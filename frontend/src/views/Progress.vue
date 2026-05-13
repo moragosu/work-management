@@ -5,9 +5,7 @@
         <h2>진행도 관리</h2>
         <div class="subtitle">주차별 세부 진행 상황</div>
       </div>
-      <div class="flex gap-8">
-        <button class="btn btn-primary btn-sm" @click="openAddModal()">+ 항목 추가</button>
-      </div>
+      <button class="btn btn-primary btn-sm" @click="openAddModal()">+ 항목 추가</button>
     </div>
 
     <div class="page-body">
@@ -21,9 +19,9 @@
           <option value="">전체 Objective</option>
           <option v-for="o in objectiveOptions" :key="o" :value="o">{{ o }}</option>
         </select>
-        <select v-model="filterAssignee" class="form-control">
-          <option value="">전체 담당자</option>
-          <option v-for="s in staffOptions" :key="s" :value="s">{{ s }}</option>
+        <select v-model="filterTask" class="form-control">
+          <option value="">전체 과제</option>
+          <option v-for="t in taskOptions" :key="t" :value="t">{{ t }}</option>
         </select>
         <button class="btn btn-ghost btn-sm" @click="clearFilters">초기화</button>
       </div>
@@ -70,10 +68,13 @@
                   <td>
                     <select
                       class="form-control inline"
-                      :value="item.task"
-                      @change="autoSave(item, 'task', $event.target.value)"
+                      :value="item.task_id"
+                      @change="updateTask(item, $event.target.value)"
                     >
-                      <option v-for="o in objectives" :key="o.id" :value="o.name">{{ o.id }}: {{ o.name }}</option>
+                      <option value="">-</option>
+                      <option v-for="t in getTasksForObjective(item.objective)" :key="t.id" :value="t.id">
+                        {{ t.name }}
+                      </option>
                     </select>
                   </td>
                   <td>
@@ -165,7 +166,7 @@
             </div>
             <div class="form-group">
               <label class="form-label">Objective *</label>
-              <select v-model="form.objective" class="form-control">
+              <select v-model="form.objective" class="form-control" @change="onObjectiveChange">
                 <option value="">선택</option>
                 <option v-for="o in objectives" :key="o.id" :value="o.id">{{ o.id }}: {{ o.name }}</option>
               </select>
@@ -173,9 +174,11 @@
           </div>
           <div class="form-group">
             <label class="form-label">과제</label>
-            <select v-model="form.task" class="form-control">
+            <select v-model="form.task_id" class="form-control" @change="onTaskChange">
               <option value="">선택</option>
-              <option v-for="o in objectives" :key="o.id" :value="o.name">{{ o.id }}: {{ o.name }}</option>
+              <option v-for="t in getTasksForObjective(form.objective)" :key="t.id" :value="t.id">
+                {{ t.name }}
+              </option>
             </select>
           </div>
           <div class="form-group">
@@ -221,7 +224,6 @@
       </div>
     </div>
 
-    <!-- Toast -->
     <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
   </div>
 </template>
@@ -232,11 +234,12 @@ import axios from 'axios'
 
 const items = ref([])
 const objectives = ref([])
+const tasks = ref([])
 const staffOptions = ref([])
 const loading = ref(false)
 const search = ref('')
 const filterObjective = ref('')
-const filterAssignee = ref('')
+const filterTask = ref('')
 const openWeeks = ref(new Set())
 const showModal = ref(false)
 const toastMsg = ref('')
@@ -245,7 +248,8 @@ const debounceTimers = {}
 const defaultForm = () => ({
   week: currentWeek(),
   objective: '',
-  task: '',
+  task_id: '',
+  task_name: '',
   subtask: '',
   planned: '',
   result: '',
@@ -257,6 +261,7 @@ const defaultForm = () => ({
 const form = ref(defaultForm())
 
 const objectiveOptions = computed(() => [...new Set(items.value.map(i => i.objective).filter(Boolean))])
+const taskOptions = computed(() => [...new Set(items.value.map(i => i.task_name).filter(Boolean))])
 
 const filteredItems = computed(() => {
   let result = items.value
@@ -264,13 +269,13 @@ const filteredItems = computed(() => {
     const q = search.value.toLowerCase()
     result = result.filter(i =>
       i.assignee?.toLowerCase().includes(q) ||
-      i.task?.toLowerCase().includes(q) ||
+      i.task_name?.toLowerCase().includes(q) ||
       i.issue?.toLowerCase().includes(q) ||
       i.subtask?.toLowerCase().includes(q)
     )
   }
   if (filterObjective.value) result = result.filter(i => i.objective === filterObjective.value)
-  if (filterAssignee.value) result = result.filter(i => i.assignee === filterAssignee.value)
+  if (filterTask.value) result = result.filter(i => i.task_name === filterTask.value)
   return result
 })
 
@@ -301,12 +306,17 @@ function toggleWeek(week) {
 function clearFilters() {
   search.value = ''
   filterObjective.value = ''
-  filterAssignee.value = ''
+  filterTask.value = ''
 }
 
 function showToast(msg) {
   toastMsg.value = msg
   setTimeout(() => { toastMsg.value = '' }, 2000)
+}
+
+function getTasksForObjective(objectiveId) {
+  if (!objectiveId) return tasks.value
+  return tasks.value.filter(t => t.objective_id === objectiveId)
 }
 
 function debounceSave(item, field, value) {
@@ -325,10 +335,32 @@ async function autoSave(item, field, value) {
   }
 }
 
+async function updateTask(item, taskId) {
+  const task = tasks.value.find(t => t.id === taskId)
+  item.task_id = taskId
+  item.task_name = task ? task.name : ''
+  try {
+    await axios.put(`/api/progress/${item.id}`, { task_id: taskId, task_name: item.task_name })
+    showToast('저장됨')
+  } catch {
+    showToast('저장 실패')
+  }
+}
+
 function openAddModal(week = null) {
   form.value = defaultForm()
   if (week) form.value.week = week
   showModal.value = true
+}
+
+function onObjectiveChange() {
+  form.value.task_id = ''
+  form.value.task_name = ''
+}
+
+function onTaskChange() {
+  const task = tasks.value.find(t => t.id === form.value.task_id)
+  form.value.task_name = task ? task.name : ''
 }
 
 async function submitAdd() {
@@ -345,7 +377,7 @@ async function submitAdd() {
 }
 
 async function deleteItem(item) {
-  if (!confirm(`"${item.subtask || item.task}" 항목을 삭제하시겠습니까?`)) return
+  if (!confirm(`"${item.subtask || item.task_name}" 항목을 삭제하시겠습니까?`)) return
   await axios.delete(`/api/progress/${item.id}`)
   items.value = items.value.filter(i => i.id !== item.id)
   showToast('삭제되었습니다')
@@ -354,15 +386,16 @@ async function deleteItem(item) {
 async function fetchAll() {
   loading.value = true
   try {
-    const [pRes, oRes, sRes] = await Promise.all([
+    const [pRes, oRes, tRes, sRes] = await Promise.all([
       axios.get('/api/progress'),
       axios.get('/api/okrs'),
+      axios.get('/api/tasks'),
       axios.get('/api/staff'),
     ])
     items.value = pRes.data
     objectives.value = oRes.data
+    tasks.value = tRes.data
     staffOptions.value = sRes.data.map(s => s.name)
-    // open current week by default
     const cw = currentWeek()
     if (items.value.some(i => i.week === cw)) {
       openWeeks.value.add(cw)

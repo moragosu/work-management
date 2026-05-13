@@ -2,7 +2,6 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
 import csv
 import io
-import json
 import uuid
 from datetime import date
 import data_store
@@ -19,29 +18,49 @@ def export_objectives():
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow([
-        "objective_id", "objective_name", "pl", "tech_stack", "status",
-        "kr_id", "kr_name", "kr_progress"
+        "objective_id", "objective_name", "tech_stack", "status",
+        "kr_id", "kr_name"
     ])
     for o in objectives:
         key_results = o.get("key_results", [])
         if key_results:
             for kr in key_results:
                 writer.writerow([
-                    o.get("id"), o.get("name"), o.get("pl"),
+                    o.get("id"), o.get("name"),
                     o.get("tech_stack"), o.get("status"),
-                    kr.get("id"), kr.get("name"), kr.get("progress"),
+                    kr.get("id"), kr.get("name"),
                 ])
         else:
             writer.writerow([
-                o.get("id"), o.get("name"), o.get("pl"),
+                o.get("id"), o.get("name"),
                 o.get("tech_stack"), o.get("status"),
-                "", "", "",
+                "", "",
             ])
     output.seek(0)
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=objectives.csv"},
+    )
+
+
+@router.get("/export/tasks")
+def export_tasks():
+    """Export tasks as CSV."""
+    tasks = data_store.load("tasks.json").get("tasks", [])
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["task_id", "task_name", "objective_id", "members"])
+    for t in tasks:
+        members_str = "; ".join([f"{m.get('name')}({m.get('staff_id')})" for m in t.get("members", [])])
+        writer.writerow([
+            t.get("id"), t.get("name"), t.get("objective_id"), members_str
+        ])
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=tasks.csv"},
     )
 
 
@@ -71,14 +90,14 @@ def export_progress():
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow([
-        "id", "week", "objective", "task", "subtask", "planned",
+        "id", "week", "objective", "task_id", "task_name", "subtask", "planned",
         "result", "progress_percent", "issue", "assignee", "solution",
         "created_at", "updated_at",
     ])
     for p in items:
         writer.writerow([
-            p.get("id"), p.get("week"), p.get("objective"), p.get("task"),
-            p.get("subtask"), p.get("planned"), p.get("result"),
+            p.get("id"), p.get("week"), p.get("objective"), p.get("task_id"),
+            p.get("task_name"), p.get("subtask"), p.get("planned"), p.get("result"),
             p.get("progress_percent"), p.get("issue"), p.get("assignee"),
             p.get("solution"), p.get("created_at"), p.get("updated_at"),
         ])
@@ -113,8 +132,6 @@ async def import_objectives(file: UploadFile = File(...)):
             objectives_map[obj_id] = {
                 "id": obj_id,
                 "name": r.get("objective_name", "").strip(),
-                "pl": r.get("pl", "").strip(),
-                "team_members": [],
                 "tech_stack": r.get("tech_stack", "").strip(),
                 "key_results": [],
                 "status": r.get("status", "진행중").strip(),
@@ -125,12 +142,35 @@ async def import_objectives(file: UploadFile = File(...)):
             objectives_map[obj_id]["key_results"].append({
                 "id": kr_id,
                 "name": r.get("kr_name", "").strip(),
-                "progress": int(r.get("kr_progress", 0) or 0),
             })
     
     objectives = list(objectives_map.values())
     data_store.save("okrs.json", {"objectives": objectives})
     return {"imported": len(objectives)}
+
+
+@router.post("/import/tasks")
+async def import_tasks(file: UploadFile = File(...)):
+    """Import tasks from CSV."""
+    rows = _parse_csv(await file.read())
+    tasks = []
+    for r in rows:
+        members = []
+        members_str = r.get("members", "").strip()
+        if members_str:
+            for m in members_str.split(";"):
+                if "(" in m and ")" in m:
+                    name = m.split("(")[0].strip()
+                    staff_id = m.split("(")[1].replace(")", "").strip()
+                    members.append({"staff_id": staff_id, "name": name})
+        tasks.append({
+            "id": r.get("task_id") or f"T{str(uuid.uuid4())[:8].upper()}",
+            "name": r.get("task_name", "").strip(),
+            "objective_id": r.get("objective_id", "").strip(),
+            "members": members,
+        })
+    data_store.save("tasks.json", {"tasks": tasks})
+    return {"imported": len(tasks)}
 
 
 @router.post("/import/staff")
@@ -162,7 +202,8 @@ async def import_progress(file: UploadFile = File(...)):
             "id": r.get("id") or f"P{str(uuid.uuid4())[:8].upper()}",
             "week": r.get("week", "").strip(),
             "objective": r.get("objective", "").strip(),
-            "task": r.get("task", "").strip(),
+            "task_id": r.get("task_id", "").strip(),
+            "task_name": r.get("task_name", "").strip(),
             "subtask": r.get("subtask", "").strip(),
             "planned": r.get("planned", "").strip(),
             "result": r.get("result", "").strip(),
@@ -181,27 +222,15 @@ async def import_progress(file: UploadFile = File(...)):
 
 @router.delete("/reset/{target}")
 def reset_data(target: str):
-    allowed = {"objectives", "staff", "progress", "all"}
+    allowed = {"objectives", "tasks", "staff", "progress", "all"}
     if target not in allowed:
         raise HTTPException(status_code=400, detail=f"target must be one of {allowed}")
     if target in ("objectives", "all"):
         data_store.save("okrs.json", {"objectives": []})
+    if target in ("tasks", "all"):
+        data_store.save("tasks.json", {"tasks": []})
     if target in ("staff", "all"):
         data_store.save("staff.json", {"staff": []})
     if target in ("progress", "all"):
         data_store.save("progress.json", {"progress_items": []})
     return {"reset": target}
-
-
-# ── Backward compatibility aliases ─────────────────────────────────────────────
-
-@router.get("/export/okrs")
-def export_okrs_alias():
-    """Alias for backward compatibility."""
-    return export_objectives()
-
-
-@router.post("/import/okrs")
-async def import_okrs_alias(file: UploadFile = File(...)):
-    """Alias for backward compatibility."""
-    return await import_objectives(file)

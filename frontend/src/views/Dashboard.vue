@@ -53,58 +53,21 @@
               <span class="objective-id-badge">{{ obj.id }}</span>
               <div>
                 <div style="font-weight:600;font-size:15px">{{ obj.name }}</div>
-                <div class="text-sm text-muted">PL: {{ obj.pl }}</div>
+                <div v-if="obj.tech_stack" class="text-sm text-muted">{{ obj.tech_stack }}</div>
               </div>
             </div>
             <span :class="statusBadgeClass(obj.status)">{{ obj.status }}</span>
           </div>
           <div class="card-body">
-            <!-- Overall Progress -->
-            <div class="flex-between" style="margin-bottom:8px">
-              <span class="text-sm text-muted">전체 진행률</span>
-              <span style="font-weight:700;font-size:16px" :style="{ color: progressColor(calcProgress(obj)) }">
-                {{ calcProgress(obj) }}%
-              </span>
-            </div>
-            <div class="progress-bar" style="margin-bottom:16px">
-              <div
-                class="progress-fill"
-                :class="progressClass(calcProgress(obj))"
-                :style="{ width: calcProgress(obj) + '%' }"
-              ></div>
-            </div>
-
             <!-- Key Results -->
             <div v-if="obj.key_results && obj.key_results.length > 0" style="margin-bottom:16px">
-              <div class="text-sm text-muted" style="margin-bottom:8px">Key Results:</div>
+              <div class="text-sm text-muted" style="margin-bottom:8px">Key Results ({{ obj.key_results.length }}개):</div>
               <div v-for="kr in obj.key_results" :key="kr.id" class="kr-item">
-                <div class="flex-between" style="margin-bottom:4px">
-                  <span class="text-sm">{{ kr.id }}: {{ kr.name }}</span>
-                  <span class="text-sm" :style="{ color: progressColor(kr.progress), fontWeight:600 }">{{ kr.progress }}%</span>
-                </div>
-                <div class="progress-bar-sm">
-                  <div
-                    class="progress-fill-sm"
-                    :class="progressClass(kr.progress)"
-                    :style="{ width: kr.progress + '%' }"
-                  ></div>
-                </div>
+                <span class="badge badge-blue" style="width:40px">{{ kr.id }}</span>
+                <span class="text-sm" style="margin-left:8px">{{ kr.name }}</span>
               </div>
             </div>
-
-            <!-- Tech stack & members -->
-            <div v-if="obj.tech_stack" style="margin-bottom:10px">
-              <span class="text-sm text-muted">기술 스택: </span>
-              <span class="text-sm">{{ obj.tech_stack }}</span>
-            </div>
-            <div>
-              <span class="text-sm text-muted">팀원: </span>
-              <span
-                v-for="m in obj.team_members" :key="m.name"
-                class="badge badge-gray"
-                style="margin-right:4px"
-              >{{ m.name }} ({{ m.role }})</span>
-            </div>
+            <div v-else class="text-sm text-muted">Key Results 없음</div>
           </div>
         </div>
       </div>
@@ -124,13 +87,6 @@ const inProgressCount = computed(() => objectives.value.filter(o => o.status ===
 const completedCount = computed(() => objectives.value.filter(o => o.status === '완료').length)
 const dangerCount = computed(() => objectives.value.filter(o => o.status === '위험').length)
 
-function calcProgress(obj) {
-  const keyResults = obj.key_results || []
-  if (keyResults.length === 0) return 0
-  const total = keyResults.reduce((sum, kr) => sum + (kr.progress || 0), 0)
-  return Math.round(total / keyResults.length)
-}
-
 async function refresh() {
   loading.value = true
   try {
@@ -147,18 +103,6 @@ function statusBadgeClass(status) {
     '완료': 'badge badge-green',
     '위험': 'badge badge-red',
   }[status] || 'badge badge-gray'
-}
-
-function progressColor(pct) {
-  if (pct >= 100) return 'var(--success)'
-  if (pct < 30) return 'var(--danger)'
-  return 'var(--primary)'
-}
-
-function progressClass(pct) {
-  if (pct >= 100) return 'green'
-  if (pct < 30) return 'red'
-  return 'blue'
 }
 
 onMounted(refresh)
@@ -179,18 +123,7 @@ onMounted(refresh)
   border-radius: 6px;
   padding: 8px 12px;
   margin-bottom: 6px;
+  display: flex;
+  align-items: center;
 }
-.progress-bar-sm {
-  height: 4px;
-  background: var(--gray-200);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.progress-fill-sm {
-  height: 100%;
-  transition: width .3s;
-}
-.progress-fill-sm.blue { background: var(--primary); }
-.progress-fill-sm.green { background: var(--success); }
-.progress-fill-sm.red { background: var(--danger); }
 </style>

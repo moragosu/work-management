@@ -11,8 +11,9 @@ router = APIRouter()
 class ProgressItem(BaseModel):
     id: Optional[str] = None
     week: str
-    okr: str
-    task: str
+    objective: str
+    task_id: str = ""
+    task_name: str = ""
     subtask: str = ""
     planned: str = ""
     result: str = ""
@@ -26,8 +27,9 @@ class ProgressItem(BaseModel):
 
 class ProgressUpdate(BaseModel):
     week: Optional[str] = None
-    okr: Optional[str] = None
-    task: Optional[str] = None
+    objective: Optional[str] = None
+    task_id: Optional[str] = None
+    task_name: Optional[str] = None
     subtask: Optional[str] = None
     planned: Optional[str] = None
     result: Optional[str] = None
@@ -49,14 +51,17 @@ def _save(items: list):
 @router.get("", response_model=List[ProgressItem])
 def list_progress(
     week: Optional[str] = Query(None),
-    okr: Optional[str] = Query(None),
+    objective: Optional[str] = Query(None),
+    task_id: Optional[str] = Query(None),
     assignee: Optional[str] = Query(None),
 ):
     items = _load()
     if week:
         items = [i for i in items if i.get("week") == week]
-    if okr:
-        items = [i for i in items if i.get("okr") == okr]
+    if objective:
+        items = [i for i in items if i.get("objective") == objective]
+    if task_id:
+        items = [i for i in items if i.get("task_id") == task_id]
     if assignee:
         items = [i for i in items if i.get("assignee") == assignee]
     return items
