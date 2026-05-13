@@ -403,6 +403,11 @@ async function addKeyResult() {
     })
     selectedObjective.value.key_results.push(data)
     newKeyResult.value = { id: '', name: '', progress: 0 }
+    // Refresh objectives list to show updated key results
+    await fetchObjectives()
+    // Update selectedObjective with fresh data
+    const updated = objectives.value.find(o => o.id === selectedObjective.value.id)
+    if (updated) selectedObjective.value = JSON.parse(JSON.stringify(updated))
     showToast('Key Result가 추가되었습니다')
   } catch (e) {
     showToast(e.response?.data?.detail || '추가 실패')
