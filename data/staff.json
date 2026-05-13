@@ -1,0 +1,24 @@
+{
+  "staff": [
+    {
+      "id": "S001",
+      "name": "박진우",
+      "role": "개발 리더",
+      "main_skills": "Python, PyTorch",
+      "sub_skills": "C++, ROS",
+      "learning": "ONNX, TensorRT",
+      "desired_field": "엣지 AI 최적화",
+      "okrs": "O1, O3"
+    },
+    {
+      "id": "S002",
+      "name": "우제균",
+      "role": "데이터 엔지니어",
+      "main_skills": "Python, SQL",
+      "sub_skills": "InfluxDB, Grafana",
+      "learning": "Apache Kafka",
+      "desired_field": "실시간 데이터 처리",
+      "okrs": "O1, O2, O4"
+    }
+  ]
+}
