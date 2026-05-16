@@ -102,18 +102,34 @@
                 </td>
                 <td>
                   <div class="objective-task-list">
-                    <div v-for="objId in getObjectiveIds(member.objectives || member.okrs)" :key="objId" class="objective-item">
-                      <div class="objective-header">
-                        <span class="badge badge-blue" :title="getObjectiveName(objId)">{{ objId }}</span>
-                        <button class="btn btn-ghost btn-xs" @click="openObjectiveSelect(member)" style="margin-left: 8px;">수정</button>
-                      </div>
-                      <div v-if="getObjectiveTasks(objId).length > 0" class="task-list">
-                        <div v-for="task in getObjectiveTasks(objId)" :key="task.id" class="task-item">
-                          <span class="badge badge-gray">{{ task.id }}</span>
-                          <span class="task-name">{{ task.name }}</span>
+                    <template v-if="member.selected_tasks">
+                      <div v-for="objId in getSelectedTaskObjectiveIds(member)" :key="objId" class="objective-item">
+                        <div class="objective-header">
+                          <span class="badge badge-blue">{{ objId }}</span>
+                          <span class="objective-label">{{ getObjectiveName(objId) }}</span>
+                        </div>
+                        <div class="task-list">
+                          <div v-for="task in getSelectedTasksForObjective(member, objId)" :key="task.id" class="task-item">
+                            <span class="badge badge-gray">{{ task.id }}</span>
+                            <span class="task-name">{{ task.name }}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </template>
+                    <template v-else>
+                      <div v-for="objId in getObjectiveIds(member.objectives || member.okrs)" :key="objId" class="objective-item">
+                        <div class="objective-header">
+                          <span class="badge badge-blue">{{ objId }}</span>
+                          <span class="objective-label">{{ getObjectiveName(objId) }}</span>
+                        </div>
+                        <div v-if="getObjectiveTasks(objId).length > 0" class="task-list">
+                          <div v-for="task in getObjectiveTasks(objId)" :key="task.id" class="task-item">
+                            <span class="badge badge-gray">{{ task.id }}</span>
+                            <span class="task-name">{{ task.name }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
                   </div>
                 </td>
                 <td>
@@ -156,12 +172,34 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">참여 Objective</label>
-            <div class="flex gap-8" style="flex-wrap:wrap">
-              <label v-for="o in objectives" :key="o.id" class="checkbox-label">
-                <input type="checkbox" :value="o.id" v-model="form.objectiveIds" />
-                {{ o.id }}
-              </label>
+            <label class="form-label">참여 과제</label>
+            <div class="task-group-list">
+              <div v-for="objective in objectives" :key="objective.id" class="objective-group">
+                <div class="objective-header">
+                  <span class="badge badge-blue">{{ objective.id }}</span>
+                  <span class="objective-name">{{ objective.name }}</span>
+                </div>
+                <div class="task-checkboxes">
+                  <label v-for="task in getObjectiveTasks(objective.id)" :key="task.id" class="task-checkbox-label">
+                    <input 
+                      type="checkbox" 
+                      :value="task.id" 
+                      :checked="form.taskIds.includes(task.id)"
+                      @change="updateTaskSelection(task.id, $event.target.checked)"
+                    />
+                    {{ task.id }}: {{ task.name }}
+                  </label>
+                </div>
+              </div>
+            </div>
+            <!-- 선택된 과제 요약 -->
+            <div v-if="form.taskIds.length > 0" class="selected-tasks-summary mt-16">
+              <div class="text-sm text-muted">선택된 과제: {{ form.taskIds.length }}개</div>
+              <div class="flex gap-4" style="flex-wrap:wrap;margin-top:8px">
+                <span v-for="taskId in form.taskIds" :key="taskId" class="badge badge-gray">
+                  {{ taskId }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -214,17 +252,40 @@ const showObjectiveModal = ref(false)
 const toastMsg = ref('')
 const debounceTimers = {}
 
-const defaultForm = () => ({ name: '', role: '', main_skills: '', sub_skills: '', objectiveIds: [] })
+const defaultForm = () => ({ name: '', role: '', main_skills: '', sub_skills: '', taskIds: [] })
 const form = ref(defaultForm())
 
 const selectedMember = ref(null)
 const selectedObjectiveIds = ref([])
+
+// 과제 선택 관련 함수 추가
+function updateTaskSelection(taskId, isSelected) {
+  if (isSelected) {
+    // 과제가 선택되었을 때
+    if (!form.value.taskIds.includes(taskId)) {
+      form.value.taskIds.push(taskId)
+    }
+  } else {
+    // 과제가 선택 해제되었을 때
+    const index = form.value.taskIds.indexOf(taskId)
+    if (index > -1) {
+      form.value.taskIds.splice(index, 1)
+    }
+  }
+}
 
 function showToast(msg) {
   toastMsg.value = msg
   setTimeout(() => { toastMsg.value = '' }, 2000)
 }
 
+// 과제 ID들 가져오기
+function getTaskIds(tasksStr) {
+  if (!tasksStr) return []
+  return tasksStr.split(',').map(id => id.trim()).filter(Boolean)
+}
+
+// Objective ID들 가져오기 (하위 호환성 유지)
 function getObjectiveIds(objectivesStr) {
   if (!objectivesStr) return []
   return objectivesStr.split(',').map(id => id.trim()).filter(Boolean)
@@ -262,6 +323,12 @@ function getObjectiveName(objectiveId) {
   return objective ? objective.name : objectiveId
 }
 
+// 과제 ID로 과제명 가져오기
+function getTaskName(taskId) {
+  const task = tasks.value.find(t => t.id === taskId)
+  return task ? task.name : taskId
+}
+
 function debounceSave(member, field, value) {
   const key = `${member.id}-${field}`
   clearTimeout(debounceTimers[key])
@@ -294,9 +361,16 @@ async function submitForm() {
 
 async function submitAdd() {
   try {
+    // 과제 ID들을 통해 연결된 Objective들을 추출
+    const objectiveIds = [...new Set(form.value.taskIds.map(taskId => {
+      const task = tasks.value.find(t => t.id === taskId)
+      return task ? task.objective_id : null
+    }).filter(Boolean))]
+    
     const payload = {
       ...form.value,
-      okrs: form.value.objectiveIds.join(', ')  // 백엔드와 호환되는 필드명 사용
+      okrs: objectiveIds.join(', '),  // 과제에서 추출한 Objective ID들 저장
+      selected_tasks: form.value.taskIds.join(', ')  // 실제 선택된 과제 ID들 저장
     }
     const { data } = await axios.post('/api/staff', payload)
     staff.value.push(data)
@@ -311,9 +385,16 @@ async function submitEdit() {
   if (!selectedMember.value) return
   
   try {
+    // 과제 ID들을 통해 연결된 Objective들을 추출
+    const objectiveIds = [...new Set(form.value.taskIds.map(taskId => {
+      const task = tasks.value.find(t => t.id === taskId)
+      return task ? task.objective_id : null
+    }).filter(Boolean))]
+    
     const payload = {
       ...form.value,
-      okrs: form.value.objectiveIds.join(', ')  // 백엔드와 호환되는 필드명 사용
+      okrs: objectiveIds.join(', '),  // 과제에서 추출한 Objective ID들 저장
+      selected_tasks: form.value.taskIds.join(', ')  // 실제 선택된 과제 ID들 저장
     }
     const { data } = await axios.put(`/api/staff/${selectedMember.value.id}`, payload)
     
@@ -408,6 +489,39 @@ function sortBy(key) {
 }
 
 // 수정 기능
+// 과제 ID들로 초기화하는 함수
+function getTaskIdsFromObjectives(objectivesStr) {
+  const objIds = getObjectiveIds(objectivesStr)
+  const taskIds = []
+  tasks.value.forEach(task => {
+    if (objIds.includes(task.objective_id)) {
+      taskIds.push(task.id)
+    }
+  })
+  return taskIds
+}
+
+// selected_tasks의 Objective ID들 반환 (Objective별 그룹핑 표시에 사용)
+function getSelectedTaskObjectiveIds(member) {
+  const taskIds = getTaskIds(member.selected_tasks)
+  const seen = new Set()
+  const objIds = []
+  taskIds.forEach(taskId => {
+    const task = tasks.value.find(t => t.id === taskId)
+    if (task && !seen.has(task.objective_id)) {
+      seen.add(task.objective_id)
+      objIds.push(task.objective_id)
+    }
+  })
+  return objIds
+}
+
+// selected_tasks 중 특정 Objective에 속하는 Task 반환
+function getSelectedTasksForObjective(member, objId) {
+  const taskIds = getTaskIds(member.selected_tasks)
+  return tasks.value.filter(t => taskIds.includes(t.id) && t.objective_id === objId)
+}
+
 function editMember(member) {
   selectedMember.value = member
   form.value = {
@@ -415,7 +529,7 @@ function editMember(member) {
     role: member.role || '',
     main_skills: member.main_skills || '',
     sub_skills: member.sub_skills || '',
-    objectiveIds: getObjectiveIds(member.objectives || member.okrs || '')  // okrs 필드도 지원
+    taskIds: member.selected_tasks ? getTaskIds(member.selected_tasks) : []
   }
   showModal.value = true
 }
@@ -499,5 +613,63 @@ onMounted(async () => {
 .task-name {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.objective-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #555);
+}
+
+/* 과제 그룹 스타일 */
+.task-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.objective-group {
+  border: 1px solid var(--outline);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.objective-group .objective-header {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--outline);
+}
+
+.objective-name {
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.task-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--gray-50);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.task-checkbox-label:hover {
+  background: var(--gray-100);
+}
+
+.task-checkbox-label input {
+  margin-top: 4px;
 }
 </style>

@@ -15,8 +15,8 @@ fi
 echo "백엔드 시작 (포트 8000)..."
 cd "$REPO_DIR/backend"
 export DATA_DIR="$REPO_DIR/data"
-uv sync --quiet
-uv run python main.py &
+uv sync --quiet --python 3.12
+uv run --python 3.12 python main.py &
 BACKEND_PID=$!
 echo "  PID: $BACKEND_PID"
 

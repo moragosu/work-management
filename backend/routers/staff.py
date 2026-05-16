@@ -16,6 +16,7 @@ class StaffMember(BaseModel):
     learning: str = ""
     desired_field: str = ""
     okrs: str = ""  # 연결된 Objective IDs (콤마 구분)
+    selected_tasks: str = ""  # 선택된 과제 IDs (콤마 구분) - 새로 추가
     task_ids: List[str] = []  # 연결된 과제 IDs
 
 
@@ -27,6 +28,7 @@ class StaffUpdate(BaseModel):
     learning: Optional[str] = None
     desired_field: Optional[str] = None
     okrs: Optional[str] = None
+    selected_tasks: Optional[str] = None  # 새로 추가
     task_ids: Optional[List[str]] = None
 
 

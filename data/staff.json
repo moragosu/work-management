@@ -3,7 +3,7 @@
     {
       "id": "S96926FE1",
       "name": "김경산",
-      "role": "설비 효율 개선/제에 기술 지원",
+      "role": "설비 효율 개선/제어 기술 지원",
       "main_skills": "PLC",
       "sub_skills": "",
       "learning": "",
@@ -18,7 +18,8 @@
       "sub_skills": "",
       "learning": "",
       "desired_field": "",
-      "okrs": "O2"
+      "okrs": "O1, O2",
+      "selected_tasks": "T4, T5, T6, T7"
     },
     {
       "id": "SBF35B869",
