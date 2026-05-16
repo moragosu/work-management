@@ -20,6 +20,24 @@
 
       <!-- ── Objective Tab ── -->
       <div v-if="activeTab === 'objective'">
+        <div class="grid-4" style="margin-bottom:20px">
+          <div class="card"><div class="card-body stat-card">
+            <div class="stat-value">{{ objectiveStats.total }}</div>
+            <div class="stat-label">전체 Objective</div>
+          </div></div>
+          <div class="card"><div class="card-body stat-card">
+            <div class="stat-value" style="color:var(--primary)">{{ objectiveStats.inProgress }}</div>
+            <div class="stat-label">진행중</div>
+          </div></div>
+          <div class="card"><div class="card-body stat-card">
+            <div class="stat-value" style="color:#22c55e">{{ objectiveStats.done }}</div>
+            <div class="stat-label">완료</div>
+          </div></div>
+          <div class="card"><div class="card-body stat-card">
+            <div class="stat-value" style="color:var(--danger)">{{ objectiveStats.danger }}</div>
+            <div class="stat-label">위험</div>
+          </div></div>
+        </div>
         <div class="flex-between" style="margin-bottom:16px">
           <button class="btn btn-ghost btn-sm" @click="exportCsv('objectives')">⬇ CSV 다운로드</button>
           <button class="btn btn-primary btn-sm" @click="openObjectiveModal()">+ Objective 추가</button>
@@ -106,6 +124,24 @@
 
       <!-- ── Task Tab ── -->
       <div v-if="activeTab === 'task'">
+        <div class="grid-4" style="margin-bottom:20px">
+          <div class="card"><div class="card-body stat-card">
+            <div class="stat-value">{{ taskStats.total }}</div>
+            <div class="stat-label">전체 과제</div>
+          </div></div>
+          <div class="card"><div class="card-body stat-card">
+            <div class="stat-value" style="color:var(--primary)">{{ taskStats.totalKR }}</div>
+            <div class="stat-label">전체 KR</div>
+          </div></div>
+          <div class="card"><div class="card-body stat-card">
+            <div class="stat-value" style="color:#22c55e">{{ taskStats.withMembers }}</div>
+            <div class="stat-label">인력 배정 완료</div>
+          </div></div>
+          <div class="card"><div class="card-body stat-card">
+            <div class="stat-value" style="color:#f59e0b">{{ taskStats.noMembers }}</div>
+            <div class="stat-label">인력 미배정</div>
+          </div></div>
+        </div>
         <div class="flex-between" style="margin-bottom:16px">
           <button class="btn btn-ghost btn-sm" @click="exportCsv('tasks')">⬇ CSV 다운로드</button>
           <button class="btn btn-primary btn-sm" @click="openTaskModal()">+ 과제 추가</button>
@@ -166,71 +202,29 @@
 
       <!-- ── Staff Tab ── -->
       <div v-if="activeTab === 'staff'">
+        <div class="grid-4" style="margin-bottom:20px">
+          <div class="card"><div class="card-body stat-card">
+            <div class="stat-value">{{ staffStats.total }}</div>
+            <div class="stat-label">총 인원</div>
+          </div></div>
+          <div class="card"><div class="card-body stat-card">
+            <div class="stat-value" style="color:var(--primary)">{{ staffStats.objCounts['O1'] || 0 }}</div>
+            <div class="stat-label">O1 참여</div>
+          </div></div>
+          <div class="card"><div class="card-body stat-card">
+            <div class="stat-value" style="color:var(--primary)">{{ staffStats.objCounts['O2'] || 0 }}</div>
+            <div class="stat-label">O2 참여</div>
+          </div></div>
+          <div class="card"><div class="card-body stat-card">
+            <div class="stat-value" style="color:var(--primary)">{{ staffStats.objCounts['O3'] || 0 }}</div>
+            <div class="stat-label">O3 참여</div>
+          </div></div>
+        </div>
         <div class="flex-between" style="margin-bottom:16px">
           <button class="btn btn-ghost btn-sm" @click="exportCsv('staff')">⬇ CSV 다운로드</button>
-          <button class="btn btn-primary btn-sm" @click="openStaffModal()">+ 인력 추가</button>
+          <button class="btn btn-primary btn-sm" @click="staffViewRef?.openAddModal()">+ 인력 추가</button>
         </div>
-        <div class="card">
-          <div v-if="staffLoading" class="loading-center"><div class="spinner"></div></div>
-          <div v-else-if="staffList.length === 0" class="empty-state">
-            <div class="empty-icon">👥</div><p>등록된 인력이 없습니다.</p>
-          </div>
-          <div v-else class="table-wrap">
-            <table>
-              <thead>
-                <tr><th>이름</th><th>역할</th><th>주 기술</th><th>부 기술</th><th>참여 Objective</th><th></th></tr>
-              </thead>
-              <tbody>
-                <tr v-for="s in staffList" :key="s.id">
-                  <td style="font-weight:600">{{ s.name }}</td>
-                  <td>{{ s.role }}</td>
-                  <td>{{ s.main_skills }}</td>
-                  <td>{{ s.sub_skills }}</td>
-                  <td>
-                    <div class="objective-task-list">
-                      <div v-for="objId in getObjectiveIds(s.objectives || s.okrs)" :key="objId" class="objective-item">
-                        <div class="objective-header">
-                          <span class="badge badge-blue" :title="getObjectiveName(objId)">{{ objId }}</span>
-                        </div>
-                        <div v-if="getObjectiveTasks(objId).length > 0" class="task-list">
-                          <div v-for="task in getObjectiveTasks(objId)" :key="task.id" class="task-item">
-                            <span class="badge badge-gray">{{ task.id }}</span>
-                            <span class="task-name">{{ task.name }}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="flex gap-8">
-                      <button class="btn btn-ghost btn-xs" @click="openStaffModal(s)">수정</button>
-                      <button class="btn btn-danger btn-xs" @click="deleteStaff(s)">삭제</button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <!-- Related Data Section -->
-          <div v-if="selectedStaffForDetails" class="card card-body mt-16">
-            <h4>관련 데이터</h4>
-            <div class="grid-2">
-              <div>
-                <h5 class="text-sm text-muted mb-8">관련 Objective ({{ selectedStaffForDetails.related_objectives.length }}개)</h5>
-                <div v-for="obj in selectedStaffForDetails.related_objectives" :key="obj.id" class="text-sm mb-4">
-                  • {{ obj.id }}: {{ obj.name }}
-                </div>
-              </div>
-              <div>
-                <h5 class="text-sm text-muted mb-8">관련 과제 ({{ selectedStaffForDetails.related_tasks.length }}개)</h5>
-                <div v-for="task in selectedStaffForDetails.related_tasks" :key="task.id" class="text-sm mb-4">
-                  • {{ task.id }}: {{ task.name }} ({{ getObjectiveName(task.objective_id) }})
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StaffView :embedded="true" ref="staffViewRef" />
       </div>
 
       <!-- ── Reset Tab ── -->
@@ -414,49 +408,6 @@
       </div>
     </div>
 
-    <!-- Staff Modal -->
-    <div v-if="showStaffModal" class="modal-overlay" @click.self="showStaffModal = false">
-      <div class="modal">
-        <div class="modal-header">
-          <h3>{{ editingStaffId ? '인력 수정' : '인력 추가' }}</h3>
-          <button class="modal-close" @click="showStaffModal = false">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label">이름 *</label>
-            <input v-model="staffForm.name" class="form-control" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">직책/역할</label>
-            <input v-model="staffForm.role" class="form-control" />
-          </div>
-          <div class="grid-2">
-            <div class="form-group">
-              <label class="form-label">주 기술</label>
-              <input v-model="staffForm.main_skills" class="form-control" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">부 기술</label>
-              <input v-model="staffForm.sub_skills" class="form-control" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">참여 Objective</label>
-            <div class="flex gap-8" style="flex-wrap:wrap">
-              <label v-for="o in objectives" :key="o.id" class="checkbox-label">
-                <input type="checkbox" :value="o.id" v-model="staffForm.objectiveIds" />
-                {{ o.id }}
-              </label>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-ghost" @click="showStaffModal = false">취소</button>
-          <button class="btn btn-primary" @click="submitStaff" :disabled="!staffForm.name">저장</button>
-        </div>
-      </div>
-    </div>
-
     <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
   </div>
 </template>
@@ -464,6 +415,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
+import StaffView from './Staff.vue'
 
 const adminMode = ref(false)
 
@@ -487,7 +439,6 @@ const tasks = ref([])
 const staffList = ref([])
 const loading = ref(false)
 const taskLoading = ref(false)
-const staffLoading = ref(false)
 const toastMsg = ref('')
 
 const nextObjectiveId = ref('O1')
@@ -516,11 +467,8 @@ const selectedTask = ref(null)
 const selectedStaffId = ref('')
 const selectedStaffRole = ref('')
 
-// Staff
-const showStaffModal = ref(false)
-const editingStaffId = ref(null)
-const defaultStaffForm = () => ({ name: '', role: '', main_skills: '', sub_skills: '', objectiveIds: [] })
-const staffForm = ref(defaultStaffForm())
+// Staff (staffList는 Task Member 모달의 availableStaff 계산에 필요)
+const staffViewRef = ref(null)
 
 // Admin Mode
 const adminPassword = ref('')
@@ -530,6 +478,35 @@ function showToast(msg) {
   setTimeout(() => { toastMsg.value = '' }, 2500)
 }
 
+// ── 탭별 현황 통계 ──
+const objectiveStats = computed(() => ({
+  total: objectives.value.length,
+  inProgress: objectives.value.filter(o => o.status === '진행중').length,
+  done: objectives.value.filter(o => o.status === '완료').length,
+  danger: objectives.value.filter(o => o.status === '위험').length,
+}))
+
+const taskStats = computed(() => ({
+  total: tasks.value.length,
+  totalKR: objectives.value.reduce((s, o) => s + (o.key_results?.length || 0), 0),
+  withMembers: tasks.value.filter(t => t.members?.length > 0).length,
+  noMembers: tasks.value.filter(t => !t.members?.length).length,
+}))
+
+const staffStats = computed(() => {
+  const objCounts = {}
+  staffList.value.forEach(s => {
+    ;(s.okrs || '').split(',').map(id => id.trim()).filter(Boolean).forEach(id => {
+      objCounts[id] = (objCounts[id] || 0) + 1
+    })
+  })
+  return {
+    total: staffList.value.length,
+    withObjective: staffList.value.filter(s => s.okrs?.trim()).length,
+    objCounts,
+  }
+})
+
 function sBadge(s) {
   return { '진행중': 'badge badge-blue', '완료': 'badge badge-green', '위험': 'badge badge-red' }[s] || 'badge badge-gray'
 }
@@ -538,16 +515,6 @@ function getObjectiveName(id) {
   if (!id) return '-'
   const o = objectives.value.find(obj => obj.id === id)
   return o ? `${o.id}: ${o.name}` : id
-}
-
-// Staff 관련 함수들 추가
-function getObjectiveIds(objectivesStr) {
-  if (!objectivesStr) return []
-  return objectivesStr.split(',').map(id => id.trim()).filter(Boolean)
-}
-
-function getObjectiveTasks(objectiveId) {
-  return tasks.value.filter(task => task.objective_id === objectiveId)
 }
 
 const availableStaff = computed(() => {
@@ -863,71 +830,8 @@ async function removeTaskMember(staffId) {
 
 // ── Staff ──
 async function fetchStaff() {
-  staffLoading.value = true
-  try { const { data } = await axios.get('/api/staff'); staffList.value = data }
-  finally { staffLoading.value = false }
-}
-
-// Related data for selected staff
-const selectedStaffForDetails = ref(null)
-
-async function showStaffDetails(staffId) {
-  try {
-    const { data } = await axios.get(`/api/staff/${staffId}/related`)
-    selectedStaffForDetails.value = data
-  } catch (e) {
-    showToast('관련 데이터 조회 실패')
-  }
-}
-
-// Staff row click to show details
-function onStaffRowClick(staff) {
-  showStaffDetails(staff.id)
-}
-
-function openStaffModal(s = null) {
-  if (s) {
-    staffForm.value = { 
-      name: s.name, 
-      role: s.role || '', 
-      main_skills: s.main_skills || '', 
-      sub_skills: s.sub_skills || '',
-      objectiveIds: (s.objectives || '').split(',').map(id => id.trim()).filter(Boolean)
-    }
-    editingStaffId.value = s.id
-  } else {
-    staffForm.value = defaultStaffForm()
-    editingStaffId.value = null
-  }
-  showStaffModal.value = true
-}
-
-async function submitStaff() {
-  try {
-    const payload = {
-      ...staffForm.value,
-      objectives: staffForm.value.objectiveIds.join(', ')
-    }
-    if (editingStaffId.value) {
-      const { data } = await axios.put(`/api/staff/${editingStaffId.value}`, payload)
-      const idx = staffList.value.findIndex(s => s.id === editingStaffId.value)
-      if (idx !== -1) staffList.value[idx] = data
-    } else {
-      const { data } = await axios.post('/api/staff', payload)
-      staffList.value.push(data)
-    }
-    showStaffModal.value = false
-    showToast('저장되었습니다')
-  } catch {
-    showToast('저장 실패')
-  }
-}
-
-async function deleteStaff(s) {
-  if (!confirm(`"${s.name}"을(를) 삭제하시겠습니까?`)) return
-  await axios.delete(`/api/staff/${s.id}`)
-  staffList.value = staffList.value.filter(x => x.id !== s.id)
-  showToast('삭제되었습니다')
+  const { data } = await axios.get('/api/staff')
+  staffList.value = data
 }
 
 // ── CSV ──
@@ -1004,41 +908,17 @@ onMounted(async () => {
   margin: 0;
 }
 
-.objective-task-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.stat-card {
+  text-align: center;
 }
-
-.objective-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
 }
-
-.objective-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.task-list {
-  margin-left: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: 2px;
-}
-
-.task-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  line-height: 1.4;
-}
-
-.task-name {
+.stat-label {
   font-size: 12px;
   color: var(--text-muted);
+  margin-top: 6px;
 }
 </style>

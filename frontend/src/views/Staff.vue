@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="page-header">
+    <div v-if="!embedded" class="page-header">
       <div>
         <h2>인력 관리</h2>
         <div class="subtitle">팀원 기술 현황 및 참여 Objective</div>
@@ -8,9 +8,9 @@
       <button class="btn btn-primary btn-sm" @click="openAddModal">+ 인력 추가</button>
     </div>
 
-    <div class="page-body">
-      <!-- Summary cards -->
-      <div class="grid-4" style="margin-bottom:24px">
+    <div :class="{ 'page-body': !embedded }">
+      <!-- Summary cards: 독립 페이지에서만 표시 -->
+      <div v-if="!embedded" class="grid-4" style="margin-bottom:24px">
         <div class="card">
           <div class="card-body" style="text-align:center">
             <div style="font-size:28px;font-weight:700;color:var(--primary)">{{ totalStaffCount }}</div>
@@ -175,15 +175,24 @@
             <label class="form-label">참여 과제</label>
             <div class="task-group-list">
               <div v-for="objective in objectives" :key="objective.id" class="objective-group">
-                <div class="objective-header">
+                <label class="objective-header objective-select-all">
+                  <input
+                    type="checkbox"
+                    :checked="isObjectiveAllSelected(objective.id)"
+                    v-indeterminate="isObjectivePartialSelected(objective.id)"
+                    @change="toggleObjectiveTasks(objective.id, $event.target.checked)"
+                  />
                   <span class="badge badge-blue">{{ objective.id }}</span>
                   <span class="objective-name">{{ objective.name }}</span>
-                </div>
+                  <span class="objective-task-count text-sm text-muted">
+                    ({{ getSelectedCountForObjective(objective.id) }}/{{ getObjectiveTasks(objective.id).length }})
+                  </span>
+                </label>
                 <div class="task-checkboxes">
                   <label v-for="task in getObjectiveTasks(objective.id)" :key="task.id" class="task-checkbox-label">
-                    <input 
-                      type="checkbox" 
-                      :value="task.id" 
+                    <input
+                      type="checkbox"
+                      :value="task.id"
                       :checked="form.taskIds.includes(task.id)"
                       @change="updateTaskSelection(task.id, $event.target.checked)"
                     />
@@ -242,6 +251,15 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
+const props = defineProps({
+  embedded: { type: Boolean, default: false }
+})
+
+const vIndeterminate = {
+  mounted(el, { value }) { el.indeterminate = value },
+  updated(el, { value }) { el.indeterminate = value },
+}
+
 const staff = ref([])
 const objectives = ref([])
 const tasks = ref([])  // 과제 목록 추가
@@ -257,6 +275,29 @@ const form = ref(defaultForm())
 
 const selectedMember = ref(null)
 const selectedObjectiveIds = ref([])
+
+// Objective 내 선택된 Task 수
+function getSelectedCountForObjective(objectiveId) {
+  return getObjectiveTasks(objectiveId).filter(t => form.value.taskIds.includes(t.id)).length
+}
+
+// Objective 내 Task 전체 선택 여부
+function isObjectiveAllSelected(objectiveId) {
+  const objTasks = getObjectiveTasks(objectiveId)
+  return objTasks.length > 0 && objTasks.every(t => form.value.taskIds.includes(t.id))
+}
+
+// Objective 내 Task 일부 선택 여부 (indeterminate)
+function isObjectivePartialSelected(objectiveId) {
+  const count = getSelectedCountForObjective(objectiveId)
+  const total = getObjectiveTasks(objectiveId).length
+  return count > 0 && count < total
+}
+
+// Objective 내 Task 일괄 선택/해제
+function toggleObjectiveTasks(objectiveId, isSelected) {
+  getObjectiveTasks(objectiveId).forEach(task => updateTaskSelection(task.id, isSelected))
+}
 
 // 과제 선택 관련 함수 추가
 function updateTaskSelection(taskId, isSelected) {
@@ -561,6 +602,8 @@ async function deleteMember(member) {
 onMounted(async () => {
   await Promise.all([fetchStaff(), fetchObjectives(), fetchTasks()])
 })
+
+defineExpose({ openAddModal })
 </script>
 
 <style scoped>
@@ -641,6 +684,25 @@ onMounted(async () => {
   margin-bottom: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--outline);
+}
+
+.objective-select-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.objective-select-all input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.objective-task-count {
+  margin-left: auto;
 }
 
 .objective-name {

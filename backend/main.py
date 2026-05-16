@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import okrs, progress, staff, admin, tasks
+from routers import okrs, progress, staff, admin, tasks, qna, confluence
 import uvicorn
 
 app = FastAPI(title="OKR Management API", version="1.0.0")
@@ -18,6 +18,8 @@ app.include_router(tasks.router, prefix="/api/tasks", tags=["Tasks"])
 app.include_router(progress.router, prefix="/api/progress", tags=["Progress"])
 app.include_router(staff.router, prefix="/api/staff", tags=["Staff"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(qna.router, prefix="/api/qna", tags=["Q&A"])
+app.include_router(confluence.router, prefix="/api/confluence", tags=["Confluence"])
 
 
 @app.get("/api/health")

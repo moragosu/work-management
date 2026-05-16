@@ -1,14 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from '../views/Dashboard.vue'
 import Progress from '../views/Progress.vue'
-import Staff from '../views/Staff.vue'
 import Admin from '../views/Admin.vue'
 
 const routes = [
   { path: '/', redirect: '/dashboard' },
   { path: '/dashboard', component: Dashboard, meta: { title: '대시보드' } },
   { path: '/progress', component: Progress, meta: { title: '주간 진행 현황' } },
-  { path: '/staff', component: Staff, meta: { title: '인력 관리' } },
+  { path: '/staff', redirect: '/admin' },
   { path: '/admin', component: Admin, meta: { title: '관리 도구' } },
 ]
 
