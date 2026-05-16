@@ -101,18 +101,19 @@
                   />
                 </td>
                 <td>
-                  <div class="flex gap-4" style="flex-wrap:wrap">
-                    <div v-for="objId in getObjectiveIds(member.objectives)" :key="objId">
-                      <div>
-                        <span class="badge badge-blue">{{ objId }}</span>
+                  <div class="objective-task-list">
+                    <div v-for="objId in getObjectiveIds(member.objectives || member.okrs)" :key="objId" class="objective-item">
+                      <div class="objective-header">
+                        <span class="badge badge-blue" :title="getObjectiveName(objId)">{{ objId }}</span>
+                        <button class="btn btn-ghost btn-xs" @click="openObjectiveSelect(member)" style="margin-left: 8px;">수정</button>
                       </div>
-                      <div v-if="getObjectiveTasks(objId).length > 0" class="text-xs text-muted" style="margin-left:20px">
-                        <div v-for="task in getObjectiveTasks(objId)" :key="task.id">
-                          • {{ task.id }}: {{ task.name }}
+                      <div v-if="getObjectiveTasks(objId).length > 0" class="task-list">
+                        <div v-for="task in getObjectiveTasks(objId)" :key="task.id" class="task-item">
+                          <span class="badge badge-gray">{{ task.id }}</span>
+                          <span class="task-name">{{ task.name }}</span>
                         </div>
                       </div>
                     </div>
-                    <button class="btn btn-ghost btn-xs" @click="openObjectiveSelect(member)">수정</button>
                   </div>
                 </td>
                 <td>
@@ -253,6 +254,12 @@ async function fetchTasks() {
 // Objective별 관련 과제 가져오기
 function getObjectiveTasks(objectiveId) {
   return tasks.value.filter(task => task.objective_id === objectiveId)
+}
+
+// Objective ID로 Objective명 가져오기
+function getObjectiveName(objectiveId) {
+  const objective = objectives.value.find(obj => obj.id === objectiveId)
+  return objective ? objective.name : objectiveId
 }
 
 function debounceSave(member, field, value) {
@@ -454,5 +461,43 @@ onMounted(async () => {
 }
 .checkbox-label input {
   margin: 0;
+}
+
+.objective-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.objective-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.objective-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-list {
+  margin-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.4;
+}
+
+.task-name {
+  font-size: 12px;
+  color: var(--text-muted);
 }
 </style>
