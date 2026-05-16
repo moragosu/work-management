@@ -175,6 +175,39 @@
           </div>
         </div>
       </div>
+
+      <!-- ── Settings Tab ── -->
+      <div v-if="activeTab === 'settings'">
+        <div class="card card-body">
+          <h3 style="margin-bottom:24px">⚙️ 설정</h3>
+          
+          <div class="form-group" style="margin-bottom:32px">
+            <label class="form-label">관리자 모드</label>
+            <div v-if="!adminMode" class="mt-16">
+              <div style="margin-bottom:16px">
+                <input v-model="adminPassword" type="password" class="form-control" placeholder="비밀번호를 입력하세요" style="margin-bottom:8px" />
+                <button class="btn btn-primary" @click="activateAdminMode">관리자 모드 활성화</button>
+              </div>
+              <p class="text-sm text-muted">관리자 모드를 활성화하면 초기화 기능을 사용할 수 있습니다.</p>
+            </div>
+            <div v-else>
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                <span class="badge badge-red">활성화됨</span>
+                <button class="btn btn-ghost btn-sm" @click="deactivateAdminMode">비활성화</button>
+              </div>
+              <p class="text-sm text-muted">관리자 모드가 활성화되어 초기화 기능을 사용할 수 있습니다.</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">정보</label>
+            <div class="text-sm text-muted" style="margin-top:8px">
+              <div>버전: 1.0.0</div>
+              <div style="margin-top:4px">개발자: Work Management Team</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Objective Modal -->
@@ -367,6 +400,7 @@ const tabs = computed(() => {
   if (adminMode.value) {
     baseTabs.push({ key: 'reset', label: '🗑 초기화' })
   }
+  baseTabs.push({ key: 'settings', label: '⚙️ 설정' })
   return baseTabs
 })
 
@@ -410,6 +444,9 @@ const showStaffModal = ref(false)
 const editingStaffId = ref(null)
 const defaultStaffForm = () => ({ name: '', role: '', main_skills: '', sub_skills: '', objectiveIds: [] })
 const staffForm = ref(defaultStaffForm())
+
+// Admin Mode
+const adminPassword = ref('')
 
 function showToast(msg) {
   toastMsg.value = msg
@@ -766,6 +803,24 @@ function toggleAdminMode() {
     localStorage.removeItem('adminMode')
     showToast('관리자 모드가 비활성화되었습니다')
   }
+}
+
+function activateAdminMode() {
+  // 간단한 비밀번호 확인 (실제 프로덕션에서는 더 강력한 인증 필요)
+  if (adminPassword.value === 'admin123') {
+    adminMode.value = true
+    localStorage.setItem('adminMode', 'true')
+    showToast('관리자 모드가 활성화되었습니다')
+    adminPassword.value = ''
+  } else {
+    showToast('비밀번호가 올바르지 않습니다')
+  }
+}
+
+function deactivateAdminMode() {
+  adminMode.value = false
+  localStorage.removeItem('adminMode')
+  showToast('관리자 모드가 비활성화되었습니다')
 }
 
 // ── Reset ──
