@@ -15,8 +15,8 @@ router = APIRouter()
 def export_objectives():
     """Export objectives with key results as CSV."""
     objectives = data_store.load("okrs.json").get("objectives", [])
-    output = io.BytesIO()
-    writer = csv.writer(io.TextIOWrapper(output, encoding='utf-8-sig', newline=''))
+    output = io.StringIO()
+    writer = csv.writer(output)
     writer.writerow([
         "objective_id", "objective_name", "tech_stack", "status",
         "kr_id", "kr_name"
@@ -37,11 +37,13 @@ def export_objectives():
                 "", "",
             ])
     output.seek(0)
+    # Add BOM for UTF-8
+    csv_content = '\ufeff' + output.getvalue()
     return StreamingResponse(
-        output,
+        iter([csv_content]),
         media_type="text/csv; charset=utf-8",
         headers={
-            "Content-Disposition": "attachment; filename*=UTF-8''objectives.csv",
+            "Content-Disposition": "attachment; filename=objectives.csv",
             "Content-Type": "text/csv; charset=utf-8"
         },
     )
@@ -51,8 +53,8 @@ def export_objectives():
 def export_tasks():
     """Export tasks as CSV."""
     tasks = data_store.load("tasks.json").get("tasks", [])
-    output = io.BytesIO()
-    writer = csv.writer(io.TextIOWrapper(output, encoding='utf-8-sig', newline=''))
+    output = io.StringIO()
+    writer = csv.writer(output)
     writer.writerow(["task_id", "task_name", "objective_id", "members"])
     for t in tasks:
         members_str = "; ".join([f"{m.get('name')}({m.get('staff_id')})" for m in t.get("members", [])])
@@ -60,11 +62,13 @@ def export_tasks():
             t.get("id"), t.get("name"), t.get("objective_id"), members_str
         ])
     output.seek(0)
+    # Add BOM for UTF-8
+    csv_content = '\ufeff' + output.getvalue()
     return StreamingResponse(
-        output,
+        iter([csv_content]),
         media_type="text/csv; charset=utf-8",
         headers={
-            "Content-Disposition": "attachment; filename*=UTF-8''tasks.csv",
+            "Content-Disposition": "attachment; filename=tasks.csv",
             "Content-Type": "text/csv; charset=utf-8"
         },
     )
@@ -73,8 +77,8 @@ def export_tasks():
 @router.get("/export/staff")
 def export_staff():
     staff = data_store.load("staff.json").get("staff", [])
-    output = io.BytesIO()
-    writer = csv.writer(io.TextIOWrapper(output, encoding='utf-8-sig', newline=''))
+    output = io.StringIO()
+    writer = csv.writer(output)
     writer.writerow(["id", "name", "role", "main_skills", "sub_skills", "learning", "desired_field", "objectives"])
     for s in staff:
         writer.writerow([
@@ -83,11 +87,13 @@ def export_staff():
             s.get("learning"), s.get("desired_field"), s.get("objectives"),
         ])
     output.seek(0)
+    # Add BOM for UTF-8
+    csv_content = '\ufeff' + output.getvalue()
     return StreamingResponse(
-        output,
+        iter([csv_content]),
         media_type="text/csv; charset=utf-8",
         headers={
-            "Content-Disposition": "attachment; filename*=UTF-8''staff.csv",
+            "Content-Disposition": "attachment; filename=staff.csv",
             "Content-Type": "text/csv; charset=utf-8"
         },
     )
@@ -96,8 +102,8 @@ def export_staff():
 @router.get("/export/progress")
 def export_progress():
     items = data_store.load("progress.json").get("progress_items", [])
-    output = io.BytesIO()
-    writer = csv.writer(io.TextIOWrapper(output, encoding='utf-8-sig', newline=''))
+    output = io.StringIO()
+    writer = csv.writer(output)
     writer.writerow([
         "id", "week", "objective", "task_id", "task_name", "subtask", "planned",
         "result", "progress_percent", "issue", "assignee", "solution",
@@ -111,11 +117,13 @@ def export_progress():
             p.get("solution"), p.get("created_at"), p.get("updated_at"),
         ])
     output.seek(0)
+    # Add BOM for UTF-8
+    csv_content = '\ufeff' + output.getvalue()
     return StreamingResponse(
-        output,
+        iter([csv_content]),
         media_type="text/csv; charset=utf-8",
         headers={
-            "Content-Disposition": "attachment; filename*=UTF-8''progress.csv",
+            "Content-Disposition": "attachment; filename=progress.csv",
             "Content-Type": "text/csv; charset=utf-8"
         },
     )
