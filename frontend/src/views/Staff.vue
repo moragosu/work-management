@@ -102,9 +102,16 @@
                 </td>
                 <td>
                   <div class="flex gap-4" style="flex-wrap:wrap">
-                    <span v-for="objId in getObjectiveIds(member.objectives)" :key="objId" class="badge badge-blue">
-                      {{ objId }}
-                    </span>
+                    <div v-for="objId in getObjectiveIds(member.objectives)" :key="objId">
+                      <div>
+                        <span class="badge badge-blue">{{ objId }}</span>
+                      </div>
+                      <div v-if="getObjectiveTasks(objId).length > 0" class="text-xs text-muted" style="margin-left:20px">
+                        <div v-for="task in getObjectiveTasks(objId)" :key="task.id">
+                          • {{ task.id }}: {{ task.name }}
+                        </div>
+                      </div>
+                    </div>
                     <button class="btn btn-ghost btn-xs" @click="openObjectiveSelect(member)">수정</button>
                   </div>
                 </td>
@@ -198,6 +205,7 @@ import axios from 'axios'
 
 const staff = ref([])
 const objectives = ref([])
+const tasks = ref([])  // 과제 목록 추가
 const loading = ref(false)
 const search = ref('')
 const showModal = ref(false)
@@ -235,6 +243,16 @@ async function fetchStaff() {
 async function fetchObjectives() {
   const { data } = await axios.get('/api/okrs')
   objectives.value = data
+}
+
+async function fetchTasks() {
+  const { data } = await axios.get('/api/tasks')
+  tasks.value = data
+}
+
+// Objective별 관련 과제 가져오기
+function getObjectiveTasks(objectiveId) {
+  return tasks.value.filter(task => task.objective_id === objectiveId)
 }
 
 function debounceSave(member, field, value) {
@@ -407,7 +425,7 @@ async function deleteMember(member) {
 }
 
 onMounted(async () => {
-  await Promise.all([fetchStaff(), fetchObjectives()])
+  await Promise.all([fetchStaff(), fetchObjectives(), fetchTasks()])
 })
 </script>
 
