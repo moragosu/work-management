@@ -82,6 +82,25 @@
               </tbody>
             </table>
           </div>
+          
+          <!-- Related Data Section -->
+          <div v-if="selectedObjectiveForDetails" class="card card-body mt-16">
+            <h4>관련 데이터</h4>
+            <div class="grid-2">
+              <div>
+                <h5 class="text-sm text-muted mb-8">관련 과제 ({{ selectedObjectiveForDetails.related_tasks.length }}개)</h5>
+                <div v-for="task in selectedObjectiveForDetails.related_tasks" :key="task.id" class="text-sm mb-4">
+                  • {{ task.id }}: {{ task.name }}
+                </div>
+              </div>
+              <div>
+                <h5 class="text-sm text-muted mb-8">관련 인력 ({{ selectedObjectiveForDetails.related_staff.length }}명)</h5>
+                <div v-for="staff in selectedObjectiveForDetails.related_staff" :key="staff.id" class="text-sm mb-4">
+                  • {{ staff.name }} ({{ staff.role || '역할 없음' }})
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -122,6 +141,26 @@
               </tbody>
             </table>
           </div>
+          
+          <!-- Related Data Section -->
+          <div v-if="selectedTaskForDetails" class="card card-body mt-16">
+            <h4>관련 데이터</h4>
+            <div class="grid-2">
+              <div>
+                <h5 class="text-sm text-muted mb-8">관련 Objective</h5>
+                <div v-if="selectedTaskForDetails.related_objective" class="text-sm mb-4">
+                  • {{ selectedTaskForDetails.related_objective.id }}: {{ selectedTaskForDetails.related_objective.name }}
+                </div>
+                <div v-else class="text-sm text-muted">연결된 Objective 없음</div>
+              </div>
+              <div>
+                <h5 class="text-sm text-muted mb-8">관련 인력 ({{ selectedTaskForDetails.related_staff.length }}명)</h5>
+                <div v-for="staff in selectedTaskForDetails.related_staff" :key="staff.id" class="text-sm mb-4">
+                  • {{ staff.name }} ({{ staff.role || '역할 없음' }})
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -157,6 +196,25 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+          
+          <!-- Related Data Section -->
+          <div v-if="selectedStaffForDetails" class="card card-body mt-16">
+            <h4>관련 데이터</h4>
+            <div class="grid-2">
+              <div>
+                <h5 class="text-sm text-muted mb-8">관련 Objective ({{ selectedStaffForDetails.related_objectives.length }}개)</h5>
+                <div v-for="obj in selectedStaffForDetails.related_objectives" :key="obj.id" class="text-sm mb-4">
+                  • {{ obj.id }}: {{ obj.name }}
+                </div>
+              </div>
+              <div>
+                <h5 class="text-sm text-muted mb-8">관련 과제 ({{ selectedStaffForDetails.related_tasks.length }}개)</h5>
+                <div v-for="task in selectedStaffForDetails.related_tasks" :key="task.id" class="text-sm mb-4">
+                  • {{ task.id }}: {{ task.name }} ({{ getObjectiveName(task.objective_id) }})
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -545,6 +603,23 @@ async function fetchObjectives() {
   } finally { loading.value = false }
 }
 
+// Related data for selected objective
+const selectedObjectiveForDetails = ref(null)
+
+async function showObjectiveDetails(objectiveId) {
+  try {
+    const { data } = await axios.get(`/api/okrs/${objectiveId}/related`)
+    selectedObjectiveForDetails.value = data
+  } catch (e) {
+    showToast('관련 데이터 조회 실패')
+  }
+}
+
+// Objective row click to show details
+function onObjectiveRowClick(objective) {
+  showObjectiveDetails(objective.id)
+}
+
 function openObjectiveModal(o = null) {
   if (o) {
     objectiveForm.value = { ...o }
@@ -666,6 +741,23 @@ async function fetchTasks() {
   } finally { taskLoading.value = false }
 }
 
+// Related data for selected task
+const selectedTaskForDetails = ref(null)
+
+async function showTaskDetails(taskId) {
+  try {
+    const { data } = await axios.get(`/api/tasks/${taskId}/related`)
+    selectedTaskForDetails.value = data
+  } catch (e) {
+    showToast('관련 데이터 조회 실패')
+  }
+}
+
+// Task row click to show details
+function onTaskRowClick(task) {
+  showTaskDetails(task.id)
+}
+
 function openTaskModal(t = null) {
   if (t) {
     taskForm.value = { ...t }
@@ -750,6 +842,23 @@ async function fetchStaff() {
   staffLoading.value = true
   try { const { data } = await axios.get('/api/staff'); staffList.value = data }
   finally { staffLoading.value = false }
+}
+
+// Related data for selected staff
+const selectedStaffForDetails = ref(null)
+
+async function showStaffDetails(staffId) {
+  try {
+    const { data } = await axios.get(`/api/staff/${staffId}/related`)
+    selectedStaffForDetails.value = data
+  } catch (e) {
+    showToast('관련 데이터 조회 실패')
+  }
+}
+
+// Staff row click to show details
+function onStaffRowClick(staff) {
+  showStaffDetails(staff.id)
 }
 
 function openStaffModal(s = null) {

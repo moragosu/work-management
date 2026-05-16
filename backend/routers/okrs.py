@@ -194,3 +194,42 @@ def get_objective_progress(objective_id: str):
 def get_next_id():
     """Get next available objective ID."""
     return {"next_id": _get_next_objective_id()}
+
+
+# ── Related data endpoints ────────────────────────────────────────────────────
+
+@router.get("/{objective_id}/related")
+def get_objective_related_data(objective_id: str):
+    """Get related tasks and staff data for an objective"""
+    objectives = _load()
+    objective = next((o for o in objectives if o["id"] == objective_id), None)
+    if not objective:
+        raise HTTPException(status_code=404, detail="Objective not found")
+    
+    # Load related data
+    import data_store
+    tasks_data = data_store.load("tasks.json")
+    staff_data = data_store.load("staff.json")
+    
+    result = {
+        "objective": objective,
+        "related_tasks": [],
+        "related_staff": []
+    }
+    
+    # Get related tasks
+    related_tasks = [t for t in tasks_data.get("tasks", []) if t.get("objective_id") == objective_id]
+    result["related_tasks"] = related_tasks
+    
+    # Get related staff (from tasks)
+    staff_ids = set()
+    for task in related_tasks:
+        for member in task.get("members", []):
+            staff_ids.add(member["staff_id"])
+    
+    for staff_id in staff_ids:
+        staff = next((s for s in staff_data.get("staff", []) if s["id"] == staff_id), None)
+        if staff:
+            result["related_staff"].append(staff)
+    
+    return result

@@ -15,7 +15,8 @@ class StaffMember(BaseModel):
     sub_skills: str = ""
     learning: str = ""
     desired_field: str = ""
-    okrs: str = ""
+    okrs: str = ""  # 연결된 Objective IDs (콤마 구분)
+    task_ids: List[str] = []  # 연결된 과제 IDs
 
 
 class StaffUpdate(BaseModel):
@@ -26,6 +27,7 @@ class StaffUpdate(BaseModel):
     learning: Optional[str] = None
     desired_field: Optional[str] = None
     okrs: Optional[str] = None
+    task_ids: Optional[List[str]] = None
 
 
 def _load():
@@ -92,3 +94,54 @@ def delete_staff(staff_id: str):
         raise HTTPException(status_code=404, detail="Staff member not found")
     _save(new_staff)
     return {"deleted": staff_id}
+
+
+# ── Related data endpoints ────────────────────────────────────────────────────
+
+@router.get("/{staff_id}/related")
+def get_staff_related_data(staff_id: str):
+    """Get related objectives and tasks data for a staff member"""
+    staff = _load()
+    member = next((s for s in staff if s["id"] == staff_id), None)
+    if not member:
+        raise HTTPException(status_code=404, detail="Staff member not found")
+    
+    # Load related data
+    import data_store
+    tasks_data = data_store.load("tasks.json")
+    objectives_data = data_store.load("okrs.json")
+    
+    result = {
+        "staff": member,
+        "related_tasks": [],
+        "related_objectives": []
+    }
+    
+    # Get related tasks (where this staff is a member)
+    related_tasks = []
+    for task in tasks_data.get("tasks", []):
+        if any(member.get("staff_id") == staff_id for member in task.get("members", [])):
+            related_tasks.append(task)
+    result["related_tasks"] = related_tasks
+    
+    # Get related objectives (from tasks and direct okrs field)
+    objective_ids = set()
+    
+    # From tasks
+    for task in related_tasks:
+        if task.get("objective_id"):
+            objective_ids.add(task["objective_id"])
+    
+    # From direct okrs field
+    if member.get("okrs"):
+        for obj_id in member["okrs"].split(","):
+            obj_id = obj_id.strip()
+            if obj_id:
+                objective_ids.add(obj_id)
+    
+    for obj_id in objective_ids:
+        objective = next((o for o in objectives_data.get("objectives", []) if o["id"] == obj_id), None)
+        if objective:
+            result["related_objectives"].append(objective)
+    
+    return result

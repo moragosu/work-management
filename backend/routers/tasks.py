@@ -110,3 +110,39 @@ def delete_task(task_id: str):
 def get_next_id():
     """Get next available task ID."""
     return {"next_id": _get_next_task_id()}
+
+
+# ── Related data endpoints ────────────────────────────────────────────────────
+
+@router.get("/{task_id}/related")
+def get_task_related_data(task_id: str):
+    """Get related objective and staff data for a task"""
+    tasks = _load()
+    task = next((t for t in tasks if t["id"] == task_id), None)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    # Load related data
+    import data_store
+    objectives_data = data_store.load("okrs.json")
+    staff_data = data_store.load("staff.json")
+    
+    result = {
+        "task": task,
+        "related_objective": None,
+        "related_staff": []
+    }
+    
+    # Get related objective
+    if task.get("objective_id"):
+        objective = next((o for o in objectives_data.get("objectives", []) if o["id"] == task["objective_id"]), None)
+        if objective:
+            result["related_objective"] = objective
+    
+    # Get related staff
+    for member in task.get("members", []):
+        staff = next((s for s in staff_data.get("staff", []) if s["id"] == member["staff_id"]), None)
+        if staff:
+            result["related_staff"].append(staff)
+    
+    return result
