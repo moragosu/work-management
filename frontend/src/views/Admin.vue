@@ -186,7 +186,21 @@
                   <td>{{ s.role }}</td>
                   <td>{{ s.main_skills }}</td>
                   <td>{{ s.sub_skills }}</td>
-                  <td>{{ s.objectives }}</td>
+                  <td>
+                    <div class="objective-task-list">
+                      <div v-for="objId in getObjectiveIds(s.objectives || s.okrs)" :key="objId" class="objective-item">
+                        <div class="objective-header">
+                          <span class="badge badge-blue" :title="getObjectiveName(objId)">{{ objId }}</span>
+                        </div>
+                        <div v-if="getObjectiveTasks(objId).length > 0" class="task-list">
+                          <div v-for="task in getObjectiveTasks(objId)" :key="task.id" class="task-item">
+                            <span class="badge badge-gray">{{ task.id }}</span>
+                            <span class="task-name">{{ task.name }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
                   <td>
                     <div class="flex gap-8">
                       <button class="btn btn-ghost btn-xs" @click="openStaffModal(s)">수정</button>
@@ -524,6 +538,16 @@ function getObjectiveName(id) {
   if (!id) return '-'
   const o = objectives.value.find(obj => obj.id === id)
   return o ? `${o.id}: ${o.name}` : id
+}
+
+// Staff 관련 함수들 추가
+function getObjectiveIds(objectivesStr) {
+  if (!objectivesStr) return []
+  return objectivesStr.split(',').map(id => id.trim()).filter(Boolean)
+}
+
+function getObjectiveTasks(objectiveId) {
+  return tasks.value.filter(task => task.objective_id === objectiveId)
 }
 
 const availableStaff = computed(() => {
@@ -978,5 +1002,43 @@ onMounted(async () => {
 }
 .checkbox-label input {
   margin: 0;
+}
+
+.objective-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.objective-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.objective-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-list {
+  margin-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.4;
+}
+
+.task-name {
+  font-size: 12px;
+  color: var(--text-muted);
 }
 </style>

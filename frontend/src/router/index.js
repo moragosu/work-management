@@ -7,7 +7,7 @@ import Admin from '../views/Admin.vue'
 const routes = [
   { path: '/', redirect: '/dashboard' },
   { path: '/dashboard', component: Dashboard, meta: { title: '대시보드' } },
-  { path: '/progress', component: Progress, meta: { title: '진행도 관리' } },
+  { path: '/progress', component: Progress, meta: { title: '주간 진행 현황' } },
   { path: '/staff', component: Staff, meta: { title: '인력 관리' } },
   { path: '/admin', component: Admin, meta: { title: '관리 도구' } },
 ]

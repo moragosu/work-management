@@ -21,7 +21,7 @@
         </RouterLink>
         <RouterLink to="/progress" class="nav-item" active-class="active">
           <span class="nav-icon material-symbols-outlined">assignment</span>
-          <span class="nav-text">진행도 관리</span>
+          <span class="nav-text">주간 진행 현황</span>
         </RouterLink>
         <RouterLink to="/staff" class="nav-item" active-class="active">
           <span class="nav-icon material-symbols-outlined">group</span>

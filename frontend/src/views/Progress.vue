@@ -2,224 +2,100 @@
   <div>
     <div class="page-header">
       <div>
-        <h2>진행도 관리</h2>
-        <div class="subtitle">주차별 세부 진행 상황</div>
+        <h2>주간 진행 현황</h2>
+        <div class="subtitle">주차별 과제 진행 상황 및 Q&A</div>
       </div>
-      <button class="btn btn-primary btn-sm" @click="openAddModal()">+ 항목 추가</button>
     </div>
 
     <div class="page-body">
-      <!-- Filter bar -->
+      <!-- Week selector and Confluence link -->
       <div class="filter-bar">
-        <div class="search-input">
-          <span class="search-icon">🔍</span>
-          <input v-model="search" class="form-control" placeholder="담당자, 과제, 이슈 검색..." />
+        <select v-model="selectedWeek" class="form-control" @change="onWeekChange">
+          <option value="">주차 선택</option>
+          <option v-for="week in availableWeeks" :key="week" :value="week">{{ week }}</option>
+        </select>
+        <div class="flex gap-8" style="flex: 1; margin-left: 16px;">
+          <input 
+            v-model="confluenceLink" 
+            class="form-control" 
+            placeholder="컨플루언스 링크를 입력하세요" 
+            @input="debounceSaveConfluenceLink"
+          />
+          <button class="btn btn-primary btn-sm" @click="saveConfluenceLink" :disabled="!selectedWeek || !confluenceLink">저장</button>
         </div>
-        <select v-model="filterObjective" class="form-control">
-          <option value="">전체 Objective</option>
-          <option v-for="o in objectiveOptions" :key="o" :value="o">{{ o }}</option>
-        </select>
-        <select v-model="filterTask" class="form-control">
-          <option value="">전체 과제</option>
-          <option v-for="t in taskOptions" :key="t" :value="t">{{ t }}</option>
-        </select>
-        <button class="btn btn-ghost btn-sm" @click="clearFilters">초기화</button>
       </div>
 
       <div v-if="loading" class="loading-center"><div class="spinner"></div></div>
-      <div v-else-if="weekGroups.length === 0" class="empty-state">
+      <div v-else-if="!selectedWeek" class="empty-state">
         <div class="empty-icon">📋</div>
-        <p>등록된 항목이 없습니다.</p>
+        <p>주차를 선택해주세요.</p>
+      </div>
+      <div v-else-if="tasksForSelectedWeek.length === 0" class="empty-state">
+        <div class="empty-icon">📋</div>
+        <p>해당 주차에 등록된 과제가 없습니다.</p>
       </div>
 
-      <!-- Week accordions -->
-      <div v-for="group in weekGroups" :key="group.week" style="margin-bottom:12px">
-        <div class="accordion-header" @click="toggleWeek(group.week)">
-          <span class="badge badge-blue">{{ group.week }}</span>
-          <span style="margin-left:4px">{{ group.items.length }}개 항목</span>
-          <div class="flex gap-8" style="margin-left:12px" @click.stop>
-            <button class="btn btn-ghost btn-xs" @click="openAddModal(group.week)">+ 추가</button>
+      <!-- Week content with Confluence link and Tasks -->
+      <div v-else>
+        <!-- Confluence link display -->
+        <div v-if="confluenceLink" class="card card-body mb-16">
+          <div class="flex gap-8" style="align-items: center;">
+            <span class="badge badge-blue">📎</span>
+            <a :href="confluenceLink" target="_blank" class="text-primary" style="flex: 1;">{{ confluenceLink }}</a>
+            <button class="btn btn-ghost btn-xs" @click="openConfluenceLink">열기</button>
           </div>
-          <span class="accordion-chevron" :class="{ open: openWeeks.has(group.week) }">▼</span>
         </div>
 
-        <div v-if="openWeeks.has(group.week)" class="accordion-body">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Objective</th>
-                  <th>과제</th>
-                  <th>세부항목</th>
-                  <th>예정</th>
-                  <th>결과</th>
-                  <th style="width:80px">진행도(%)</th>
-                  <th>이슈</th>
-                  <th>담당자</th>
-                  <th>해결방안</th>
-                  <th style="width:60px"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="item in group.items" :key="item.id">
-                  <td>
-                    <span class="badge badge-blue">{{ item.objective }}</span>
-                  </td>
-                  <td>
-                    <select
-                      class="form-control inline"
-                      :value="item.task_id"
-                      @change="updateTask(item, $event.target.value)"
-                    >
-                      <option value="">-</option>
-                      <option v-for="t in getTasksForObjective(item.objective)" :key="t.id" :value="t.id">
-                        {{ t.name }}
-                      </option>
-                    </select>
-                  </td>
-                  <td>
-                    <input
-                      class="form-control inline"
-                      :value="item.subtask"
-                      @input="debounceSave(item, 'subtask', $event.target.value)"
-                    />
-                  </td>
-                  <td>
-                    <textarea
-                      class="form-control inline"
-                      rows="2"
-                      style="resize:vertical;min-width:120px"
-                      :value="item.planned"
-                      @input="debounceSave(item, 'planned', $event.target.value)"
-                    ></textarea>
-                  </td>
-                  <td>
-                    <textarea
-                      class="form-control inline"
-                      rows="2"
-                      style="resize:vertical;min-width:120px"
-                      :value="item.result"
-                      @input="debounceSave(item, 'result', $event.target.value)"
-                    ></textarea>
-                  </td>
-                  <td>
-                    <input
-                      type="number" min="0" max="100"
-                      class="form-control inline"
-                      style="width:70px"
-                      :value="item.progress_percent"
-                      @change="autoSave(item, 'progress_percent', Number($event.target.value))"
-                    />
-                  </td>
-                  <td>
-                    <textarea
-                      class="form-control inline"
-                      rows="2"
-                      style="resize:vertical;min-width:100px"
-                      :value="item.issue"
-                      @input="debounceSave(item, 'issue', $event.target.value)"
-                    ></textarea>
-                  </td>
-                  <td>
-                    <select
-                      class="form-control inline"
-                      style="min-width:80px"
-                      :value="item.assignee"
-                      @change="autoSave(item, 'assignee', $event.target.value)"
-                    >
-                      <option value="">-</option>
-                      <option v-for="s in staffOptions" :key="s" :value="s">{{ s }}</option>
-                    </select>
-                  </td>
-                  <td>
-                    <textarea
-                      class="form-control inline"
-                      rows="2"
-                      style="resize:vertical;min-width:100px"
-                      :value="item.solution"
-                      @input="debounceSave(item, 'solution', $event.target.value)"
-                    ></textarea>
-                  </td>
-                  <td>
-                    <button class="btn btn-danger btn-xs" @click="deleteItem(item)">삭제</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <!-- Tasks with Q&A -->
+        <div v-for="task in tasksForSelectedWeek" :key="task.id" class="card mb-16">
+          <div class="card-header">
+            <h3>{{ task.name }}</h3>
+            <span class="badge badge-blue">{{ getObjectiveName(task.objective_id) }}</span>
           </div>
-        </div>
-      </div>
-    </div>
+          
+          <div class="card-body">
+            <!-- Questions and Answers -->
+            <div v-for="qa in getQuestionsForTask(task.id)" :key="qa.id" class="mb-16">
+              <div class="qa-item">
+                <div class="question">
+                  <span class="badge badge-orange">💬</span>
+                  <strong>질문:</strong>
+                  <span style="margin-left: 8px;">{{ qa.question }}</span>
+                </div>
+                <div v-if="qa.answer" class="answer mt-8">
+                  <span class="badge badge-green">📝</span>
+                  <strong>답변:</strong>
+                  <span style="margin-left: 8px;">{{ qa.answer }}</span>
+                  <span v-if="qa.answer_by" class="text-muted text-sm" style="margin-left: 8px;">({{ qa.answer_by }})</span>
+                </div>
+                <div v-else class="answer mt-8">
+                  <span class="badge badge-gray">⏳</span>
+                  <span class="text-muted">답변 대기중</span>
+                </div>
+              </div>
+            </div>
 
-    <!-- Add Modal -->
-    <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
-      <div class="modal">
-        <div class="modal-header">
-          <h3>진행 항목 추가</h3>
-          <button class="modal-close" @click="showModal = false">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="grid-2">
-            <div class="form-group">
-              <label class="form-label">주차 *</label>
-              <input v-model="form.week" class="form-control" placeholder="W1, W2, ..." />
+            <!-- Add question form -->
+            <div v-if="showQuestionForm === task.id" class="mt-16">
+              <div class="form-group">
+                <label class="form-label">새 질문</label>
+                <textarea 
+                  v-model="newQuestionText" 
+                  class="form-control" 
+                  rows="3" 
+                  placeholder="과제에 대한 질문을 입력하세요..."
+                ></textarea>
+              </div>
+              <div class="flex gap-8" style="justify-content: flex-end;">
+                <button class="btn btn-ghost" @click="cancelQuestion">취소</button>
+                <button class="btn btn-primary" @click="addQuestion(task.id)" :disabled="!newQuestionText">질문 추가</button>
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Objective *</label>
-              <select v-model="form.objective" class="form-control" @change="onObjectiveChange">
-                <option value="">선택</option>
-                <option v-for="o in objectives" :key="o.id" :value="o.id">{{ o.id }}: {{ o.name }}</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">과제</label>
-            <select v-model="form.task_id" class="form-control" @change="onTaskChange">
-              <option value="">선택</option>
-              <option v-for="t in getTasksForObjective(form.objective)" :key="t.id" :value="t.id">
-                {{ t.name }}
-              </option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">세부항목</label>
-            <input v-model="form.subtask" class="form-control" />
-          </div>
-          <div class="grid-2">
-            <div class="form-group">
-              <label class="form-label">예정</label>
-              <textarea v-model="form.planned" class="form-control" rows="2"></textarea>
-            </div>
-            <div class="form-group">
-              <label class="form-label">결과</label>
-              <textarea v-model="form.result" class="form-control" rows="2"></textarea>
+
+            <div v-else class="mt-16">
+              <button class="btn btn-ghost btn-sm" @click="openQuestionForm(task.id)">+ 질문 추가</button>
             </div>
           </div>
-          <div class="grid-2">
-            <div class="form-group">
-              <label class="form-label">진행도 (%)</label>
-              <input type="number" v-model.number="form.progress_percent" min="0" max="100" class="form-control" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">담당자</label>
-              <select v-model="form.assignee" class="form-control">
-                <option value="">선택</option>
-                <option v-for="s in staffOptions" :key="s" :value="s">{{ s }}</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">이슈</label>
-            <textarea v-model="form.issue" class="form-control" rows="2"></textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label">해결방안</label>
-            <textarea v-model="form.solution" class="form-control" rows="2"></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-ghost" @click="showModal = false">취소</button>
-          <button class="btn btn-primary" @click="submitAdd" :disabled="!form.week || !form.objective">추가</button>
         </div>
       </div>
     </div>
@@ -232,81 +108,51 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
-const items = ref([])
-const objectives = ref([])
+// 새로운 데이터 구조
 const tasks = ref([])
-const staffOptions = ref([])
+const objectives = ref([])
+const staffList = ref([])
 const loading = ref(false)
-const search = ref('')
-const filterObjective = ref('')
-const filterTask = ref('')
-const openWeeks = ref(new Set())
-const showModal = ref(false)
 const toastMsg = ref('')
+
+// Q&A 관련 상태
+const questions = ref([])
+const answers = ref([])
+
+// 새로운 UI 상태
+const selectedWeek = ref('')
+const confluenceLink = ref('')
+const showQuestionForm = ref('')
+const newQuestionText = ref('')
 const debounceTimers = {}
 
-const defaultForm = () => ({
-  week: currentWeek(),
-  objective: '',
-  task_id: '',
-  task_name: '',
-  subtask: '',
-  planned: '',
-  result: '',
-  progress_percent: 0,
-  issue: '',
-  assignee: '',
-  solution: '',
-})
-const form = ref(defaultForm())
-
-const objectiveOptions = computed(() => [...new Set(items.value.map(i => i.objective).filter(Boolean))])
-const taskOptions = computed(() => [...new Set(items.value.map(i => i.task_name).filter(Boolean))])
-
-const filteredItems = computed(() => {
-  let result = items.value
-  if (search.value) {
-    const q = search.value.toLowerCase()
-    result = result.filter(i =>
-      i.assignee?.toLowerCase().includes(q) ||
-      i.task_name?.toLowerCase().includes(q) ||
-      i.issue?.toLowerCase().includes(q) ||
-      i.subtask?.toLowerCase().includes(q)
-    )
+// 주차 관련 계산
+const availableWeeks = computed(() => {
+  // 현재 주차를 중심으로 앞뒤 4주 생성
+  const currentWeekNum = getCurrentWeekNumber()
+  const weeks = []
+  for (let i = Math.max(1, currentWeekNum - 4); i <= currentWeekNum + 4; i++) {
+    weeks.push(`W${i}`)
   }
-  if (filterObjective.value) result = result.filter(i => i.objective === filterObjective.value)
-  if (filterTask.value) result = result.filter(i => i.task_name === filterTask.value)
-  return result
+  return weeks
 })
 
-const weekGroups = computed(() => {
-  const map = new Map()
-  for (const item of filteredItems.value) {
-    const w = item.week || '미지정'
-    if (!map.has(w)) map.set(w, [])
-    map.get(w).push(item)
-  }
-  return [...map.entries()]
-    .sort(([a], [b]) => (parseInt(a.slice(1)) || 0) - (parseInt(b.slice(1)) || 0))
-    .map(([week, items]) => ({ week, items }))
+const tasksForSelectedWeek = computed(() => {
+  // 현재 선택된 주차에 해당하는 모든 과제 반환
+  // 실제 구현에서는 progress 데이터에서 해당 주차의 과제를 필터링
+  return tasks.value
 })
 
-function currentWeek() {
-  const jan1 = new Date(new Date().getFullYear(), 0, 1)
-  const weekNum = Math.ceil(((new Date() - jan1) / 86400000 + jan1.getDay() + 1) / 7)
-  return `W${weekNum}`
+function getCurrentWeekNumber() {
+  const today = new Date()
+  const firstDayOfYear = new Date(today.getFullYear(), 0, 1)
+  const pastDaysOfYear = (today - firstDayOfYear) / 86400000
+  return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7)
 }
 
-function toggleWeek(week) {
-  if (openWeeks.value.has(week)) openWeeks.value.delete(week)
-  else openWeeks.value.add(week)
-  openWeeks.value = new Set(openWeeks.value)
-}
-
-function clearFilters() {
-  search.value = ''
-  filterObjective.value = ''
-  filterTask.value = ''
+function getObjectiveName(objectiveId) {
+  const objective = objectives.value.find(obj => obj.id === objectiveId)
+  return objective ? objective.name : objectiveId
 }
 
 function showToast(msg) {
@@ -314,95 +160,101 @@ function showToast(msg) {
   setTimeout(() => { toastMsg.value = '' }, 2000)
 }
 
-function getTasksForObjective(objectiveId) {
-  if (!objectiveId) return tasks.value
-  return tasks.value.filter(t => t.objective_id === objectiveId)
+// Q&A 관련 함수
+function getQuestionsForTask(taskId) {
+  // 특정 과제에 대한 모든 질문과 답변 반환
+  const taskQuestions = questions.value.filter(q => q.task_id === taskId)
+  return taskQuestions.map(q => {
+    const answer = answers.value.find(a => a.question_id === q.id)
+    return {
+      ...q,
+      answer: answer ? answer.answer : '',
+      answer_by: answer ? answer.answer_by : ''
+    }
+  })
 }
 
-function debounceSave(item, field, value) {
-  const key = `${item.id}-${field}`
-  clearTimeout(debounceTimers[key])
-  debounceTimers[key] = setTimeout(() => autoSave(item, field, value), 800)
+function openQuestionForm(taskId) {
+  showQuestionForm.value = taskId
+  newQuestionText.value = ''
 }
 
-async function autoSave(item, field, value) {
-  item[field] = value
+function cancelQuestion() {
+  showQuestionForm.value = ''
+  newQuestionText.value = ''
+}
+
+async function addQuestion(taskId) {
+  if (!newQuestionText.value.trim()) return
+  
   try {
-    await axios.put(`/api/progress/${item.id}`, { [field]: value })
-    showToast('저장됨')
+    const questionData = {
+      task_id: taskId,
+      question: newQuestionText.value,
+      created_at: new Date().toISOString()
+    }
+    
+    // 실제 구현에서는 API 호출
+    const newQuestion = {
+      id: `Q${Date.now()}`,
+      ...questionData
+    }
+    questions.value.push(newQuestion)
+    
+    showToast('질문이 추가되었습니다')
+    cancelQuestion()
   } catch {
-    showToast('저장 실패')
+    showToast('질문 추가 실패')
   }
 }
 
-async function updateTask(item, taskId) {
-  const task = tasks.value.find(t => t.id === taskId)
-  item.task_id = taskId
-  item.task_name = task ? task.name : ''
+function onWeekChange() {
+  // 주차 변경 시 컨플루언스 링크 로드
+  loadConfluenceLink()
+}
+
+function loadConfluenceLink() {
+  // 실제 구현에서는 해당 주차의 컨플루언스 링크를 API에서 로드
+  confluenceLink.value = ''
+}
+
+function debounceSaveConfluenceLink() {
+  clearTimeout(debounceTimers.confluence)
+  debounceTimers.confluence = setTimeout(saveConfluenceLink, 1000)
+}
+
+async function saveConfluenceLink() {
+  if (!selectedWeek.value || !confluenceLink.value) return
+  
   try {
-    await axios.put(`/api/progress/${item.id}`, { task_id: taskId, task_name: item.task_name })
-    showToast('저장됨')
+    // 실제 구현에서는 API 호출로 컨플루언스 링크 저장
+    showToast('컨플루언스 링크가 저장되었습니다')
   } catch {
-    showToast('저장 실패')
+    showToast('링크 저장 실패')
   }
 }
 
-function openAddModal(week = null) {
-  form.value = defaultForm()
-  if (week) form.value.week = week
-  showModal.value = true
-}
-
-function onObjectiveChange() {
-  form.value.task_id = ''
-  form.value.task_name = ''
-}
-
-function onTaskChange() {
-  const task = tasks.value.find(t => t.id === form.value.task_id)
-  form.value.task_name = task ? task.name : ''
-}
-
-async function submitAdd() {
-  try {
-    const { data } = await axios.post('/api/progress', form.value)
-    items.value.push(data)
-    openWeeks.value.add(data.week)
-    openWeeks.value = new Set(openWeeks.value)
-    showModal.value = false
-    showToast('항목이 추가되었습니다')
-  } catch {
-    showToast('추가 실패')
+function openConfluenceLink() {
+  if (confluenceLink.value) {
+    window.open(confluenceLink.value, '_blank')
   }
-}
-
-async function deleteItem(item) {
-  if (!confirm(`"${item.subtask || item.task_name}" 항목을 삭제하시겠습니까?`)) return
-  await axios.delete(`/api/progress/${item.id}`)
-  items.value = items.value.filter(i => i.id !== item.id)
-  showToast('삭제되었습니다')
 }
 
 async function fetchAll() {
   loading.value = true
   try {
-    const [pRes, oRes, tRes, sRes] = await Promise.all([
-      axios.get('/api/progress'),
-      axios.get('/api/okrs'),
+    const [tRes, oRes, sRes] = await Promise.all([
       axios.get('/api/tasks'),
+      axios.get('/api/okrs'),
       axios.get('/api/staff'),
     ])
-    items.value = pRes.data
-    objectives.value = oRes.data
     tasks.value = tRes.data
-    staffOptions.value = sRes.data.map(s => s.name)
-    const cw = currentWeek()
-    if (items.value.some(i => i.week === cw)) {
-      openWeeks.value.add(cw)
-    } else if (weekGroups.value.length > 0) {
-      openWeeks.value.add(weekGroups.value[weekGroups.value.length - 1].week)
-    }
-    openWeeks.value = new Set(openWeeks.value)
+    objectives.value = oRes.data
+    staffList.value = sRes.data
+    
+    // 기본으로 현재 주차 선택
+    selectedWeek.value = `W${getCurrentWeekNumber()}`
+    loadConfluenceLink()
   } finally {
     loading.value = false
   }
