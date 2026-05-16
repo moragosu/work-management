@@ -3,7 +3,7 @@
     <div class="page-header">
       <div>
         <h2>관리 도구</h2>
-        <div class="subtitle">Objective · Key Result · 과제 · 인력 관리</div>
+        <div class="subtitle">목표 · Key Result · 과제 · 인력 관리</div>
       </div>
       <div v-if="adminMode" class="flex gap-8">
         <span class="badge badge-red">관리자 모드</span>
@@ -23,7 +23,7 @@
         <div class="grid-4" style="margin-bottom:20px">
           <div class="card"><div class="card-body stat-card">
             <div class="stat-value">{{ objectiveStats.total }}</div>
-            <div class="stat-label">전체 Objective</div>
+            <div class="stat-label">전체 목표</div>
           </div></div>
           <div class="card"><div class="card-body stat-card">
             <div class="stat-value" style="color:var(--primary)">{{ objectiveStats.inProgress }}</div>
@@ -45,7 +45,7 @@
         <div class="card">
           <div v-if="loading" class="loading-center"><div class="spinner"></div></div>
           <div v-else-if="objectives.length === 0" class="empty-state">
-            <div class="empty-icon">📊</div><p>등록된 Objective가 없습니다.</p>
+            <div class="empty-icon">📊</div><p>등록된 목표가 없습니다.</p>
           </div>
           <div v-else class="table-wrap">
             <table>
@@ -55,14 +55,13 @@
                   ID <span v-if="sortKeys.objectives === 'id'">{{ sortOrders.objectives === 'asc' ? '↑' : '↓' }}</span>
                 </th>
                 <th @click="sortBy('name', 'objectives')" style="cursor:pointer">
-                  Objective명 <span v-if="sortKeys.objectives === 'name'">{{ sortOrders.objectives === 'asc' ? '↑' : '↓' }}</span>
-                </th>
-                <th @click="sortBy('tech_stack', 'objectives')" style="cursor:pointer">
-                  기술 스택 <span v-if="sortKeys.objectives === 'tech_stack'">{{ sortOrders.objectives === 'asc' ? '↑' : '↓' }}</span>
+                  목표명 <span v-if="sortKeys.objectives === 'name'">{{ sortOrders.objectives === 'asc' ? '↑' : '↓' }}</span>
                 </th>
                 <th @click="sortBy('key_results.length', 'objectives')" style="cursor:pointer">
                   Key Results <span v-if="sortKeys.objectives === 'key_results.length'">{{ sortOrders.objectives === 'asc' ? '↑' : '↓' }}</span>
                 </th>
+                <th>연결 과제</th>
+                <th>참여 인력</th>
                 <th @click="sortBy('status', 'objectives')" style="cursor:pointer">
                   상태 <span v-if="sortKeys.objectives === 'status'">{{ sortOrders.objectives === 'asc' ? '↑' : '↓' }}</span>
                 </th>
@@ -73,21 +72,31 @@
                 <tr v-for="o in sortedObjectives" :key="o.id">
                   <td><span class="badge badge-blue">{{ o.id }}</span></td>
                   <td style="font-weight:600">{{ o.name }}</td>
-                  <td><span class="text-sm">{{ o.tech_stack }}</span></td>
                   <td>
-                      <div style="display:flex;align-items:center;gap:8px">
-                        <div style="min-width:120px">
-                          <div class="text-sm">
-                            {{ o.key_results?.length || 0 }}개
-                            <button class="btn btn-ghost btn-xs" @click="openKeyResultModal(o)" style="margin-left:4px">+ KR</button>
-                          </div>
-                          <div v-if="o.key_results && o.key_results.length > 0" class="key-result-list" style="max-height:100px;overflow-y:auto">
-                            <div v-for="kr in o.key_results" :key="kr.id" class="text-xs text-muted" style="margin-top:2px;padding-left:8px;border-left:2px solid var(--outline)">
-                              <span class="text-xs" style="color:var(--primary)">{{ kr.id }}</span> {{ kr.name }}
-                            </div>
-                          </div>
-                        </div>
+                    <div class="text-sm">
+                      {{ o.key_results?.length || 0 }}개
+                      <button class="btn btn-ghost btn-xs" @click.stop="openKeyResultModal(o)" style="margin-left:4px">+ KR</button>
+                    </div>
+                    <div v-if="o.key_results && o.key_results.length > 0" class="key-result-list">
+                      <div v-for="kr in o.key_results" :key="kr.id" class="text-xs text-muted" style="margin-top:2px;padding-left:8px;border-left:2px solid var(--outline)">
+                        <span class="text-xs" style="color:var(--primary)">{{ kr.id }}</span> {{ kr.name }}
                       </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div v-if="getObjectiveTasks(o.id).length" class="task-list">
+                      <div v-for="t in getObjectiveTasks(o.id)" :key="t.id" class="task-list-item">
+                        <span class="badge badge-blue" style="flex-shrink:0">{{ t.id }}</span>
+                        <span class="task-name">{{ t.name }}</span>
+                      </div>
+                    </div>
+                    <span v-else class="text-muted text-sm">-</span>
+                  </td>
+                  <td style="max-width:200px">
+                    <div v-if="getObjectiveStaff(o.id).length" class="member-chips">
+                      <span v-for="s in getObjectiveStaff(o.id)" :key="s.id" class="badge badge-gray" :title="s.role">{{ s.name }}</span>
+                    </div>
+                    <span v-else class="text-muted text-sm">-</span>
                   </td>
                   <td><span :class="sBadge(o.status)">{{ o.status }}</span></td>
                   <td>
@@ -155,7 +164,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>ID</th><th>과제명</th><th>Objective</th><th>참여 인력</th><th></th>
+                  <th>ID</th><th>과제명</th><th>목표</th><th>참여 인력</th><th></th>
                 </tr>
               </thead>
               <tbody>
@@ -164,8 +173,10 @@
                   <td style="font-weight:600">{{ t.name }}</td>
                   <td><span class="text-sm">{{ getObjectiveName(t.objective_id) }}</span></td>
                   <td>
-                    <span class="text-sm">{{ t.members?.length || 0 }}명</span>
-                    <button class="btn btn-ghost btn-xs" @click="openTaskMemberModal(t)" style="margin-left:4px">인력</button>
+                    <div v-if="getTaskMembers(t.id).length > 0" class="member-chips">
+                      <span v-for="m in getTaskMembers(t.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                    </div>
+                    <span v-else class="text-muted text-sm">미배정</span>
                   </td>
                   <td>
                     <div class="flex gap-8">
@@ -183,11 +194,11 @@
             <h4>관련 데이터</h4>
             <div class="grid-2">
               <div>
-                <h5 class="text-sm text-muted mb-8">관련 Objective</h5>
+                <h5 class="text-sm text-muted mb-8">관련 목표</h5>
                 <div v-if="selectedTaskForDetails.related_objective" class="text-sm mb-4">
                   • {{ selectedTaskForDetails.related_objective.id }}: {{ selectedTaskForDetails.related_objective.name }}
                 </div>
-                <div v-else class="text-sm text-muted">연결된 Objective 없음</div>
+                <div v-else class="text-sm text-muted">연결된 목표 없음</div>
               </div>
               <div>
                 <h5 class="text-sm text-muted mb-8">관련 인력 ({{ selectedTaskForDetails.related_staff.length }}명)</h5>
@@ -224,7 +235,7 @@
           <button class="btn btn-ghost btn-sm" @click="exportCsv('staff')">⬇ CSV 다운로드</button>
           <button class="btn btn-primary btn-sm" @click="staffViewRef?.openAddModal()">+ 인력 추가</button>
         </div>
-        <StaffView :embedded="true" ref="staffViewRef" />
+        <StaffView :embedded="true" ref="staffViewRef" @updated="fetchStaff" />
       </div>
 
       <!-- ── Reset Tab ── -->
@@ -233,7 +244,7 @@
           <h3 style="margin-bottom:16px;color:var(--danger)">⚠️ 데이터 초기화</h3>
           <p class="text-muted text-sm" style="margin-bottom:20px">삭제된 데이터는 복구할 수 없습니다.</p>
           <div class="flex gap-8" style="flex-wrap:wrap">
-            <button class="btn btn-danger btn-sm" @click="resetData('objectives')">Objective 전체 삭제</button>
+            <button class="btn btn-danger btn-sm" @click="resetData('objectives')">목표 전체 삭제</button>
             <button class="btn btn-danger btn-sm" @click="resetData('tasks')">과제 전체 삭제</button>
             <button class="btn btn-danger btn-sm" @click="resetData('staff')">인력 전체 삭제</button>
             <button class="btn btn-danger btn-sm" @click="resetData('progress')">진행도 전체 삭제</button>
@@ -285,12 +296,12 @@
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label">Objective ID</label>
+            <label class="form-label">목표 ID</label>
             <input v-model="objectiveForm.id" class="form-control" :placeholder="nextObjectiveId" disabled />
             <span class="text-sm text-muted">자동 생성</span>
           </div>
           <div class="form-group">
-            <label class="form-label">Objective명 *</label>
+            <label class="form-label">목표명 *</label>
             <input v-model="objectiveForm.name" class="form-control" />
           </div>
           <div class="form-group">
@@ -360,7 +371,7 @@
             <input v-model="taskForm.name" class="form-control" />
           </div>
           <div class="form-group">
-            <label class="form-label">연결 Objective</label>
+            <label class="form-label">연결 목표</label>
             <select v-model="taskForm.objective_id" class="form-control">
               <option value="">없음</option>
               <option v-for="o in objectives" :key="o.id" :value="o.id">{{ o.id }}: {{ o.name }}</option>
@@ -421,7 +432,7 @@ const adminMode = ref(false)
 
 const tabs = computed(() => {
   const baseTabs = [
-    { key: 'objective', label: '📊 Objective' },
+    { key: 'objective', label: '📊 목표' },
     { key: 'task', label: '📋 과제' },
     { key: 'staff', label: '👥 인력' },
   ]
@@ -467,8 +478,26 @@ const selectedTask = ref(null)
 const selectedStaffId = ref('')
 const selectedStaffRole = ref('')
 
-// Staff (staffList는 Task Member 모달의 availableStaff 계산에 필요)
+// Staff
 const staffViewRef = ref(null)
+
+function getTaskMembers(taskId) {
+  return staffList.value.filter(s => {
+    const ids = (s.selected_tasks || '').split(',').map(t => t.trim()).filter(Boolean)
+    return ids.includes(taskId)
+  })
+}
+
+function getObjectiveTasks(objectiveId) {
+  return tasks.value.filter(t => t.objective_id === objectiveId)
+}
+
+function getObjectiveStaff(objectiveId) {
+  return staffList.value.filter(s => {
+    const ids = (s.okrs || '').split(',').map(id => id.trim()).filter(Boolean)
+    return ids.includes(objectiveId)
+  })
+}
 
 // Admin Mode
 const adminPassword = ref('')
@@ -489,8 +518,8 @@ const objectiveStats = computed(() => ({
 const taskStats = computed(() => ({
   total: tasks.value.length,
   totalKR: objectives.value.reduce((s, o) => s + (o.key_results?.length || 0), 0),
-  withMembers: tasks.value.filter(t => t.members?.length > 0).length,
-  noMembers: tasks.value.filter(t => !t.members?.length).length,
+  withMembers: tasks.value.filter(t => getTaskMembers(t.id).length > 0).length,
+  noMembers: tasks.value.filter(t => getTaskMembers(t.id).length === 0).length,
 }))
 
 const staffStats = computed(() => {
@@ -872,7 +901,7 @@ function deactivateAdminMode() {
 
 // ── Reset ──
 async function resetData(target) {
-  const labels = { objectives: 'Objective', tasks: '과제', staff: '인력', progress: '진행도', all: '모든' }
+  const labels = { objectives: '목표', tasks: '과제', staff: '인력', progress: '진행도', all: '모든' }
   if (!confirm(`${labels[target]} 데이터를 전부 삭제하시겠습니까?`)) return
   await axios.delete(`/api/admin/reset/${target}`)
   showToast('초기화 완료')
@@ -906,6 +935,28 @@ onMounted(async () => {
 }
 .checkbox-label input {
   margin: 0;
+}
+
+.member-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.task-list-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.task-name {
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .stat-card {

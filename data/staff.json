@@ -8,7 +8,8 @@
       "sub_skills": "",
       "learning": "",
       "desired_field": "",
-      "okrs": ""
+      "okrs": "",
+      "selected_tasks": ""
     },
     {
       "id": "S13C4978B",
@@ -49,7 +50,8 @@
       "sub_skills": "",
       "learning": "",
       "desired_field": "",
-      "okrs": ""
+      "okrs": "O1",
+      "selected_tasks": "T2"
     },
     {
       "id": "S5BC91CDE",
@@ -79,7 +81,8 @@
       "sub_skills": "",
       "learning": "",
       "desired_field": "",
-      "okrs": ""
+      "okrs": "O1",
+      "selected_tasks": "T4"
     },
     {
       "id": "S36C42767",
@@ -99,7 +102,8 @@
       "sub_skills": "",
       "learning": "",
       "desired_field": "",
-      "okrs": ""
+      "okrs": "O2",
+      "selected_tasks": "T5, T6"
     },
     {
       "id": "S50611A66",
@@ -119,7 +123,8 @@
       "sub_skills": "",
       "learning": "",
       "desired_field": "",
-      "okrs": ""
+      "okrs": "O2, O4",
+      "selected_tasks": "T5, T6, T7, T8"
     },
     {
       "id": "S662B202F",
@@ -139,7 +144,8 @@
       "sub_skills": "",
       "learning": "",
       "desired_field": "",
-      "okrs": ""
+      "okrs": "O1",
+      "selected_tasks": "T1"
     },
     {
       "id": "SB0932AF5",
@@ -159,7 +165,8 @@
       "sub_skills": "",
       "learning": "",
       "desired_field": "",
-      "okrs": ""
+      "okrs": "O4, O1",
+      "selected_tasks": "T8, T1"
     },
     {
       "id": "S82102620",
@@ -169,7 +176,8 @@
       "sub_skills": "",
       "learning": "",
       "desired_field": "",
-      "okrs": ""
+      "okrs": "O1, O4",
+      "selected_tasks": "T1, T8"
     },
     {
       "id": "SA249E67B",
@@ -179,7 +187,8 @@
       "sub_skills": "",
       "learning": "",
       "desired_field": "",
-      "okrs": ""
+      "okrs": "O1",
+      "selected_tasks": "T1"
     },
     {
       "id": "SFE0EEA41",
@@ -189,7 +198,8 @@
       "sub_skills": "",
       "learning": "",
       "desired_field": "",
-      "okrs": ""
+      "okrs": "O2",
+      "selected_tasks": "T7"
     }
   ]
 }

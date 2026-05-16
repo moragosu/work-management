@@ -3,7 +3,7 @@
     <div v-if="!embedded" class="page-header">
       <div>
         <h2>인력 관리</h2>
-        <div class="subtitle">팀원 기술 현황 및 참여 Objective</div>
+        <div class="subtitle">팀원 기술 현황 및 참여 목표</div>
       </div>
       <button class="btn btn-primary btn-sm" @click="openAddModal">+ 인력 추가</button>
     </div>
@@ -41,7 +41,7 @@
       <div class="filter-bar">
         <div class="search-input">
           <span class="search-icon">🔍</span>
-          <input v-model="search" class="form-control" placeholder="이름, 기술, Objective 검색..." @input="fetchStaff" />
+          <input v-model="search" class="form-control" placeholder="이름, 기술, 목표 검색..." @input="fetchStaff" />
         </div>
         <button class="btn btn-ghost btn-sm" @click="search = ''; fetchStaff()">초기화</button>
       </div>
@@ -69,7 +69,7 @@
                   부 기술 <span v-if="sortKey === 'sub_skills'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
                 </th>
                 <th @click="sortBy('objectives')" style="cursor:pointer">
-                  참여 Objective <span v-if="sortKey === 'objectives'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
+                  참여 목표 <span v-if="sortKey === 'objectives'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
                 </th>
                 <th style="width:90px"></th>
               </tr>
@@ -225,7 +225,7 @@
     <div v-if="showObjectiveModal" class="modal-overlay" @click.self="showObjectiveModal = false">
       <div class="modal">
         <div class="modal-header">
-          <h3>참여 Objective 선택 - {{ selectedMember?.name }}</h3>
+          <h3>참여 목표 선택 - {{ selectedMember?.name }}</h3>
           <button class="modal-close" @click="showObjectiveModal = false">✕</button>
         </div>
         <div class="modal-body">
@@ -254,6 +254,7 @@ import axios from 'axios'
 const props = defineProps({
   embedded: { type: Boolean, default: false }
 })
+const emit = defineEmits(['updated'])
 
 const vIndeterminate = {
   mounted(el, { value }) { el.indeterminate = value },
@@ -417,6 +418,7 @@ async function submitAdd() {
     staff.value.push(data)
     showModal.value = false
     showToast('인력이 추가되었습니다')
+    emit('updated')
   } catch {
     showToast('추가 실패')
   }
@@ -447,6 +449,7 @@ async function submitEdit() {
     
     showModal.value = false
     showToast('인력 정보가 수정되었습니다')
+    emit('updated')
   } catch {
     showToast('수정 실패')
   }
@@ -597,6 +600,7 @@ async function deleteMember(member) {
   await axios.delete(`/api/staff/${member.id}`)
   staff.value = staff.value.filter(s => s.id !== member.id)
   showToast('삭제되었습니다')
+  emit('updated')
 }
 
 onMounted(async () => {

@@ -31,7 +31,7 @@
           <div class="card-header" style="flex-wrap:wrap;gap:8px">
             <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
               <h3 style="margin:0">{{ task.name }}</h3>
-              <span class="badge badge-blue">{{ getObjectiveName(task.objective_id) }}</span>
+              <span class="badge badge-blue">{{ task.objective_id }}: {{ getObjectiveName(task.objective_id) }}</span>
             </div>
             <div class="member-badges">
               <span
