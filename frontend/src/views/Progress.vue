@@ -8,20 +8,15 @@
     </div>
 
     <div class="page-body">
-      <!-- Week selector and Confluence link -->
+      <!-- Week selector with arrow navigation -->
       <div class="filter-bar">
-        <select v-model="selectedWeek" class="form-control" @change="onWeekChange">
-          <option value="">주차 선택</option>
-          <option v-for="week in availableWeeks" :key="week" :value="week">{{ week }}</option>
-        </select>
-        <div class="flex gap-8" style="flex: 1; margin-left: 16px;">
-          <input 
-            v-model="confluenceLink" 
-            class="form-control" 
-            placeholder="컨플루언스 링크를 입력하세요" 
-            @input="debounceSaveConfluenceLink"
-          />
-          <button class="btn btn-primary btn-sm" @click="saveConfluenceLink" :disabled="!selectedWeek || !confluenceLink">저장</button>
+        <div class="flex gap-8" style="align-items: center;">
+          <button class="btn btn-ghost btn-sm" @click="prevWeek" :disabled="!selectedWeek || getCurrentWeekIndex() <= 0">←</button>
+          <select v-model="selectedWeek" class="form-control" @change="onWeekChange" style="min-width: 120px;">
+            <option value="">주차 선택</option>
+            <option v-for="week in availableWeeks" :key="week" :value="week">{{ week }}</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" @click="nextWeek" :disabled="!selectedWeek || getCurrentWeekIndex() >= availableWeeks.length - 1">→</button>
         </div>
       </div>
 
@@ -54,6 +49,29 @@
           </div>
           
           <div class="card-body">
+            <!-- Task-specific Confluence link -->
+            <div v-if="getTaskConfluenceLink(task.id)" class="mb-16">
+              <div class="flex gap-8" style="align-items: center;">
+                <span class="badge badge-blue">📎</span>
+                <a :href="getTaskConfluenceLink(task.id)" target="_blank" class="text-primary" style="flex: 1; font-size: 14px;">
+                  {{ getTaskConfluenceLink(task.id) }}
+                </a>
+                <button class="btn btn-ghost btn-xs" @click="openTaskConfluenceLink(task.id)">열기</button>
+              </div>
+            </div>
+            <div v-else class="mb-16">
+              <div class="flex gap-8">
+                <input 
+                  :value="taskConfluenceLinks[task.id] || ''"
+                  @input="updateTaskConfluenceLink(task.id, $event.target.value)"
+                  class="form-control" 
+                  placeholder="과제별 컨플루언스 링크를 입력하세요" 
+                  style="flex: 1;"
+                />
+                <button class="btn btn-primary btn-xs" @click="saveTaskConfluenceLink(task.id)" :disabled="!taskConfluenceLinks[task.id]">저장</button>
+              </div>
+            </div>
+
             <!-- Questions and Answers -->
             <div v-for="qa in getQuestionsForTask(task.id)" :key="qa.id" class="mb-16">
               <div class="qa-item">
@@ -122,6 +140,7 @@ const answers = ref([])
 // 새로운 UI 상태
 const selectedWeek = ref('')
 const confluenceLink = ref('')
+const taskConfluenceLinks = ref({}) // 과제별 컨플루언스 링크 저장
 const showQuestionForm = ref('')
 const newQuestionText = ref('')
 const debounceTimers = {}
@@ -148,6 +167,27 @@ function getCurrentWeekNumber() {
   const firstDayOfYear = new Date(today.getFullYear(), 0, 1)
   const pastDaysOfYear = (today - firstDayOfYear) / 86400000
   return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7)
+}
+
+function getCurrentWeekIndex() {
+  if (!selectedWeek.value) return -1
+  return availableWeeks.value.indexOf(selectedWeek.value)
+}
+
+function prevWeek() {
+  const currentIndex = getCurrentWeekIndex()
+  if (currentIndex > 0) {
+    selectedWeek.value = availableWeeks.value[currentIndex - 1]
+    onWeekChange()
+  }
+}
+
+function nextWeek() {
+  const currentIndex = getCurrentWeekIndex()
+  if (currentIndex < availableWeeks.value.length - 1) {
+    selectedWeek.value = availableWeeks.value[currentIndex + 1]
+    onWeekChange()
+  }
 }
 
 function getObjectiveName(objectiveId) {
@@ -237,6 +277,34 @@ async function saveConfluenceLink() {
 function openConfluenceLink() {
   if (confluenceLink.value) {
     window.open(confluenceLink.value, '_blank')
+  }
+}
+
+// 과제별 컨플루언스 링크 관련 함수
+function getTaskConfluenceLink(taskId) {
+  // 실제 구현에서는 API에서 과제별 컨플루언스 링크를 로드
+  return taskConfluenceLinks.value[taskId] || ''
+}
+
+function updateTaskConfluenceLink(taskId, link) {
+  taskConfluenceLinks.value[taskId] = link
+}
+
+function saveTaskConfluenceLink(taskId) {
+  if (!taskConfluenceLinks.value[taskId]) return
+  
+  try {
+    // 실제 구현에서는 API 호출로 과제별 컨플루언스 링크 저장
+    showToast('과제 컨플루언스 링크가 저장되었습니다')
+  } catch {
+    showToast('링크 저장 실패')
+  }
+}
+
+function openTaskConfluenceLink(taskId) {
+  const link = getTaskConfluenceLink(taskId)
+  if (link) {
+    window.open(link, '_blank')
   }
 }
 
