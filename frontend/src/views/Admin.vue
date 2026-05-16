@@ -27,26 +27,49 @@
           </div>
           <div v-else class="table-wrap">
             <table>
-              <thead>
-                <tr>
-                  <th>ID</th><th>Objective명</th><th>기술 스택</th>
-                  <th>Key Results</th><th>상태</th><th></th>
-                </tr>
-              </thead>
+            <thead>
+              <tr>
+                <th @click="sortBy('id', 'objectives')" style="cursor:pointer">
+                  ID <span v-if="sortKeys.objectives === 'id'">{{ sortOrders.objectives === 'asc' ? '↑' : '↓' }}</span>
+                </th>
+                <th @click="sortBy('name', 'objectives')" style="cursor:pointer">
+                  Objective명 <span v-if="sortKeys.objectives === 'name'">{{ sortOrders.objectives === 'asc' ? '↑' : '↓' }}</span>
+                </th>
+                <th @click="sortBy('tech_stack', 'objectives')" style="cursor:pointer">
+                  기술 스택 <span v-if="sortKeys.objectives === 'tech_stack'">{{ sortOrders.objectives === 'asc' ? '↑' : '↓' }}</span>
+                </th>
+                <th @click="sortBy('key_results.length', 'objectives')" style="cursor:pointer">
+                  Key Results <span v-if="sortKeys.objectives === 'key_results.length'">{{ sortOrders.objectives === 'asc' ? '↑' : '↓' }}</span>
+                </th>
+                <th @click="sortBy('status', 'objectives')" style="cursor:pointer">
+                  상태 <span v-if="sortKeys.objectives === 'status'">{{ sortOrders.objectives === 'asc' ? '↑' : '↓' }}</span>
+                </th>
+                <th></th>
+              </tr>
+            </thead>
               <tbody>
-                <tr v-for="o in objectives" :key="o.id">
+                <tr v-for="o in sortedObjectives" :key="o.id">
                   <td><span class="badge badge-blue">{{ o.id }}</span></td>
                   <td style="font-weight:600">{{ o.name }}</td>
                   <td><span class="text-sm">{{ o.tech_stack }}</span></td>
                   <td>
-                    <div class="flex gap-4" style="align-items:center">
-                      <span class="text-sm">{{ o.key_results?.length || 0 }}개</span>
-                      <button class="btn btn-ghost btn-xs" @click="openKeyResultModal(o)">+ KR</button>
-                    </div>
+                      <div style="display:flex;align-items:center;gap:8px">
+                        <div style="min-width:120px">
+                          <div class="text-sm">
+                            {{ o.key_results?.length || 0 }}개
+                            <button class="btn btn-ghost btn-xs" @click="openKeyResultModal(o)" style="margin-left:4px">+ KR</button>
+                          </div>
+                          <div v-if="o.key_results && o.key_results.length > 0" class="key-result-list" style="max-height:100px;overflow-y:auto">
+                            <div v-for="kr in o.key_results" :key="kr.id" class="text-xs text-muted" style="margin-top:2px;padding-left:8px;border-left:2px solid var(--outline)">
+                              <span class="text-xs" style="color:var(--primary)">{{ kr.id }}</span> {{ kr.name }}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                   </td>
                   <td><span :class="sBadge(o.status)">{{ o.status }}</span></td>
                   <td>
-                    <div class="flex gap-8">
+                    <div style="display:flex;gap:8px">
                       <button class="btn btn-ghost btn-xs" @click="openObjectiveModal(o)">수정</button>
                       <button class="btn btn-danger btn-xs" @click="deleteObjective(o)">삭제</button>
                     </div>
@@ -198,8 +221,9 @@
             <div v-for="kr in selectedObjective.key_results" :key="kr.id" class="kr-edit-item">
               <div class="flex gap-8" style="align-items:center">
                 <span class="badge badge-blue" style="width:50px">{{ kr.id }}</span>
-                <input v-model="kr.name" class="form-control" placeholder="Key Result 내용" style="flex:1" />
-                <button class="btn btn-danger btn-xs" @click="deleteKeyResult(kr.id)">✕</button>
+                <input v-model="kr.name" class="form-control" placeholder="Key Result 내용" style="flex:1" @input="onKeyResultInput(kr)" />
+                <button v-if="kr.isModified" class="btn btn-primary btn-xs" @click="updateKeyResult(kr)" style="min-width:60px">수정</button>
+                <button v-else class="btn btn-danger btn-xs" @click="deleteKeyResult(kr.id)">✕</button>
               </div>
             </div>
           </div>
@@ -396,6 +420,65 @@ const availableStaff = computed(() => {
   return staffList.value.filter(s => !memberIds.includes(s.id))
 })
 
+// 정렬 기능
+const sortKeys = ref({
+  objectives: '',
+  tasks: '',
+  staff: ''
+})
+
+const sortOrders = ref({
+  objectives: 'asc',
+  tasks: 'asc',
+  staff: 'asc'
+})
+
+function sortBy(key, tab) {
+  if (sortKeys.value[tab] === key) {
+    if (sortOrders.value[tab] === 'asc') {
+      sortOrders.value[tab] = 'desc'
+    } else {
+      sortKeys.value[tab] = ''
+      sortOrders.value[tab] = 'asc'
+    }
+  } else {
+    sortKeys.value[tab] = key
+    sortOrders.value[tab] = 'asc'
+  }
+}
+
+// 정렬된 데이터 computed properties
+const sortedObjectives = computed(() => {
+  const key = sortKeys.value.objectives
+  if (!key) return objectives.value
+  
+  return [...objectives.value].sort((a, b) => {
+    let aVal, bVal
+    
+    // key_results.length의 경우 특별 처리
+    if (key === 'key_results.length') {
+      aVal = a.key_results?.length || 0
+      bVal = b.key_results?.length || 0
+    } else {
+      // 점 표기법 처리 (예: 'status')
+      aVal = a[key]
+      bVal = b[key]
+    }
+    
+    // 문자열 비교
+    if (typeof aVal === 'string') {
+      aVal = aVal.toLowerCase()
+      bVal = bVal.toLowerCase()
+    }
+    
+    let result = 0
+    if (aVal < bVal) result = -1
+    else if (aVal > bVal) result = 1
+    
+    return sortOrders.value.objectives === 'asc' ? result : -result
+  })
+})
+
 // ── Objective ──
 async function fetchObjectives() {
   loading.value = true
@@ -446,9 +529,48 @@ async function deleteObjective(o) {
 
 // ── Key Results ──
 function openKeyResultModal(o) {
+  // 원본 데이터 저장을 위해 deep copy
   selectedObjective.value = JSON.parse(JSON.stringify(o))
+  // 각 Key Result에 원본 이름 저장
+  if (selectedObjective.value.key_results) {
+    selectedObjective.value.key_results.forEach(kr => {
+      kr.originalName = kr.name
+      kr.isModified = false
+    })
+  }
   newKeyResultName.value = ''
   showKeyResultModal.value = true
+}
+
+function onKeyResultInput(kr) {
+  // 원본이 없으면 생성 (처음 로드된 경우)
+  if (kr.originalName === undefined) {
+    kr.originalName = kr.name
+  }
+  // 수정 여부 확인
+  kr.isModified = kr.name !== kr.originalName
+}
+
+async function updateKeyResult(kr) {
+  try {
+    await axios.put(`/api/okrs/${selectedObjective.value.id}/key-results/${kr.id}`, {
+      name: kr.name
+    })
+    // 원본 이름 업데이트
+    kr.originalName = kr.name
+    kr.isModified = false
+    // 메인 objectives 목록도 업데이트
+    const mainObj = objectives.value.find(o => o.id === selectedObjective.value.id)
+    if (mainObj) {
+      const mainKr = mainObj.key_results.find(k => k.id === kr.id)
+      if (mainKr) {
+        mainKr.name = kr.name
+      }
+    }
+    showToast('Key Result가 수정되었습니다')
+  } catch (e) {
+    showToast('수정 실패')
+  }
 }
 
 async function addKeyResult() {
