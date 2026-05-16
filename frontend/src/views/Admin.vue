@@ -5,6 +5,10 @@
         <h2>관리 도구</h2>
         <div class="subtitle">Objective · Key Result · 과제 · 인력 관리</div>
       </div>
+      <div v-if="adminMode" class="flex gap-8">
+        <span class="badge badge-red">관리자 모드</span>
+        <button class="btn btn-ghost btn-sm" @click="toggleAdminMode">관리자 모드 해제</button>
+      </div>
     </div>
 
     <div class="page-body">
@@ -352,12 +356,20 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
-const tabs = [
-  { key: 'objective', label: '📊 Objective' },
-  { key: 'task', label: '📋 과제' },
-  { key: 'staff', label: '👥 인력' },
-  { key: 'reset', label: '🗑 초기화' },
-]
+const adminMode = ref(false)
+
+const tabs = computed(() => {
+  const baseTabs = [
+    { key: 'objective', label: '📊 Objective' },
+    { key: 'task', label: '📋 과제' },
+    { key: 'staff', label: '👥 인력' },
+  ]
+  if (adminMode.value) {
+    baseTabs.push({ key: 'reset', label: '🗑 초기화' })
+  }
+  return baseTabs
+})
+
 const activeTab = ref('objective')
 
 const objectives = ref([])
@@ -743,6 +755,19 @@ function exportCsv(type) {
   window.open(`/api/admin/export/${type}`, '_blank')
 }
 
+// ── Admin Mode ──
+function toggleAdminMode() {
+  adminMode.value = !adminMode.value
+  // localStorage에 관리자 모드 상태 저장
+  if (adminMode.value) {
+    localStorage.setItem('adminMode', 'true')
+    showToast('관리자 모드가 활성화되었습니다')
+  } else {
+    localStorage.removeItem('adminMode')
+    showToast('관리자 모드가 비활성화되었습니다')
+  }
+}
+
 // ── Reset ──
 async function resetData(target) {
   const labels = { objectives: 'Objective', tasks: '과제', staff: '인력', progress: '진행도', all: '모든' }
@@ -755,6 +780,8 @@ async function resetData(target) {
 }
 
 onMounted(async () => {
+  // localStorage에서 관리자 모드 상태 복원
+  adminMode.value = localStorage.getItem('adminMode') === 'true'
   await Promise.all([fetchObjectives(), fetchTasks(), fetchStaff()])
 })
 </script>
