@@ -1,24 +1,194 @@
 {
   "staff": [
     {
-      "id": "S001",
-      "name": "박진우",
-      "role": "개발 리더",
-      "main_skills": "Python, PyTorch",
-      "sub_skills": "C++, ROS",
-      "learning": "ONNX, TensorRT",
-      "desired_field": "엣지 AI 최적화",
-      "okrs": "O1, O3"
+      "id": "S96926FE1",
+      "name": "김경산",
+      "role": "설비 효율 개선/제에 기술 지원",
+      "main_skills": "PLC",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
     },
     {
-      "id": "S002",
+      "id": "S13C4978B",
+      "name": "김용빈",
+      "role": "Web기반 BackEnd 개발, SBC 솔루션 개발",
+      "main_skills": "Python, C#",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "SBF35B869",
+      "name": "김정훈",
+      "role": "SBC DL Solution 개발(SW)-데이터분석",
+      "main_skills": "Python",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "SFDA4A938",
+      "name": "김진호",
+      "role": "시스템(APC, DMF, 자가조치, EOS/ESD)",
+      "main_skills": "C#",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "SDDF6D239",
+      "name": "맹한영",
+      "role": "SBC Solution 개발(SW), 데이터 분석",
+      "main_skills": "Python",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "S5BC91CDE",
+      "name": "박선미",
+      "role": "기/성능검사기용 표면처리 및 소재 개발",
+      "main_skills": "",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "S0494087E",
+      "name": "박오용",
+      "role": "자동화(PLC 통신 모듈, 에러 자가조치)",
+      "main_skills": "",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "SD8667118",
+      "name": "박찬규",
+      "role": "SBC Solution 개발(SW), 로봇, 부품품질",
+      "main_skills": "",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "S36C42767",
+      "name": "박태준",
+      "role": "Web기반 FrontEnd 개발-협의위원",
+      "main_skills": "",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "S53EEF855",
+      "name": "신대호",
+      "role": "Web기반 BackEnd 개발, CTQ 연계 표준화",
+      "main_skills": "",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "S50611A66",
       "name": "우제균",
-      "role": "데이터 엔지니어",
-      "main_skills": "Python, SQL",
-      "sub_skills": "InfluxDB, Grafana",
-      "learning": "Apache Kafka",
-      "desired_field": "실시간 데이터 처리",
-      "okrs": "O1, O2, O4"
+      "role": "제조공정분석 및 비효율개선(기획)",
+      "main_skills": "",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "S2C07AA8C",
+      "name": "윤희동",
+      "role": "Web기반 FrondEnd/BackEnd 개발",
+      "main_skills": "",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "S662B202F",
+      "name": "이강태",
+      "role": "전장설계, PLC, LCiA 설비개발",
+      "main_skills": "",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "S05D70A75",
+      "name": "이승목",
+      "role": "SBC DL Solution 개발(SW)-개발",
+      "main_skills": "",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "SB0932AF5",
+      "name": "임기진",
+      "role": "설비 효율 개선/기구 설계",
+      "main_skills": "",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "S46B7BE33",
+      "name": "정병주",
+      "role": "SBC DL Solution 개발(SW)-개발",
+      "main_skills": "",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "S82102620",
+      "name": "정영달",
+      "role": "SBC DL Solution 개발(SW)-개발",
+      "main_skills": "",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "SA249E67B",
+      "name": "조효제",
+      "role": "SBC DL Solution 개발(SW)-개발",
+      "main_skills": "",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
+    },
+    {
+      "id": "SFE0EEA41",
+      "name": "황성연",
+      "role": "Web기반 FrontEnd 개발-개발",
+      "main_skills": "",
+      "sub_skills": "",
+      "learning": "",
+      "desired_field": "",
+      "okrs": ""
     }
   ]
 }
