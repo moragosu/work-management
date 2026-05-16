@@ -40,7 +40,7 @@
         </div>
         <div class="flex-between" style="margin-bottom:16px">
           <button class="btn btn-ghost btn-sm" @click="exportCsv('objectives')">⬇ CSV 다운로드</button>
-          <button class="btn btn-primary btn-sm" @click="openObjectiveModal()">+ Objective 추가</button>
+          <button class="btn btn-primary btn-sm" @click="openObjectiveModal()">+ 목표 추가</button>
         </div>
         <div class="card">
           <div v-if="loading" class="loading-center"><div class="spinner"></div></div>
@@ -959,17 +959,4 @@ onMounted(async () => {
   line-height: 1.4;
 }
 
-.stat-card {
-  text-align: center;
-}
-.stat-value {
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-.stat-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 6px;
-}
 </style>
