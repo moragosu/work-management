@@ -289,7 +289,7 @@ async function submitAdd() {
   try {
     const payload = {
       ...form.value,
-      objectives: form.value.objectiveIds.join(', ')
+      okrs: form.value.objectiveIds.join(', ')  // 백엔드와 호환되는 필드명 사용
     }
     const { data } = await axios.post('/api/staff', payload)
     staff.value.push(data)
@@ -306,7 +306,7 @@ async function submitEdit() {
   try {
     const payload = {
       ...form.value,
-      objectives: form.value.objectiveIds.join(', ')
+      okrs: form.value.objectiveIds.join(', ')  // 백엔드와 호환되는 필드명 사용
     }
     const { data } = await axios.put(`/api/staff/${selectedMember.value.id}`, payload)
     
@@ -325,7 +325,7 @@ async function submitEdit() {
 
 function openObjectiveSelect(member) {
   selectedMember.value = member
-  selectedObjectiveIds.value = getObjectiveIds(member.objectives)
+  selectedObjectiveIds.value = getObjectiveIds(member.objectives || member.okrs || '')
   showObjectiveModal.value = true
 }
 
@@ -333,8 +333,19 @@ async function saveObjectives() {
   if (!selectedMember.value) return
   const objectivesStr = selectedObjectiveIds.value.join(', ')
   try {
-    await axios.put(`/api/staff/${selectedMember.value.id}`, { objectives: objectivesStr })
+    // 백엔드는 okrs 필드를 기대하므로 필드명 변경
+    await axios.put(`/api/staff/${selectedMember.value.id}`, { okrs: objectivesStr })
+    
+    // selectedMember 업데이트
     selectedMember.value.objectives = objectivesStr
+    
+    // staff.value 배열의 해당 멤버도 업데이트
+    const index = staff.value.findIndex(s => s.id === selectedMember.value.id)
+    if (index !== -1) {
+      staff.value[index].objectives = objectivesStr
+      // staff.value[index].okrs = objectivesStr  // 백엔드와 호환
+    }
+    
     showObjectiveModal.value = false
     showToast('저장됨')
   } catch {
@@ -353,10 +364,12 @@ const sortedStaff = computed(() => {
     let aVal = a[sortKey.value]
     let bVal = b[sortKey.value]
     
-    // objectives의 경우 ID 개수로 정렬
+    // objectives의 경우 ID 개수로 정렬 (okrs 필드도 지원)
     if (sortKey.value === 'objectives') {
-      aVal = getObjectiveIds(aVal).length
-      bVal = getObjectiveIds(bVal).length
+      const aObjectives = a.objectives || a.okrs || '';
+      const bObjectives = b.objectives || b.okrs || '';
+      aVal = getObjectiveIds(aObjectives).length
+      bVal = getObjectiveIds(bObjectives).length
     }
     
     // 문자열 비교
@@ -395,7 +408,7 @@ function editMember(member) {
     role: member.role || '',
     main_skills: member.main_skills || '',
     sub_skills: member.sub_skills || '',
-    objectiveIds: getObjectiveIds(member.objectives)
+    objectiveIds: getObjectiveIds(member.objectives || member.okrs || '')  // okrs 필드도 지원
   }
   showModal.value = true
 }
@@ -406,7 +419,7 @@ const totalStaffCount = computed(() => staff.value.length)
 const objectiveStats = computed(() => {
   const stats = {}
   staff.value.forEach(member => {
-    const objIds = getObjectiveIds(member.objectives)
+    const objIds = getObjectiveIds(member.objectives || member.okrs || '')
     objIds.forEach(objId => {
       if (!stats[objId]) {
         stats[objId] = { count: 0 }
