@@ -320,7 +320,10 @@
             <div class="text-sm text-muted" style="margin-bottom:8px">연결된 인력:</div>
             <div v-for="m in selectedTask.members" :key="m.staff_id" class="kr-edit-item">
               <div class="flex gap-8" style="align-items:center">
-                <span>{{ m.name }}</span>
+                <div style="flex:1">
+                  <div>{{ m.name }}</div>
+                  <div class="text-xs text-muted">{{ m.role || '역할 없음' }}</div>
+                </div>
                 <button class="btn btn-danger btn-xs" @click="removeTaskMember(m.staff_id)">✕</button>
               </div>
             </div>
@@ -330,6 +333,7 @@
             <option value="">선택</option>
             <option v-for="s in availableStaff" :key="s.id" :value="s.id">{{ s.name }}</option>
           </select>
+          <input v-model="selectedStaffRole" class="form-control" placeholder="역할을 입력하세요" style="margin-bottom:8px" />
           <button class="btn btn-primary btn-sm" @click="addTaskMember" :disabled="!selectedStaffId">추가</button>
         </div>
         <div class="modal-footer">
@@ -438,6 +442,7 @@ const taskForm = ref(defaultTaskForm())
 const showTaskMemberModal = ref(false)
 const selectedTask = ref(null)
 const selectedStaffId = ref('')
+const selectedStaffRole = ref('')
 
 // Staff
 const showStaffModal = ref(false)
@@ -710,7 +715,11 @@ async function addTaskMember() {
   if (!staff) return
   
   selectedTask.value.members = selectedTask.value.members || []
-  selectedTask.value.members.push({ staff_id: staff.id, name: staff.name })
+  selectedTask.value.members.push({ 
+    staff_id: staff.id, 
+    name: staff.name, 
+    role: selectedStaffRole.value 
+  })
   
   try {
     await axios.put(`/api/tasks/${selectedTask.value.id}`, { members: selectedTask.value.members })
@@ -718,6 +727,7 @@ async function addTaskMember() {
     const updated = tasks.value.find(t => t.id === selectedTask.value.id)
     if (updated) selectedTask.value = JSON.parse(JSON.stringify(updated))
     selectedStaffId.value = ''
+    selectedStaffRole.value = ''
     showToast('인력이 추가되었습니다')
   } catch (e) {
     showToast('추가 실패')

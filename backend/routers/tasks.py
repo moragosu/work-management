@@ -9,6 +9,7 @@ router = APIRouter()
 class TaskMember(BaseModel):
     staff_id: str
     name: str
+    role: str = ""
 
 
 class Task(BaseModel):
