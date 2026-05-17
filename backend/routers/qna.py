@@ -66,7 +66,7 @@ def create_question(body: QuestionCreate):
     }
     questions.append(new_q)
     _save(questions, answers)
-    return {**new_q, "answer": None}
+    return {**new_q, "answers": []}
 
 
 @router.put("/questions/{question_id}")
@@ -76,8 +76,8 @@ def update_question(question_id: str, body: QuestionUpdate):
         if q["id"] == question_id:
             q["question"] = body.question
             _save(questions, answers)
-            answer = next((a for a in answers if a["question_id"] == question_id), None)
-            return {**q, "answer": answer}
+            q_answers = [a for a in answers if a["question_id"] == question_id]
+            return {**q, "answers": q_answers}
     raise HTTPException(status_code=404, detail="Question not found")
 
 

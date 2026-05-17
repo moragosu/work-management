@@ -544,8 +544,11 @@ async function fetchAll() {
     initProgressForms()
     selectedWeek.value = route.query.week || `W${getCurrentWeekNumber()}`
     await onWeekChange()
-    await handleFocusQuery()
-  } finally { loading.value = false }
+  } finally {
+    loading.value = false
+  }
+  // loading이 false가 된 후 DOM이 렌더링되면 포커스 이동
+  await handleFocusQuery()
 }
 
 function initLinkInputs() {
