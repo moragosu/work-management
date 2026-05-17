@@ -80,7 +80,7 @@
             </div>
 
             <!-- ② 진행 내용 & 이슈 -->
-            <div class="section-block">
+            <div v-if="showWeeklyProgress" class="section-block">
               <div class="section-label">📝 이번 주 진행 내용</div>
 
               <!-- 저장된 진행 내용 표시 -->
@@ -317,6 +317,9 @@ const addingQuestionToTask = ref('')
 const newQuestionText = ref('')
 const editingQuestionId = ref('')
 const editingQuestionText = ref('')
+
+// 화면 설정
+const showWeeklyProgress = ref(false)
 
 // 질문 삭제 비밀번호 모달
 const showDeletePasswordModal = ref(false)
@@ -613,7 +616,10 @@ function initProgressForms() {
   progressForm.value = forms
 }
 
-onMounted(fetchAll)
+onMounted(() => {
+  showWeeklyProgress.value = localStorage.getItem('showWeeklyProgress') === 'true'
+  fetchAll()
+})
 </script>
 
 <style scoped>

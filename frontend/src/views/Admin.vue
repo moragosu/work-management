@@ -276,6 +276,18 @@
             </div>
           </div>
 
+          <div class="form-group" style="margin-bottom:32px">
+            <label class="form-label">화면 설정</label>
+            <div class="mt-16" style="display:flex;align-items:center;gap:12px">
+              <label class="toggle-label">
+                <input type="checkbox" v-model="showWeeklyProgress" @change="saveShowWeeklyProgress" />
+                <span class="toggle-track"></span>
+              </label>
+              <span class="text-sm">주간 진행 현황 — <strong>이번 주 진행 내용</strong> 섹션 표시</span>
+            </div>
+            <p class="text-sm text-muted" style="margin-top:6px">비활성화 시 Q&A와 컨플루언스 링크만 표시됩니다.</p>
+          </div>
+
           <div class="form-group">
             <label class="form-label">정보</label>
             <div class="text-sm text-muted" style="margin-top:8px">
@@ -901,6 +913,13 @@ function deactivateAdminMode() {
   showToast('관리자 모드가 비활성화되었습니다')
 }
 
+// ── 화면 설정 ──
+const showWeeklyProgress = ref(false)
+function saveShowWeeklyProgress() {
+  localStorage.setItem('showWeeklyProgress', showWeeklyProgress.value ? 'true' : 'false')
+  showToast(showWeeklyProgress.value ? '이번 주 진행 내용 섹션이 표시됩니다' : '이번 주 진행 내용 섹션이 숨겨집니다')
+}
+
 // ── Reset ──
 async function resetData(target) {
   const labels = { objectives: '목표', tasks: '과제', staff: '인력', progress: '진행도', all: '모든' }
@@ -914,6 +933,7 @@ async function resetData(target) {
 
 onMounted(async () => {
   adminMode.value = localStorage.getItem('adminMode') === 'true'
+  showWeeklyProgress.value = localStorage.getItem('showWeeklyProgress') === 'true'
   if (route.query.tab) activeTab.value = route.query.tab
   await Promise.all([fetchObjectives(), fetchTasks(), fetchStaff()])
   if (route.query.focusTask) {
