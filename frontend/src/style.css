@@ -442,6 +442,7 @@ tbody tr:last-child td { border-bottom: none; }
   transition: all .15s;
 }
 .modal-close:hover { background: var(--gray-100); color: var(--text-primary); }
+.modal-sm { max-width: 360px; }
 
 /* ── Grid ── */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }

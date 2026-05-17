@@ -241,6 +241,31 @@
     </div>
 
     <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
+
+    <!-- 질문 삭제 비밀번호 모달 -->
+    <div v-if="showDeletePasswordModal" class="modal-overlay" @click.self="closeDeleteModal">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <h3>질문 삭제 확인</h3>
+          <button class="modal-close" @click="closeDeleteModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="text-sm text-muted" style="margin-bottom:12px">질문과 모든 답변이 삭제됩니다. 비밀번호를 입력하세요.</p>
+          <input
+            v-model="deletePassword"
+            type="password"
+            class="form-control"
+            placeholder="비밀번호"
+            @keyup.enter="confirmDeleteQuestion"
+            ref="deletePasswordInput"
+          />
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost btn-sm" @click="closeDeleteModal">취소</button>
+          <button class="btn btn-danger btn-sm" @click="confirmDeleteQuestion">삭제</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -292,6 +317,12 @@ const addingQuestionToTask = ref('')
 const newQuestionText = ref('')
 const editingQuestionId = ref('')
 const editingQuestionText = ref('')
+
+// 질문 삭제 비밀번호 모달
+const showDeletePasswordModal = ref(false)
+const deletePassword = ref('')
+const pendingDeleteQuestionId = ref(null)
+const deletePasswordInput = ref(null)
 
 // 답변 상태
 const addingAnswerToId = ref('')
@@ -473,12 +504,31 @@ async function updateQuestion(questionId) {
     showToast('수정되었습니다')
   } catch { showToast('수정 실패') }
 }
-async function deleteQuestion(questionId) {
-  if (!confirm('질문을 삭제하시겠습니까? 답변도 함께 삭제됩니다.')) return
+function deleteQuestion(questionId) {
+  pendingDeleteQuestionId.value = questionId
+  deletePassword.value = ''
+  showDeletePasswordModal.value = true
+  nextTick(() => deletePasswordInput.value?.focus())
+}
+
+function closeDeleteModal() {
+  showDeletePasswordModal.value = false
+  deletePassword.value = ''
+  pendingDeleteQuestionId.value = null
+}
+
+async function confirmDeleteQuestion() {
+  if (deletePassword.value !== 'admin123') {
+    showToast('비밀번호가 올바르지 않습니다')
+    deletePassword.value = ''
+    nextTick(() => deletePasswordInput.value?.focus())
+    return
+  }
   try {
-    await axios.delete(`/api/qna/questions/${questionId}`)
-    qnaList.value = qnaList.value.filter(q => q.id !== questionId)
+    await axios.delete(`/api/qna/questions/${pendingDeleteQuestionId.value}`)
+    qnaList.value = qnaList.value.filter(q => q.id !== pendingDeleteQuestionId.value)
     showToast('삭제되었습니다')
+    closeDeleteModal()
   } catch { showToast('삭제 실패') }
 }
 
