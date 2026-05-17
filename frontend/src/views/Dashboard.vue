@@ -174,13 +174,14 @@
       </div>
 
       <!-- ④ 파트원별 활동 현황 -->
-      <div class="section-header" style="margin-bottom:12px;margin-top:32px">
+      <div class="section-header section-header-toggle" style="margin-top:32px" @click="activityOpen = !activityOpen">
         <span class="section-header-title">파트원별 활동 현황</span>
+        <span class="material-symbols-outlined section-chevron" :class="{ open: activityOpen }">expand_more</span>
       </div>
-      <div v-if="staffList.length === 0" class="card">
+      <div v-if="staffList.length === 0 && activityOpen" class="card" style="margin-top:12px">
         <div class="card-body text-muted text-sm">파트원 정보가 없습니다.</div>
       </div>
-      <div v-else class="card">
+      <div v-else-if="activityOpen" class="card" style="margin-top:12px">
         <table>
           <thead>
             <tr>
@@ -259,6 +260,7 @@ const allQuestions     = ref([])
 
 const loading = ref(false)
 const actionLoading = ref(false)
+const activityOpen = ref(true)
 
 const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
 
@@ -556,6 +558,18 @@ onMounted(refresh)
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+.section-header-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+.section-header-toggle:hover .section-header-title { color: var(--text-primary); }
+.section-chevron {
+  font-size: 18px; width: 18px; height: 18px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  margin-left: auto;
+}
+.section-chevron.open { transform: rotate(180deg); }
 
 /* ── 목표 카드 ── */
 .obj-card { transition: box-shadow .2s, transform .15s; }
