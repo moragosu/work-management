@@ -60,7 +60,7 @@
                   이름 <span v-if="sortKey === 'name'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
                 </th>
                 <th @click="sortBy('role')" style="cursor:pointer">
-                  직책/역할 <span v-if="sortKey === 'role'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
+                  역할 <span v-if="sortKey === 'role'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
                 </th>
                 <th @click="sortBy('main_skills')" style="cursor:pointer">
                   주 기술 <span v-if="sortKey === 'main_skills'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
@@ -158,7 +158,7 @@
             <input v-model="form.name" class="form-control" />
           </div>
           <div class="form-group">
-            <label class="form-label">직책/역할</label>
+            <label class="form-label">역할</label>
             <input v-model="form.role" class="form-control" />
           </div>
           <div class="grid-2">
