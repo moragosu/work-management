@@ -50,6 +50,7 @@ import axios from 'axios'
 import { MdPreview } from 'md-editor-v3'
 import MarkdownEditor from '../MarkdownEditor.vue'
 import { useToast } from '../../composables/useToast.js'
+import { hasContent } from '../../utils/content.js'
 
 const props = defineProps({
   progress: { type: Object, default: null },
@@ -59,14 +60,12 @@ const props = defineProps({
   objectiveId: { type: String, default: '' },
 })
 const emit = defineEmits(['update:progress'])
-const { toastMsg, showToast } = useToast()
+const { toastMsg, showToast, toastError } = useToast()
 
 const adding = ref(false)
 const editing = ref(false)
 const issueText = ref('')
 const assigneeName = ref('')
-
-function hasContent(text) { return !!(text && text.trim()) }
 
 function startAdd() {
   adding.value = true
@@ -111,7 +110,7 @@ async function handleSave() {
     emit('update:progress', saved)
     cancel()
     showToast('저장되었습니다')
-  } catch { showToast('저장 실패') }
+  } catch (e) { toastError(e, '저장 실패') }
 }
 
 async function handleDelete() {
@@ -125,7 +124,7 @@ async function handleDelete() {
       emit('update:progress', null)
     }
     showToast('삭제되었습니다')
-  } catch { showToast('삭제 실패') }
+  } catch (e) { toastError(e, '삭제 실패') }
 }
 </script>
 
@@ -135,24 +134,6 @@ async function handleDelete() {
   margin-bottom: 16px;
   border-bottom: 1px solid var(--outline);
 }
-.section-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.section-icon {
-  font-size: 14px;
-  width: 14px;
-  height: 14px;
-  color: var(--text-muted);
-}
-.mt-8 { margin-top: 8px; }
 .issue-box {
   background: #fff7ed;
   border-left: 3px solid #f59e0b;

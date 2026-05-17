@@ -113,6 +113,7 @@ import axios from 'axios'
 import { MdPreview } from 'md-editor-v3'
 import MarkdownEditor from '../MarkdownEditor.vue'
 import { useToast } from '../../composables/useToast.js'
+import { hasContent } from '../../utils/content.js'
 
 const props = defineProps({
   questions: { type: Array, default: () => [] },
@@ -121,9 +122,7 @@ const props = defineProps({
   week: { type: String, required: true },
 })
 const emit = defineEmits(['update:questions'])
-const { toastMsg, showToast } = useToast()
-
-function hasContent(text) { return !!(text && text.trim()) }
+const { toastMsg, showToast, toastError } = useToast()
 
 // ── 질문 ──
 const addingQuestion = ref(false)
@@ -144,7 +143,7 @@ async function addQuestion() {
     emit('update:questions', [...props.questions, data])
     cancelAddQuestion()
     showToast('질문이 추가되었습니다')
-  } catch { showToast('질문 추가 실패') }
+  } catch (e) { toastError(e, '질문 추가 실패') }
 }
 
 async function updateQuestion(questionId) {
@@ -154,7 +153,7 @@ async function updateQuestion(questionId) {
     emit('update:questions', props.questions.map(q => q.id === questionId ? { ...q, question: data.question } : q))
     cancelEditQuestion()
     showToast('수정되었습니다')
-  } catch { showToast('수정 실패') }
+  } catch (e) { toastError(e, '질문 수정 실패') }
 }
 
 // ── 질문 삭제 ──
@@ -164,7 +163,7 @@ async function deleteQuestion(questionId) {
     await axios.delete(`/api/qna/questions/${questionId}`)
     emit('update:questions', props.questions.filter(q => q.id !== questionId))
     showToast('삭제되었습니다')
-  } catch { showToast('삭제 실패') }
+  } catch (e) { toastError(e, '질문 삭제 실패') }
 }
 
 // ── 답변 ──
@@ -191,7 +190,7 @@ async function addAnswer(questionId) {
     ))
     cancelAddAnswer()
     showToast('답변이 저장되었습니다')
-  } catch { showToast('답변 저장 실패') }
+  } catch (e) { toastError(e, '답변 저장 실패') }
 }
 
 async function updateAnswer(answerId) {
@@ -206,7 +205,7 @@ async function updateAnswer(answerId) {
     })))
     cancelEditAnswer()
     showToast('수정되었습니다')
-  } catch { showToast('수정 실패') }
+  } catch (e) { toastError(e, '답변 수정 실패') }
 }
 
 async function deleteAnswer(answerId, questionId) {
@@ -217,32 +216,11 @@ async function deleteAnswer(answerId, questionId) {
       q.id === questionId ? { ...q, answers: q.answers.filter(a => a.id !== answerId) } : q
     ))
     showToast('삭제되었습니다')
-  } catch { showToast('삭제 실패') }
+  } catch (e) { toastError(e, '답변 삭제 실패') }
 }
 </script>
 
 <style scoped>
-.mt-8  { margin-top: 8px; }
-.mt-16 { margin-top: 16px; }
-
-.section-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.section-icon {
-  font-size: 14px;
-  width: 14px;
-  height: 14px;
-  color: var(--text-muted);
-}
-
 .qa-block {
   margin-bottom: 12px;
   padding: 12px;

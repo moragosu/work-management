@@ -247,6 +247,8 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import axios from 'axios'
 import { parseIds } from '../utils/parseIds.js'
+import { getCurrentWeekNumber } from '../utils/week.js'
+import { statusBadgeClass } from '../utils/status.js'
 
 const router = useRouter()
 
@@ -264,11 +266,6 @@ const activityOpen = ref(true)
 
 const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
 
-function getCurrentWeekNumber() {
-  const d = new Date()
-  const start = new Date(d.getFullYear(), 0, 1)
-  return Math.ceil(((d - start) / 86400000 + start.getDay() + 1) / 7)
-}
 const currentWeek = `W${getCurrentWeekNumber()}`
 
 // ── 목표 통계 ──
@@ -353,10 +350,6 @@ function getTaskName(taskId) {
 function getObjectiveName(objectiveId) {
   return objectives.value.find(o => o.id === objectiveId)?.name || objectiveId
 }
-function statusBadgeClass(status) {
-  return { '진행중': 'badge badge-blue', '완료': 'badge badge-green', '위험': 'badge badge-red' }[status] || 'badge badge-gray'
-}
-
 // ── 바로가기 네비게이션 ──
 function goToQuestion(q) {
   router.push({ path: '/progress', query: { week: currentWeek, focusQuestion: q.id } })

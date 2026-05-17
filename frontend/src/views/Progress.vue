@@ -62,12 +62,12 @@
             </div>
             <div class="member-badges">
               <span
-                v-for="m in getTaskMembers(task.id)"
+                v-for="m in taskMembers(task.id)"
                 :key="m.id"
                 class="badge badge-gray"
                 :title="m.role"
               >{{ m.name }}</span>
-              <span v-if="getTaskMembers(task.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
+              <span v-if="taskMembers(task.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
             </div>
           </div>
 
@@ -131,6 +131,8 @@ import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { useToast } from '../composables/useToast.js'
 import { parseIds } from '../utils/parseIds.js'
+import { getCurrentWeekNumber, getWeekDateRange } from '../utils/week.js'
+import { getTaskMembers } from '../utils/staff.js'
 import ProgressSection from '../components/progress/ProgressSection.vue'
 import QASection from '../components/progress/QASection.vue'
 
@@ -140,13 +142,13 @@ const tasks = ref([])
 const objectives = ref([])
 const staffList = ref([])
 const loading = ref(false)
-const { toastMsg, showToast } = useToast()
+const { toastMsg, showToast, toastError } = useToast()
 
 const selectedStaff = ref([])
 const filteredTasks = computed(() => {
   if (selectedStaff.value.length === 0) return tasks.value
   return tasks.value.filter(task =>
-    getTaskMembers(task.id).some(m => selectedStaff.value.includes(m.name))
+    taskMembers(task.id).some(m => selectedStaff.value.includes(m.name))
   )
 })
 function toggleStaff(name) {
@@ -170,23 +172,6 @@ const availableWeeks = computed(() => {
   return weeks
 })
 
-function getCurrentWeekNumber() {
-  const today = new Date()
-  const start = new Date(today.getFullYear(), 0, 1)
-  return Math.ceil(((today - start) / 86400000 + start.getDay() + 1) / 7)
-}
-
-function getWeekDateRange(weekStr) {
-  if (!weekStr) return ''
-  const weekNum = parseInt(weekStr.replace('W', ''))
-  const year = new Date().getFullYear()
-  const jan1 = new Date(year, 0, 1)
-  const startOffset = (weekNum - 1) * 7 - jan1.getDay()
-  const start = new Date(year, 0, 1 + startOffset)
-  const end = new Date(year, 0, 1 + startOffset + 6)
-  const fmt = (d) => `${d.getMonth() + 1}/${d.getDate()}`
-  return `${fmt(start)} – ${fmt(end)}`
-}
 function getCurrentWeekIndex() { return availableWeeks.value.indexOf(selectedWeek.value) }
 function prevWeek() {
   const i = getCurrentWeekIndex()
@@ -209,7 +194,7 @@ async function onWeekChange() {
 
 // ── 헬퍼 ──
 function getObjectiveName(id) { return objectives.value.find(o => o.id === id)?.name ?? id }
-function getTaskMembers(taskId) { return staffList.value.filter(s => parseIds(s.selected_tasks).includes(taskId)) }
+function taskMembers(taskId) { return getTaskMembers(taskId, staffList.value) }
 function getQuestionsForTask(taskId) { return qnaList.value.filter(q => q.task_id === taskId) }
 function getTaskLink(taskId) { return linkMap.value[taskId] || null }
 
@@ -256,7 +241,7 @@ async function saveLink(taskId) {
     linkInputs.value[taskId] = ''
     cancelEditLink(taskId)
     showToast('링크가 저장되었습니다')
-  } catch { showToast('링크 저장 실패') }
+  } catch (e) { toastError(e, '링크 저장 실패') }
 }
 async function deleteLink(taskId) {
   if (!confirm('링크를 삭제하시겠습니까?')) return
@@ -265,7 +250,7 @@ async function deleteLink(taskId) {
     if (existing) await axios.delete(`/api/confluence/${existing.id}`)
     const updated = { ...linkMap.value }; delete updated[taskId]; linkMap.value = updated
     showToast('삭제되었습니다')
-  } catch { showToast('삭제 실패') }
+  } catch (e) { toastError(e, '링크 삭제 실패') }
 }
 
 // ── Q&A 로드 ──
@@ -315,7 +300,6 @@ onMounted(fetchAll)
 </script>
 
 <style scoped>
-.mb-16 { margin-bottom: 16px; }
 .gap-6 { gap: 6px; }
 
 .filter-label-sm {
@@ -405,23 +389,6 @@ onMounted(fetchAll)
   padding-bottom: 16px;
   margin-bottom: 16px;
   border-bottom: 1px solid var(--outline);
-}
-.section-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.section-icon {
-  font-size: 14px;
-  width: 14px;
-  height: 14px;
-  color: var(--text-muted);
 }
 .link-text { flex: 1; font-size: 14px; word-break: break-all; }
 </style>

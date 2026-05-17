@@ -271,7 +271,7 @@ const loading = ref(false)
 const search = ref('')
 const { show: showModal, open: openModal, close: closeModal } = useModal()
 const { show: showObjectiveModal, open: openObjectiveModal, close: closeObjectiveModal } = useModal()
-const { toastMsg, showToast } = useToast()
+const { toastMsg, showToast, toastError } = useToast()
 const debounceTimers = {}
 
 const defaultForm = () => ({ name: '', role: '', main_skills: '', sub_skills: '', taskIds: [] })
@@ -369,9 +369,7 @@ function debounceSave(member, field, value) {
     try {
       await axios.put(`/api/staff/${member.id}`, { [field]: value })
       showToast('저장됨')
-    } catch {
-      showToast('저장 실패')
-    }
+    } catch (e) { toastError(e, '저장 실패') }
   }, 800)
 }
 
@@ -409,9 +407,7 @@ async function submitAdd() {
     closeModal()
     showToast('인력이 추가되었습니다')
     emit('updated')
-  } catch {
-    showToast('추가 실패')
-  }
+  } catch (e) { toastError(e, '인력 추가 실패') }
 }
 
 async function submitEdit() {
@@ -440,9 +436,7 @@ async function submitEdit() {
     closeModal()
     showToast('인력 정보가 수정되었습니다')
     emit('updated')
-  } catch {
-    showToast('수정 실패')
-  }
+  } catch (e) { toastError(e, '인력 수정 실패') }
 }
 
 function openObjectiveSelect(member) {
@@ -470,9 +464,7 @@ async function saveObjectives() {
     
     closeObjectiveModal()
     showToast('저장됨')
-  } catch {
-    showToast('저장 실패')
-  }
+  } catch (e) { toastError(e, '저장 실패') }
 }
 
 // 정렬 기능

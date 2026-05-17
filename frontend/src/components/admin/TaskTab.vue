@@ -42,8 +42,8 @@
               <td style="font-weight:600">{{ t.name }}</td>
               <td><span class="text-sm">{{ getObjectiveName(t.objective_id) }}</span></td>
               <td>
-                <div v-if="getTaskMembers(t.id).length > 0" class="member-chips">
-                  <span v-for="m in getTaskMembers(t.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                <div v-if="taskMembers(t.id).length > 0" class="member-chips">
+                  <span v-for="m in taskMembers(t.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
                 </div>
                 <span v-else class="text-muted text-sm">미배정</span>
               </td>
@@ -134,7 +134,7 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { useToast } from '../../composables/useToast.js'
-import { parseIds } from '../../utils/parseIds.js'
+import { getTaskMembers } from '../../utils/staff.js'
 
 const props = defineProps({
   tasks: { type: Array, default: () => [] },
@@ -145,18 +145,18 @@ const props = defineProps({
 })
 const emit = defineEmits(['refresh'])
 const route = useRoute()
-const { toastMsg, showToast } = useToast()
+const { toastMsg, showToast, toastError } = useToast()
 
 // ── 통계 ──
 const stats = computed(() => ({
   total: props.tasks.length,
   totalKR: props.objectives.reduce((s, o) => s + (o.key_results?.length || 0), 0),
-  withMembers: props.tasks.filter(t => getTaskMembers(t.id).length > 0).length,
-  noMembers: props.tasks.filter(t => getTaskMembers(t.id).length === 0).length,
+  withMembers: props.tasks.filter(t => taskMembers(t.id).length > 0).length,
+  noMembers: props.tasks.filter(t => taskMembers(t.id).length === 0).length,
 }))
 
 // ── 헬퍼 ──
-function getTaskMembers(taskId) { return props.staffList.filter(s => parseIds(s.selected_tasks).includes(taskId)) }
+function taskMembers(taskId) { return getTaskMembers(taskId, props.staffList) }
 function getObjectiveName(id) {
   if (!id) return '-'
   const o = props.objectives.find(obj => obj.id === id)
@@ -191,9 +191,7 @@ async function submitTask() {
     showModal.value = false
     showToast('저장되었습니다')
     emit('refresh')
-  } catch (e) {
-    showToast(e.response?.data?.detail || '저장 실패')
-  }
+  } catch (e) { toastError(e, '저장 실패') }
 }
 
 async function deleteTask(t) {
@@ -227,7 +225,7 @@ async function addMember() {
     selectedStaffId.value = ''
     selectedStaffRole.value = ''
     showToast('인력이 추가되었습니다')
-  } catch { showToast('추가 실패') }
+  } catch (e) { toastError(e, '인력 추가 실패') }
 }
 
 async function removeMember(staffId) {
@@ -236,7 +234,7 @@ async function removeMember(staffId) {
     await axios.put(`/api/tasks/${selectedTask.value.id}`, { members: selectedTask.value.members })
     showToast('삭제되었습니다')
     emit('refresh')
-  } catch { showToast('삭제 실패') }
+  } catch (e) { toastError(e, '인력 삭제 실패') }
 }
 
 // ── focusTask (대시보드에서 이동 시) ──

@@ -72,7 +72,7 @@
                 </div>
                 <span v-else class="text-muted text-sm">-</span>
               </td>
-              <td><span :class="sBadge(o.status)">{{ o.status }}</span></td>
+              <td><span :class="statusBadgeClass(o.status)">{{ o.status }}</span></td>
               <td>
                 <div style="display:flex;gap:8px">
                   <button class="btn btn-ghost btn-xs" @click="openModal(o)" data-tooltip="목표 정보 수정">수정</button>
@@ -160,6 +160,7 @@ import { ref, computed } from 'vue'
 import axios from 'axios'
 import { useToast } from '../../composables/useToast.js'
 import { parseIds } from '../../utils/parseIds.js'
+import { statusBadgeClass } from '../../utils/status.js'
 
 const props = defineProps({
   objectives: { type: Array, default: () => [] },
@@ -169,7 +170,7 @@ const props = defineProps({
   nextId: { type: String, default: 'O1' },
 })
 const emit = defineEmits(['refresh'])
-const { toastMsg, showToast } = useToast()
+const { toastMsg, showToast, toastError } = useToast()
 
 // ── 통계 ──
 const stats = computed(() => ({
@@ -204,9 +205,6 @@ const sortedObjectives = computed(() => {
 // ── 헬퍼 ──
 function getObjectiveTasks(id) { return props.tasks.filter(t => t.objective_id === id) }
 function getObjectiveStaff(id) { return props.staffList.filter(s => parseIds(s.okrs).includes(id)) }
-function sBadge(s) {
-  return { '진행중': 'badge badge-blue', '완료': 'badge badge-green', '위험': 'badge badge-red' }[s] || 'badge badge-gray'
-}
 function exportCsv() { window.open('/api/admin/export/objectives', '_blank') }
 
 // ── Objective Form Modal ──
@@ -236,9 +234,7 @@ async function submitObjective() {
     showModal.value = false
     showToast('저장되었습니다')
     emit('refresh')
-  } catch (e) {
-    showToast(e.response?.data?.detail || '저장 실패')
-  }
+  } catch (e) { toastError(e, '저장 실패') }
 }
 
 async function deleteObjective(o) {
@@ -271,7 +267,7 @@ async function updateKr(kr) {
     kr.originalName = kr.name; kr.isModified = false
     showToast('Key Result가 수정되었습니다')
     emit('refresh')
-  } catch { showToast('수정 실패') }
+  } catch (e) { toastError(e, 'KR 수정 실패') }
 }
 
 async function addKr() {
@@ -291,7 +287,7 @@ async function deleteKr(krId) {
     selectedObjective.value.key_results = selectedObjective.value.key_results.filter(kr => kr.id !== krId)
     showToast('삭제되었습니다')
     emit('refresh')
-  } catch { showToast('삭제 실패') }
+  } catch (e) { toastError(e, 'KR 삭제 실패') }
 }
 </script>
 

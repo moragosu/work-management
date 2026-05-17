@@ -8,5 +8,9 @@ export function useToast(duration = 2000) {
     setTimeout(() => { toastMsg.value = '' }, duration)
   }
 
-  return { toastMsg, showToast }
+  function toastError(e, fallback = '처리 실패') {
+    showToast(e?.response?.data?.detail || fallback)
+  }
+
+  return { toastMsg, showToast, toastError }
 }
