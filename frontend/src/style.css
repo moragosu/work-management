@@ -576,7 +576,17 @@ tbody tr:last-child td { border-bottom: none; }
   padding: var(--space-2xl) var(--space-lg);
   color: var(--text-muted);
 }
-.empty-state .empty-icon { font-size: 40px; margin-bottom: var(--space-sm); opacity: 0.5; }
+.empty-state .empty-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-sm);
+  opacity: 0.5;
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 48;
+}
 .empty-state p { font-size: 15px; }
 
 .toast {

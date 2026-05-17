@@ -1,6 +1,9 @@
 <template>
   <div>
-    <div class="section-label">💬 Q&A</div>
+    <div class="section-label">
+      <span class="material-symbols-outlined section-icon">forum</span>
+      Q&A
+    </div>
 
     <div v-for="qa in questions" :key="qa.id" :id="'qa-' + qa.id" class="qa-block">
       <!-- 질문 -->
@@ -99,42 +102,17 @@
       <button class="btn btn-ghost btn-sm" @click="addingQuestion = true">+ 질문 추가</button>
     </div>
 
-    <!-- 질문 삭제 비밀번호 모달 -->
-    <div v-if="showDeleteModal" class="modal-overlay" @click.self="closeDeleteModal">
-      <div class="modal modal-sm">
-        <div class="modal-header">
-          <h3>질문 삭제 확인</h3>
-          <button class="modal-close" @click="closeDeleteModal">✕</button>
-        </div>
-        <div class="modal-body">
-          <p class="text-sm text-muted" style="margin-bottom:12px">질문과 모든 답변이 삭제됩니다. 비밀번호를 입력하세요.</p>
-          <input
-            v-model="deletePassword"
-            type="password"
-            class="form-control"
-            placeholder="비밀번호"
-            @keyup.enter="confirmDelete"
-            ref="deletePasswordInput"
-          />
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-ghost btn-sm" @click="closeDeleteModal">취소</button>
-          <button class="btn btn-danger btn-sm" @click="confirmDelete">삭제</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref } from 'vue'
 import axios from 'axios'
 import { MdPreview } from 'md-editor-v3'
 import MarkdownEditor from '../MarkdownEditor.vue'
 import { useToast } from '../../composables/useToast.js'
-import { ADMIN_PASSWORD } from '../../config.js'
 
 const props = defineProps({
   questions: { type: Array, default: () => [] },
@@ -179,37 +157,13 @@ async function updateQuestion(questionId) {
   } catch { showToast('수정 실패') }
 }
 
-// ── 질문 삭제 (비밀번호 보호) ──
-const showDeleteModal = ref(false)
-const deletePassword = ref('')
-const pendingDeleteId = ref(null)
-const deletePasswordInput = ref(null)
-
-function deleteQuestion(questionId) {
-  pendingDeleteId.value = questionId
-  deletePassword.value = ''
-  showDeleteModal.value = true
-  nextTick(() => deletePasswordInput.value?.focus())
-}
-
-function closeDeleteModal() {
-  showDeleteModal.value = false
-  deletePassword.value = ''
-  pendingDeleteId.value = null
-}
-
-async function confirmDelete() {
-  if (deletePassword.value !== ADMIN_PASSWORD) {
-    showToast('비밀번호가 올바르지 않습니다')
-    deletePassword.value = ''
-    nextTick(() => deletePasswordInput.value?.focus())
-    return
-  }
+// ── 질문 삭제 ──
+async function deleteQuestion(questionId) {
+  if (!confirm('질문과 모든 답변이 삭제됩니다. 계속하시겠습니까?')) return
   try {
-    await axios.delete(`/api/qna/questions/${pendingDeleteId.value}`)
-    emit('update:questions', props.questions.filter(q => q.id !== pendingDeleteId.value))
+    await axios.delete(`/api/qna/questions/${questionId}`)
+    emit('update:questions', props.questions.filter(q => q.id !== questionId))
     showToast('삭제되었습니다')
-    closeDeleteModal()
   } catch { showToast('삭제 실패') }
 }
 
@@ -278,6 +232,15 @@ async function deleteAnswer(answerId, questionId) {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.section-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
 }
 
 .qa-block {

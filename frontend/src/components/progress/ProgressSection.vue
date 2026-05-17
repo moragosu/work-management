@@ -1,6 +1,9 @@
 <template>
   <div v-if="show" class="section-block">
-    <div class="section-label">📝 이번 주 진행 내용</div>
+    <div class="section-label">
+      <span class="material-symbols-outlined section-icon">edit_note</span>
+      이번 주 진행 내용
+    </div>
 
     <!-- 저장된 진행 내용 표시 -->
     <template v-if="progress && !editing">
@@ -10,7 +13,10 @@
         </div>
         <MdPreview language="en-US" :modelValue="progress.result" class="md-preview-inline" />
         <div v-if="progress.issue" class="issue-box">
-          <span class="issue-label">⚠ 이슈</span>
+          <span class="issue-label">
+            <span class="material-symbols-outlined" style="font-size:13px;width:13px;height:13px;vertical-align:middle">warning</span>
+            이슈
+          </span>
           <MdPreview language="en-US" :modelValue="progress.issue" class="md-preview-inline" />
         </div>
         <div class="flex gap-4 mt-8" style="justify-content:flex-end">
@@ -147,6 +153,15 @@ async function handleDelete() {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.section-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
 }
 .mt-8 { margin-top: 8px; }
 .progress-view { display: flex; flex-direction: column; gap: 8px; }

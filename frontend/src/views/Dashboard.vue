@@ -5,7 +5,10 @@
         <h2>대시보드</h2>
         <div class="subtitle">{{ currentWeek }} · {{ today }}</div>
       </div>
-      <button class="btn btn-ghost btn-sm" @click="refresh">🔄 새로고침</button>
+      <button class="btn btn-ghost btn-sm" @click="refresh">
+        <span class="material-symbols-outlined" style="font-size:16px;width:16px;height:16px">refresh</span>
+        새로고침
+      </button>
     </div>
 
     <div class="page-body">
@@ -13,28 +16,28 @@
       <div class="grid-4" style="margin-bottom:24px">
         <div class="card stat-accent stat-accent-blue">
           <div class="card-body stat-card">
-            <div class="stat-icon">📊</div>
+            <span class="material-symbols-outlined stat-icon stat-icon-blue">assignment</span>
             <div class="stat-value">{{ objectives.length }}</div>
             <div class="stat-label">전체 목표</div>
           </div>
         </div>
         <div class="card stat-accent stat-accent-primary">
           <div class="card-body stat-card">
-            <div class="stat-icon">🔄</div>
+            <span class="material-symbols-outlined stat-icon stat-icon-primary">sync</span>
             <div class="stat-value" style="color:var(--primary)">{{ inProgressCount }}</div>
             <div class="stat-label">진행중</div>
           </div>
         </div>
         <div class="card stat-accent stat-accent-green">
           <div class="card-body stat-card">
-            <div class="stat-icon">✅</div>
+            <span class="material-symbols-outlined stat-icon stat-icon-green">check_circle</span>
             <div class="stat-value" style="color:var(--success)">{{ completedCount }}</div>
             <div class="stat-label">완료</div>
           </div>
         </div>
         <div class="card stat-accent stat-accent-red">
           <div class="card-body stat-card">
-            <div class="stat-icon">⚠️</div>
+            <span class="material-symbols-outlined stat-icon stat-icon-red">warning</span>
             <div class="stat-value" style="color:var(--danger)">{{ dangerCount }}</div>
             <div class="stat-label">위험</div>
           </div>
@@ -48,7 +51,9 @@
         <div class="card action-panel">
           <div class="card-header">
             <div class="panel-title">
-              <span class="panel-icon" style="background:#fff7ed;color:var(--orange)">💬</span>
+              <span class="panel-icon" style="background:#fff7ed;color:var(--orange)">
+                <span class="material-symbols-outlined">forum</span>
+              </span>
               미답변 질문
             </div>
             <span class="badge" :class="unansweredQuestions.length ? 'badge-orange' : 'badge-gray'">
@@ -76,7 +81,9 @@
         <div class="card action-panel">
           <div class="card-header">
             <div class="panel-title">
-              <span class="panel-icon" style="background:#fff7ed;color:var(--warning)">🚧</span>
+              <span class="panel-icon" style="background:#fff7ed;color:var(--warning)">
+                <span class="material-symbols-outlined">construction</span>
+              </span>
               이슈
             </div>
             <span class="badge" :class="weekIssues.length ? 'badge-yellow' : 'badge-gray'">
@@ -105,7 +112,9 @@
         <div class="card action-panel">
           <div class="card-header">
             <div class="panel-title">
-              <span class="panel-icon" style="background:#f0f4ff;color:var(--primary)">👤</span>
+              <span class="panel-icon" style="background:#f0f4ff;color:var(--primary)">
+                <span class="material-symbols-outlined">person_off</span>
+              </span>
               미배정 과제
             </div>
             <span class="badge" :class="unassignedTasks.length ? 'badge-red' : 'badge-gray'">
@@ -137,7 +146,7 @@
       </div>
       <div v-if="loading" class="loading-center"><div class="spinner"></div></div>
       <div v-else-if="objectives.length === 0" class="empty-state">
-        <div class="empty-icon">📋</div>
+        <span class="material-symbols-outlined empty-icon">assignment</span>
         <p>등록된 목표가 없습니다. 관리 도구에서 목표를 추가하세요.</p>
       </div>
       <div v-else class="grid-2" style="gap:16px">
@@ -277,7 +286,20 @@ onMounted(refresh)
 .stat-accent-primary { border-top-color: #6366f1; }
 .stat-accent-green   { border-top-color: var(--success); }
 .stat-accent-red     { border-top-color: var(--danger); }
-.stat-icon { font-size: 20px; margin-bottom: 6px; line-height: 1; }
+.stat-icon {
+  font-size: 28px;
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stat-icon-blue    { color: var(--primary); }
+.stat-icon-primary { color: #6366f1; }
+.stat-icon-green   { color: var(--success); }
+.stat-icon-red     { color: var(--danger); }
 
 /* ── 액션 패널 ── */
 .action-panel { display: flex; flex-direction: column; }
@@ -294,8 +316,12 @@ onMounted(refresh)
   width: 28px; height: 28px;
   border-radius: var(--radius-sm);
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 15px;
   flex-shrink: 0;
+}
+.panel-icon .material-symbols-outlined {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 .panel-body {
@@ -365,13 +391,12 @@ onMounted(refresh)
 
 .panel-goto {
   font-size: 11px;
-  color: var(--primary);
+  color: var(--text-muted);
   margin-left: auto;
   flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 0.15s;
+  transition: color 0.15s;
 }
-.panel-item-link:hover .panel-goto { opacity: 1; }
+.panel-item-link:hover .panel-goto { color: var(--primary); }
 
 /* ── 섹션 헤더 ── */
 .section-header { display: flex; align-items: center; gap: 8px; }

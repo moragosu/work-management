@@ -17,10 +17,10 @@
             </button>
             <div class="week-nav-info">
               <div style="display:flex;align-items:center;gap:6px">
-                <span class="week-nav-label">{{ selectedWeek }}</span>
+                <span class="week-nav-label">{{ getWeekDateRange(selectedWeek) }}</span>
                 <span v-if="selectedWeek === `W${getCurrentWeekNumber()}`" class="week-current-badge">이번 주</span>
               </div>
-              <span class="week-nav-range">{{ getWeekDateRange(selectedWeek) }}</span>
+              <span class="week-nav-range">{{ selectedWeek }}</span>
             </div>
             <button class="week-nav-btn" @click="nextWeek" :disabled="getCurrentWeekIndex() >= availableWeeks.length - 1">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -47,7 +47,8 @@
 
       <div v-if="loading" class="loading-center"><div class="spinner"></div></div>
       <div v-else-if="!selectedWeek" class="empty-state">
-        <div class="empty-icon">📋</div><p>주차를 선택해주세요.</p>
+        <span class="material-symbols-outlined empty-icon">calendar_today</span>
+        <p>주차를 선택해주세요.</p>
       </div>
 
       <div v-else>
@@ -72,7 +73,10 @@
           <div class="card-body">
             <!-- ① 컨플루언스 링크 -->
             <div class="section-block">
-              <div class="section-label">📎 컨플루언스</div>
+              <div class="section-label">
+                <span class="material-symbols-outlined section-icon">link</span>
+                컨플루언스
+              </div>
               <div v-if="getTaskLink(task.id) && !editingLinkId[task.id]" class="flex gap-8" style="align-items:center">
                 <a :href="getTaskLink(task.id).url" target="_blank" class="text-primary link-text">
                   {{ getTaskLink(task.id).url }}
@@ -356,11 +360,11 @@ onMounted(() => {
   padding: 8px 20px;
   border-left: 1px solid var(--outline);
   border-right: 1px solid var(--outline);
-  min-width: 130px;
+  min-width: 150px;
   gap: 2px;
 }
-.week-nav-label { font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: 0.02em; }
-.week-nav-range { font-size: 12px; color: var(--text-muted); }
+.week-nav-label { font-size: 14px; font-weight: 700; color: var(--text-primary); letter-spacing: 0.01em; }
+.week-nav-range { font-size: 11px; color: var(--text-muted); letter-spacing: 0.03em; }
 .week-nav-current { border-color: var(--color-primary, #4f8ef7); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary, #4f8ef7) 15%, transparent); }
 .week-nav-current .week-nav-btn { color: var(--color-primary, #4f8ef7); }
 .week-nav-current .week-nav-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary, #4f8ef7) 8%, transparent); }
@@ -414,6 +418,15 @@ onMounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.section-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
 }
 .link-text { flex: 1; font-size: 14px; word-break: break-all; }
 </style>
