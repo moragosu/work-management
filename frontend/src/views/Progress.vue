@@ -78,10 +78,10 @@
                   <div class="progress-meta">
                     <span class="badge badge-gray">{{ getProgress(task.id).assignee || '담당자 없음' }}</span>
                   </div>
-                  <div class="rich-content" v-html="renderContent(getProgress(task.id).result)" />
+                  <MdPreview :modelValue="getProgress(task.id).result" class="md-preview-inline" />
                   <div v-if="getProgress(task.id).issue" class="issue-box">
                     <span class="issue-label">⚠ 이슈</span>
-                    <div class="rich-content" v-html="renderContent(getProgress(task.id).issue)" />
+                    <MdPreview :modelValue="getProgress(task.id).issue" class="md-preview-inline" />
                   </div>
                   <div class="flex gap-4 mt-8" style="justify-content:flex-end">
                     <button class="btn btn-ghost btn-xs" @click="startEditProgress(task.id)">수정</button>
@@ -105,19 +105,11 @@
                   </div>
                   <div class="form-group">
                     <label class="form-label">진행 내용</label>
-                    <RichTextarea
-                      v-model="progressForm[task.id].result"
-                      placeholder="이번 주 진행한 내용을 입력하세요... (Ctrl+V로 이미지 붙여넣기)"
-                      :rows="4"
-                    />
+                    <MarkdownEditor v-model="progressForm[task.id].result" height="220px" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">이슈 / 블로커 <span class="text-muted text-sm">(선택)</span></label>
-                    <RichTextarea
-                      v-model="progressForm[task.id].issue"
-                      placeholder="이슈나 블로커가 있으면 입력하세요... (Ctrl+V로 이미지 붙여넣기)"
-                      :rows="2"
-                    />
+                    <MarkdownEditor v-model="progressForm[task.id].issue" height="140px" />
                   </div>
                   <div class="flex gap-8" style="justify-content:flex-end">
                     <button class="btn btn-ghost btn-sm" @click="cancelProgress(task.id)">취소</button>
@@ -142,13 +134,13 @@
                 <span class="badge badge-orange">Q</span>
                 <div class="qa-content">
                   <template v-if="editingQuestionId === qa.id">
-                    <textarea v-model="editingQuestionText" class="form-control" rows="2" />
+                    <MarkdownEditor v-model="editingQuestionText" height="140px" />
                     <div class="flex gap-4 mt-8" style="justify-content:flex-end">
                       <button class="btn btn-ghost btn-xs" @click="cancelEditQuestion">취소</button>
-                      <button class="btn btn-primary btn-xs" @click="updateQuestion(qa.id)" :disabled="!editingQuestionText">저장</button>
+                      <button class="btn btn-primary btn-xs" @click="updateQuestion(qa.id)" :disabled="!hasContent(editingQuestionText)">저장</button>
                     </div>
                   </template>
-                  <span v-else class="qa-text">{{ qa.question }}</span>
+                  <MdPreview v-else :modelValue="qa.question" class="md-preview-inline" />
                 </div>
                 <div v-if="editingQuestionId !== qa.id" class="qa-actions">
                   <button class="btn btn-ghost btn-xs" @click="startEditQuestion(qa)">수정</button>
@@ -173,11 +165,7 @@
                 <div class="qa-content">
                   <template v-if="editingAnswerId === ans.id">
                     <div style="flex:1">
-                      <RichTextarea
-                        v-model="editingAnswerText"
-                        placeholder="답변을 입력하세요... (Ctrl+V로 이미지 붙여넣기)"
-                        :rows="2"
-                      />
+                      <MarkdownEditor v-model="editingAnswerText" height="160px" />
                       <select v-model="editingAnswerBy" class="form-control mt-8">
                         <option value="">작성자 선택</option>
                         <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
@@ -189,7 +177,7 @@
                     </div>
                   </template>
                   <template v-else>
-                    <div class="rich-content" v-html="renderContent(ans.answer)" />
+                    <MdPreview :modelValue="ans.answer" class="md-preview-inline" />
                     <span class="answer-by">
                       — {{ ans.answer_by }}
                       <span class="answer-date">{{ ans.updated_at ?? ans.created_at }}</span>
@@ -207,11 +195,7 @@
               <div v-if="addingAnswerToId === qa.id" class="answer-row">
                 <span class="badge badge-green">A</span>
                 <div style="flex:1">
-                  <RichTextarea
-                    v-model="newAnswerText"
-                    placeholder="답변을 입력하세요... (Ctrl+V로 이미지 붙여넣기)"
-                    :rows="2"
-                  />
+                  <MarkdownEditor v-model="newAnswerText" height="160px" />
                   <select v-model="newAnswerBy" class="form-control mt-8">
                     <option value="">작성자 선택</option>
                     <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
@@ -231,10 +215,10 @@
 
             <!-- 질문 추가 -->
             <div v-if="addingQuestionToTask === task.id" class="mt-16">
-              <textarea v-model="newQuestionText" class="form-control" rows="3" placeholder="질문을 입력하세요..." />
+              <MarkdownEditor v-model="newQuestionText" height="160px" />
               <div class="flex gap-8 mt-8" style="justify-content:flex-end">
                 <button class="btn btn-ghost btn-sm" @click="cancelAddQuestion">취소</button>
-                <button class="btn btn-primary btn-sm" @click="addQuestion(task.id)" :disabled="!newQuestionText">질문 추가</button>
+                <button class="btn btn-primary btn-sm" @click="addQuestion(task.id)" :disabled="!hasContent(newQuestionText)">질문 추가</button>
               </div>
             </div>
             <div v-else class="mt-8">
@@ -252,7 +236,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
-import RichTextarea from '../components/RichTextarea.vue'
+import { MdPreview } from 'md-editor-v3'
+import MarkdownEditor from '../components/MarkdownEditor.vue'
 
 const tasks = ref([])
 const objectives = ref([])
@@ -320,14 +305,8 @@ async function onWeekChange() {
 
 // ── 헬퍼 ──
 function getObjectiveName(id) { return objectives.value.find(o => o.id === id)?.name ?? id }
-function renderContent(text) {
-  if (!text) return ''
-  if (/<[a-zA-Z]/.test(text)) return text
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
-}
-function hasContent(html) {
-  if (!html) return false
-  return html.replace(/<(?!img)[^>]+>/gi, '').trim().length > 0 || /<img/i.test(html)
+function hasContent(text) {
+  return !!(text && text.trim())
 }
 function showToast(msg) { toastMsg.value = msg; setTimeout(() => { toastMsg.value = '' }, 2000) }
 
@@ -446,7 +425,7 @@ async function loadQnA() {
 function startAddQuestion(taskId) { addingQuestionToTask.value = taskId; newQuestionText.value = '' }
 function cancelAddQuestion() { addingQuestionToTask.value = ''; newQuestionText.value = '' }
 async function addQuestion(taskId) {
-  if (!newQuestionText.value.trim()) return
+  if (!hasContent(newQuestionText.value)) return
   try {
     const { data } = await axios.post('/api/qna/questions', { task_id: taskId, week: selectedWeek.value, question: newQuestionText.value.trim() })
     qnaList.value.push(data)
@@ -457,7 +436,7 @@ async function addQuestion(taskId) {
 function startEditQuestion(qa) { editingQuestionId.value = qa.id; editingQuestionText.value = qa.question }
 function cancelEditQuestion() { editingQuestionId.value = ''; editingQuestionText.value = '' }
 async function updateQuestion(questionId) {
-  if (!editingQuestionText.value.trim()) return
+  if (!hasContent(editingQuestionText.value)) return
   try {
     const { data } = await axios.put(`/api/qna/questions/${questionId}`, { question: editingQuestionText.value.trim() })
     const idx = qnaList.value.findIndex(q => q.id === questionId)
@@ -651,4 +630,28 @@ onMounted(fetchAll)
 .answer-date { color: var(--text-muted); }
 .answer-edited { font-size: 11px; opacity: 0.7; }
 
+</style>
+
+<style>
+/* MdPreview 인라인 렌더링 - 카드 내부에 자연스럽게 통합 */
+.md-preview-inline.md-editor-previewOnly {
+  background: transparent !important;
+  padding: 0 !important;
+}
+.md-preview-inline .md-editor-preview-wrapper {
+  padding: 4px 0 !important;
+}
+.md-preview-inline .md-editor-preview {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+.md-preview-inline .md-editor-preview > p:first-child { margin-top: 0; }
+.md-preview-inline .md-editor-preview > p:last-child { margin-bottom: 0; }
+.md-preview-inline .md-editor-preview img {
+  max-width: 100%;
+  border-radius: 4px;
+  margin: 6px 0;
+  display: block;
+}
 </style>
