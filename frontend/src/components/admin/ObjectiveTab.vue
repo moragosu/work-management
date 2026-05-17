@@ -20,8 +20,8 @@
     </div>
 
     <div class="flex-between" style="margin-bottom:16px">
-      <button class="btn btn-ghost btn-sm" @click="exportCsv">⬇ CSV 다운로드</button>
-      <button class="btn btn-primary btn-sm" @click="openModal()">+ 목표 추가</button>
+      <button class="btn btn-ghost btn-sm" @click="exportCsv" data-tooltip="목표 목록을 CSV 파일로 내보내기">⬇ CSV 다운로드</button>
+      <button class="btn btn-primary btn-sm" @click="openModal()" data-tooltip="새 목표(Objective) 추가">+ 목표 추가</button>
     </div>
 
     <div class="card">
@@ -49,7 +49,7 @@
               <td>
                 <div class="text-sm">
                   {{ o.key_results?.length || 0 }}개
-                  <button class="btn btn-ghost btn-xs" @click.stop="openKrModal(o)" style="margin-left:4px">+ KR</button>
+                  <button class="btn btn-ghost btn-xs" @click.stop="openKrModal(o)" style="margin-left:4px" data-tooltip="Key Results 관리">+ KR</button>
                 </div>
                 <div v-if="o.key_results?.length > 0" class="key-result-list">
                   <div v-for="kr in o.key_results" :key="kr.id" class="text-xs text-muted" style="margin-top:2px;padding-left:8px;border-left:2px solid var(--outline)">
@@ -75,8 +75,8 @@
               <td><span :class="sBadge(o.status)">{{ o.status }}</span></td>
               <td>
                 <div style="display:flex;gap:8px">
-                  <button class="btn btn-ghost btn-xs" @click="openModal(o)">수정</button>
-                  <button class="btn btn-danger btn-xs" @click="deleteObjective(o)">삭제</button>
+                  <button class="btn btn-ghost btn-xs" @click="openModal(o)" data-tooltip="목표 정보 수정">수정</button>
+                  <button class="btn btn-danger btn-xs" @click="deleteObjective(o)" data-tooltip="목표 삭제">삭제</button>
                 </div>
               </td>
             </tr>
@@ -90,7 +90,7 @@
       <div class="modal">
         <div class="modal-header">
           <h3>{{ editingId ? 'Objective 수정' : 'Objective 추가' }}</h3>
-          <button class="modal-close" @click="showModal = false">✕</button>
+          <button class="modal-close" @click="showModal = false" data-tooltip="닫기">✕</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -114,8 +114,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-ghost" @click="showModal = false">취소</button>
-          <button class="btn btn-primary" @click="submitObjective" :disabled="!form.name">저장</button>
+          <button class="btn btn-ghost" @click="showModal = false" data-tooltip="변경사항 취소">취소</button>
+          <button class="btn btn-primary" @click="submitObjective" :disabled="!form.name" data-tooltip="목표 저장">저장</button>
         </div>
       </div>
     </div>
@@ -125,7 +125,7 @@
       <div class="modal" style="max-width:640px">
         <div class="modal-header">
           <h3>Key Results - {{ selectedObjective?.id }}: {{ selectedObjective?.name }}</h3>
-          <button class="modal-close" @click="showKrModal = false">✕</button>
+          <button class="modal-close" @click="showKrModal = false" data-tooltip="닫기">✕</button>
         </div>
         <div class="modal-body">
           <div v-if="selectedObjective?.key_results?.length > 0" style="margin-bottom:16px">
@@ -134,15 +134,15 @@
               <div class="flex gap-8" style="align-items:center">
                 <span class="badge badge-blue" style="width:50px">{{ kr.id }}</span>
                 <input v-model="kr.name" class="form-control" placeholder="Key Result 내용" style="flex:1" @input="onKrInput(kr)" />
-                <button v-if="kr.isModified" class="btn btn-primary btn-xs" @click="updateKr(kr)" style="min-width:60px">수정</button>
-                <button v-else class="btn btn-danger btn-xs" @click="deleteKr(kr.id)">✕</button>
+                <button v-if="kr.isModified" class="btn btn-primary btn-xs" @click="updateKr(kr)" style="min-width:60px" data-tooltip="수정 내용 저장">수정</button>
+                <button v-else class="btn btn-danger btn-xs" @click="deleteKr(kr.id)" data-tooltip="Key Result 삭제">✕</button>
               </div>
             </div>
           </div>
           <div class="text-sm text-muted" style="margin-bottom:8px">새 Key Result 추가:</div>
           <div class="flex gap-8" style="align-items:center">
             <input v-model="newKrName" class="form-control" placeholder="Key Result 내용" style="flex:1" />
-            <button class="btn btn-primary btn-xs" @click="addKr" :disabled="!newKrName">추가</button>
+            <button class="btn btn-primary btn-xs" @click="addKr" :disabled="!newKrName" data-tooltip="Key Result 추가">추가</button>
           </div>
         </div>
         <div class="modal-footer">

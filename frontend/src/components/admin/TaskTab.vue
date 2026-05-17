@@ -20,8 +20,8 @@
     </div>
 
     <div class="flex-between" style="margin-bottom:16px">
-      <button class="btn btn-ghost btn-sm" @click="exportCsv">⬇ CSV 다운로드</button>
-      <button class="btn btn-primary btn-sm" @click="openModal()">+ 과제 추가</button>
+      <button class="btn btn-ghost btn-sm" @click="exportCsv" data-tooltip="과제 목록을 CSV 파일로 내보내기">⬇ CSV 다운로드</button>
+      <button class="btn btn-primary btn-sm" @click="openModal()" data-tooltip="새 과제 추가">+ 과제 추가</button>
     </div>
 
     <div class="card">
@@ -49,8 +49,8 @@
               </td>
               <td>
                 <div class="flex gap-8">
-                  <button class="btn btn-ghost btn-xs" @click="openModal(t)">수정</button>
-                  <button class="btn btn-danger btn-xs" @click="deleteTask(t)">삭제</button>
+                  <button class="btn btn-ghost btn-xs" @click="openModal(t)" data-tooltip="과제 정보 수정">수정</button>
+                  <button class="btn btn-danger btn-xs" @click="deleteTask(t)" data-tooltip="과제 삭제">삭제</button>
                 </div>
               </td>
             </tr>
@@ -64,7 +64,7 @@
       <div class="modal">
         <div class="modal-header">
           <h3>{{ editingId ? '과제 수정' : '과제 추가' }}</h3>
-          <button class="modal-close" @click="showModal = false">✕</button>
+          <button class="modal-close" @click="showModal = false" data-tooltip="닫기">✕</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -85,8 +85,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-ghost" @click="showModal = false">취소</button>
-          <button class="btn btn-primary" @click="submitTask" :disabled="!form.name">저장</button>
+          <button class="btn btn-ghost" @click="showModal = false" data-tooltip="변경사항 취소">취소</button>
+          <button class="btn btn-primary" @click="submitTask" :disabled="!form.name" data-tooltip="과제 저장">저장</button>
         </div>
       </div>
     </div>

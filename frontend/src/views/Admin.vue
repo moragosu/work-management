@@ -59,8 +59,8 @@
           </div></div>
         </div>
         <div class="tab-toolbar">
-          <button class="btn btn-ghost btn-sm" @click="exportCsv('staff')">⬇ CSV 다운로드</button>
-          <button class="btn btn-primary btn-sm" @click="staffViewRef?.openAddModal()">+ 인력 추가</button>
+          <button class="btn btn-ghost btn-sm" @click="exportCsv('staff')" data-tooltip="파트원 목록을 CSV 파일로 내보내기">⬇ CSV 다운로드</button>
+          <button class="btn btn-primary btn-sm" @click="staffViewRef?.openAddModal()" data-tooltip="새 파트원 추가">+ 인력 추가</button>
         </div>
         <StaffView :embedded="true" ref="staffViewRef" @updated="fetchStaff" />
       </div>
@@ -71,11 +71,11 @@
           <h3 class="reset-heading">⚠️ 데이터 초기화</h3>
           <p class="text-muted text-sm reset-desc">삭제된 데이터는 복구할 수 없습니다.</p>
           <div class="reset-actions">
-            <button class="btn btn-danger btn-sm" @click="resetData('objectives')">목표 전체 삭제</button>
-            <button class="btn btn-danger btn-sm" @click="resetData('tasks')">과제 전체 삭제</button>
-            <button class="btn btn-danger btn-sm" @click="resetData('staff')">인력 전체 삭제</button>
-            <button class="btn btn-danger btn-sm" @click="resetData('progress')">진행도 전체 삭제</button>
-            <button class="btn btn-danger" @click="resetData('all')">⚠️ 모든 데이터 삭제</button>
+            <button class="btn btn-danger btn-sm" @click="resetData('objectives')" data-tooltip="등록된 목표(OKR)를 모두 삭제 — 복구 불가">목표 전체 삭제</button>
+            <button class="btn btn-danger btn-sm" @click="resetData('tasks')" data-tooltip="등록된 과제를 모두 삭제 — 복구 불가">과제 전체 삭제</button>
+            <button class="btn btn-danger btn-sm" @click="resetData('staff')" data-tooltip="등록된 파트원 정보를 모두 삭제 — 복구 불가">인력 전체 삭제</button>
+            <button class="btn btn-danger btn-sm" @click="resetData('progress')" data-tooltip="주간 진행 현황 및 이슈를 모두 삭제 — 복구 불가">진행도 전체 삭제</button>
+            <button class="btn btn-danger" @click="resetData('all')" data-tooltip="⚠️ 모든 데이터 영구 삭제 — 절대 복구 불가">⚠️ 모든 데이터 삭제</button>
           </div>
         </div>
       </div>

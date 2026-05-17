@@ -1,5 +1,5 @@
 <template>
-  <div class="layout">
+  <div class="layout" @mousemove="onMouseMove" @mouseover="onMouseOver" @mouseout="onMouseOut">
     <aside class="sidebar">
       <RouterLink to="/dashboard" class="sidebar-logo">
         <div class="logo-badge">
@@ -37,8 +37,75 @@
       <RouterView />
     </main>
   </div>
+
+  <!-- 전역 마우스 추적 툴팁 -->
+  <Teleport to="body">
+    <div v-if="tooltip.visible" class="global-tooltip" :style="tooltipStyle">
+      {{ tooltip.text }}
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
+import { reactive, computed } from 'vue'
+
+const tooltip = reactive({ visible: false, text: '', x: 0, y: 0 })
+
+const tooltipStyle = computed(() => {
+  const ox = 14
+  const oy = 20
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const estW = tooltip.text.length * 7 + 20
+  const estH = 28
+  const x = tooltip.x + ox + estW > vw ? tooltip.x - estW - 4 : tooltip.x + ox
+  const y = tooltip.y + oy + estH > vh ? tooltip.y - estH - 8 : tooltip.y + oy
+  return { left: x + 'px', top: y + 'px' }
+})
+
+function onMouseMove(e) {
+  if (tooltip.visible) {
+    tooltip.x = e.clientX
+    tooltip.y = e.clientY
+  }
+}
+
+function onMouseOver(e) {
+  const el = e.target.closest('[data-tooltip]')
+  if (el) {
+    tooltip.text = el.getAttribute('data-tooltip')
+    tooltip.x = e.clientX
+    tooltip.y = e.clientY
+    tooltip.visible = true
+  }
+}
+
+function onMouseOut(e) {
+  const el = e.target.closest('[data-tooltip]')
+  if (el && !el.contains(e.relatedTarget)) {
+    tooltip.visible = false
+  }
+}
 </script>
+
+<style scoped>
+.global-tooltip {
+  position: fixed;
+  z-index: 9999;
+  background: #1a1a2e;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 5px 10px;
+  border-radius: 5px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+  animation: tooltip-in 0.1s ease;
+}
+@keyframes tooltip-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
