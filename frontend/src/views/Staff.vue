@@ -146,11 +146,11 @@
     </div>
 
     <!-- Add Modal -->
-    <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
+    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
       <div class="modal">
         <div class="modal-header">
           <h3>{{ selectedMember ? '인력 수정' : '인력 추가' }}</h3>
-          <button class="modal-close" @click="showModal = false">✕</button>
+          <button class="modal-close" @click="closeModal">✕</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -213,7 +213,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-ghost" @click="showModal = false">취소</button>
+          <button class="btn btn-ghost" @click="closeModal">취소</button>
           <button class="btn btn-primary" @click="submitForm" :disabled="!form.name.trim()">
             {{ selectedMember ? '수정' : '추가' }}
           </button>
@@ -222,11 +222,11 @@
     </div>
 
     <!-- Objective Select Modal -->
-    <div v-if="showObjectiveModal" class="modal-overlay" @click.self="showObjectiveModal = false">
+    <div v-if="showObjectiveModal" class="modal-overlay" @click.self="closeObjectiveModal">
       <div class="modal">
         <div class="modal-header">
           <h3>참여 목표 선택 - {{ selectedMember?.name }}</h3>
-          <button class="modal-close" @click="showObjectiveModal = false">✕</button>
+          <button class="modal-close" @click="closeObjectiveModal">✕</button>
         </div>
         <div class="modal-body">
           <div class="flex gap-8" style="flex-wrap:wrap">
@@ -237,7 +237,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-ghost" @click="showObjectiveModal = false">취소</button>
+          <button class="btn btn-ghost" @click="closeObjectiveModal">취소</button>
           <button class="btn btn-primary" @click="saveObjectives">저장</button>
         </div>
       </div>
@@ -250,6 +250,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
+import { useToast } from '../composables/useToast.js'
+import { useModal } from '../composables/useModal.js'
+import { parseIds } from '../utils/parseIds.js'
 
 const props = defineProps({
   embedded: { type: Boolean, default: false }
@@ -266,9 +269,9 @@ const objectives = ref([])
 const tasks = ref([])  // 과제 목록 추가
 const loading = ref(false)
 const search = ref('')
-const showModal = ref(false)
-const showObjectiveModal = ref(false)
-const toastMsg = ref('')
+const { show: showModal, open: openModal, close: closeModal } = useModal()
+const { show: showObjectiveModal, open: openObjectiveModal, close: closeObjectiveModal } = useModal()
+const { toastMsg, showToast } = useToast()
 const debounceTimers = {}
 
 const defaultForm = () => ({ name: '', role: '', main_skills: '', sub_skills: '', taskIds: [] })
@@ -316,22 +319,9 @@ function updateTaskSelection(taskId, isSelected) {
   }
 }
 
-function showToast(msg) {
-  toastMsg.value = msg
-  setTimeout(() => { toastMsg.value = '' }, 2000)
-}
 
-// 과제 ID들 가져오기
-function getTaskIds(tasksStr) {
-  if (!tasksStr) return []
-  return tasksStr.split(',').map(id => id.trim()).filter(Boolean)
-}
-
-// Objective ID들 가져오기 (하위 호환성 유지)
-function getObjectiveIds(objectivesStr) {
-  if (!objectivesStr) return []
-  return objectivesStr.split(',').map(id => id.trim()).filter(Boolean)
-}
+const getTaskIds = parseIds
+const getObjectiveIds = parseIds
 
 async function fetchStaff() {
   loading.value = true
@@ -388,7 +378,7 @@ function debounceSave(member, field, value) {
 function openAddModal() {
   form.value = defaultForm()
   selectedMember.value = null
-  showModal.value = true
+  openModal()
 }
 
 async function submitForm() {
@@ -416,7 +406,7 @@ async function submitAdd() {
     }
     const { data } = await axios.post('/api/staff', payload)
     staff.value.push(data)
-    showModal.value = false
+    closeModal()
     showToast('인력이 추가되었습니다')
     emit('updated')
   } catch {
@@ -447,7 +437,7 @@ async function submitEdit() {
       staff.value[index] = data
     }
     
-    showModal.value = false
+    closeModal()
     showToast('인력 정보가 수정되었습니다')
     emit('updated')
   } catch {
@@ -458,7 +448,7 @@ async function submitEdit() {
 function openObjectiveSelect(member) {
   selectedMember.value = member
   selectedObjectiveIds.value = getObjectiveIds(member.objectives || member.okrs || '')
-  showObjectiveModal.value = true
+  openObjectiveModal()
 }
 
 async function saveObjectives() {
@@ -478,7 +468,7 @@ async function saveObjectives() {
       // staff.value[index].okrs = objectivesStr  // 백엔드와 호환
     }
     
-    showObjectiveModal.value = false
+    closeObjectiveModal()
     showToast('저장됨')
   } catch {
     showToast('저장 실패')
@@ -575,7 +565,7 @@ function editMember(member) {
     sub_skills: member.sub_skills || '',
     taskIds: member.selected_tasks ? getTaskIds(member.selected_tasks) : []
   }
-  showModal.value = true
+  openModal()
 }
 
 // 집계 기능

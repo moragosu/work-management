@@ -171,6 +171,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import axios from 'axios'
+import { parseIds } from '../utils/parseIds.js'
 
 const router = useRouter()
 
@@ -209,7 +210,7 @@ const weekIssues = computed(() =>
 const assignedTaskIds = computed(() => {
   const ids = new Set()
   staffList.value.forEach(s => {
-    ;(s.selected_tasks || '').split(',').map(t => t.trim()).filter(Boolean).forEach(id => ids.add(id))
+    parseIds(s.selected_tasks).forEach(id => ids.add(id))
   })
   return ids
 })

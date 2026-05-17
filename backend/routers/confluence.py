@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional
-import uuid
 import data_store
+from utils.id_generator import short_uuid
 
 router = APIRouter()
 
@@ -39,7 +39,7 @@ def get_links(week: Optional[str] = Query(None), task_id: Optional[str] = Query(
 def create_link(body: LinkCreate):
     links = _load()
     new_link = {
-        "id": f"CL{str(uuid.uuid4())[:8].upper()}",
+        "id": short_uuid("CL"),
         "week": body.week,
         "task_id": body.task_id,
         "url": body.url,

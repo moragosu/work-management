@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 import data_store
+from utils.id_generator import next_sequential_id
 
 router = APIRouter()
 
@@ -35,19 +36,7 @@ def _save(tasks: list) -> None:
 
 
 def _get_next_task_id() -> str:
-    """Generate next task ID (T1, T2, ...)."""
-    tasks = _load()
-    if not tasks:
-        return "T1"
-    max_num = 0
-    for t in tasks:
-        try:
-            num = int(t["id"].replace("T", ""))
-            if num > max_num:
-                max_num = num
-        except (ValueError, KeyError):
-            pass
-    return f"T{max_num + 1}"
+    return next_sequential_id(_load(), "T")
 
 
 # ── Task endpoints ─────────────────────────────────────────────────────────────

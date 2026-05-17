@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, field_validator
 from typing import List, Optional
 import data_store
+from utils.id_generator import next_sequential_id
 
 router = APIRouter()
 
@@ -40,35 +41,11 @@ def _save(objectives: list) -> None:
 
 
 def _get_next_objective_id() -> str:
-    """Generate next objective ID (O1, O2, ...)."""
-    objectives = _load()
-    if not objectives:
-        return "O1"
-    max_num = 0
-    for o in objectives:
-        try:
-            num = int(o["id"].replace("O", ""))
-            if num > max_num:
-                max_num = num
-        except (ValueError, KeyError):
-            pass
-    return f"O{max_num + 1}"
+    return next_sequential_id(_load(), "O")
 
 
 def _get_next_key_result_id(objective: dict) -> str:
-    """Generate next key result ID (KR1, KR2, ...)."""
-    key_results = objective.get("key_results", [])
-    if not key_results:
-        return "KR1"
-    max_num = 0
-    for kr in key_results:
-        try:
-            num = int(kr["id"].replace("KR", ""))
-            if num > max_num:
-                max_num = num
-        except (ValueError, KeyError):
-            pass
-    return f"KR{max_num + 1}"
+    return next_sequential_id(objective.get("key_results", []), "KR")
 
 
 def _calculate_progress(objective: dict) -> int:

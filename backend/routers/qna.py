@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date, datetime
-import uuid
 import data_store
+from utils.id_generator import short_uuid
 
 router = APIRouter()
 
@@ -58,7 +58,7 @@ def list_questions(week: Optional[str] = Query(None), task_id: Optional[str] = Q
 def create_question(body: QuestionCreate):
     questions, answers = _load()
     new_q = {
-        "id": f"Q{str(uuid.uuid4())[:8].upper()}",
+        "id": short_uuid("Q"),
         "task_id": body.task_id,
         "week": body.week,
         "question": body.question,
@@ -96,7 +96,7 @@ def create_answer(body: AnswerCreate):
     if not any(q["id"] == body.question_id for q in questions):
         raise HTTPException(status_code=404, detail="Question not found")
     new_a = {
-        "id": f"A{str(uuid.uuid4())[:8].upper()}",
+        "id": short_uuid("A"),
         "question_id": body.question_id,
         "answer": body.answer,
         "answer_by": body.answer_by,

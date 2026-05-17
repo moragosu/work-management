@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import date
-import uuid
 import data_store
+from utils.id_generator import short_uuid
 
 router = APIRouter()
 
@@ -91,7 +91,7 @@ def create_item(item: ProgressItem):
     items = _load()
     today = date.today().isoformat()
     new_item = item.model_dump()
-    new_item["id"] = f"P{str(uuid.uuid4())[:8].upper()}"
+    new_item["id"] = short_uuid("P")
     new_item["created_at"] = today
     new_item["updated_at"] = today
     items.append(new_item)

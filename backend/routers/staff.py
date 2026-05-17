@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import List, Optional
-import uuid
 import data_store
+from utils.id_generator import short_uuid
 
 router = APIRouter()
 
@@ -70,7 +70,7 @@ def get_staff(staff_id: str):
 def create_staff(member: StaffMember):
     staff = _load()
     new_member = member.model_dump()
-    new_member["id"] = f"S{str(uuid.uuid4())[:8].upper()}"
+    new_member["id"] = short_uuid("S")
     staff.append(new_member)
     _save(staff)
     return new_member
