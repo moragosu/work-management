@@ -11,6 +11,20 @@ if ! command -v uv &>/dev/null; then
   export PATH="$HOME/.local/bin:$PATH"
 fi
 
+# node/npm 설치 확인
+if ! command -v node &>/dev/null || ! command -v npm &>/dev/null; then
+  echo "Node.js가 없습니다. nvm으로 설치 중..."
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  nvm install 20
+  nvm use 20
+else
+  # nvm이 있는 환경이면 로드
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+fi
+
 # Backend
 echo "백엔드 시작 (포트 8000)..."
 cd "$REPO_DIR/backend"
@@ -21,7 +35,7 @@ BACKEND_PID=$!
 echo "  PID: $BACKEND_PID"
 
 # Frontend
-echo "프론트엔드 시작 (포트 5173)..."
+echo "프론트엔드 시작 (포트 5174)..."
 cd "$REPO_DIR/frontend"
 if [ ! -d "node_modules" ]; then
   npm install
@@ -32,7 +46,7 @@ echo "  PID: $FRONTEND_PID"
 
 echo ""
 echo "✅ 개발 서버 실행 중"
-echo "   프론트엔드: http://localhost:5173"
+echo "   프론트엔드: http://localhost:5174"
 echo "   API:        http://localhost:8000/docs"
 echo ""
 echo "종료: Ctrl+C"
