@@ -10,13 +10,17 @@
     <div class="page-body">
       <!-- 주차 선택 + 인력 필터 -->
       <div class="filter-bar" style="flex-direction:column;align-items:flex-start;gap:10px">
-        <div class="flex gap-8" style="align-items:center">
-          <button class="btn btn-ghost btn-sm" @click="prevWeek" :disabled="getCurrentWeekIndex() <= 0">←</button>
-          <select v-model="selectedWeek" class="form-control" @change="onWeekChange" style="min-width:120px">
-            <option value="">주차 선택</option>
-            <option v-for="w in availableWeeks" :key="w" :value="w">{{ w }}</option>
-          </select>
-          <button class="btn btn-ghost btn-sm" @click="nextWeek" :disabled="getCurrentWeekIndex() >= availableWeeks.length - 1">→</button>
+        <div class="week-nav">
+          <button class="week-nav-btn" @click="prevWeek" :disabled="getCurrentWeekIndex() <= 0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="week-nav-info">
+            <span class="week-nav-label">{{ selectedWeek }}</span>
+            <span class="week-nav-range">{{ getWeekDateRange(selectedWeek) }}</span>
+          </div>
+          <button class="week-nav-btn" @click="nextWeek" :disabled="getCurrentWeekIndex() >= availableWeeks.length - 1">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
         </div>
         <div v-if="staffList.length > 0" class="flex gap-6" style="align-items:center;flex-wrap:wrap">
           <span class="filter-label-sm">인력</span>
@@ -348,6 +352,18 @@ function getCurrentWeekNumber() {
   const start = new Date(today.getFullYear(), 0, 1)
   return Math.ceil(((today - start) / 86400000 + start.getDay() + 1) / 7)
 }
+
+function getWeekDateRange(weekStr) {
+  if (!weekStr) return ''
+  const weekNum = parseInt(weekStr.replace('W', ''))
+  const year = new Date().getFullYear()
+  const jan1 = new Date(year, 0, 1)
+  const startOffset = (weekNum - 1) * 7 - jan1.getDay()
+  const start = new Date(year, 0, 1 + startOffset)
+  const end = new Date(year, 0, 1 + startOffset + 6)
+  const fmt = (d) => `${d.getMonth() + 1}/${d.getDate()}`
+  return `${fmt(start)} – ${fmt(end)}`
+}
 function getCurrentWeekIndex() { return availableWeeks.value.indexOf(selectedWeek.value) }
 function prevWeek() {
   const i = getCurrentWeekIndex()
@@ -634,6 +650,54 @@ onMounted(() => {
   font-weight: 600;
   color: var(--text-muted);
   white-space: nowrap;
+}
+
+/* 주차 네비게이터 */
+.week-nav {
+  display: inline-flex;
+  align-items: stretch;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  overflow: hidden;
+}
+.week-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background 0.15s, color 0.15s;
+}
+.week-nav-btn:hover:not(:disabled) {
+  background: var(--gray-100);
+  color: var(--text-primary);
+}
+.week-nav-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+.week-nav-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  border-left: 1px solid var(--outline);
+  border-right: 1px solid var(--outline);
+  min-width: 130px;
+  gap: 2px;
+}
+.week-nav-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+.week-nav-range {
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .staff-chip {
