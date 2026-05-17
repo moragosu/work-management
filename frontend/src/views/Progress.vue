@@ -100,12 +100,9 @@
             <!-- ② 진행 내용 -->
             <ProgressSection
               :progress="progressMap[task.id] || null"
-              :staff-list="staffList"
-              :task-members="getTaskMembers(task.id)"
               :task-id="task.id"
               :week="selectedWeek"
               :objective-id="task.objective_id || ''"
-              :show="showWeeklyProgress"
               @update:progress="p => onProgressUpdate(task.id, p)"
             />
 
@@ -162,7 +159,6 @@ const linkMap = ref({})
 const progressMap = ref({})
 const linkInputs = ref({})
 const editingLinkId = ref({})
-const showWeeklyProgress = ref(false)
 
 // ── 주차 ──
 const availableWeeks = computed(() => {
@@ -313,10 +309,7 @@ async function fetchAll() {
   await handleFocusQuery()
 }
 
-onMounted(() => {
-  showWeeklyProgress.value = localStorage.getItem('showWeeklyProgress') === 'true'
-  fetchAll()
-})
+onMounted(fetchAll)
 </script>
 
 <style scoped>
