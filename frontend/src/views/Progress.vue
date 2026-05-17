@@ -100,6 +100,7 @@
             <!-- ② 진행 내용 -->
             <ProgressSection
               :progress="progressMap[task.id] || null"
+              :staff-list="staffList"
               :task-id="task.id"
               :week="selectedWeek"
               :objective-id="task.objective_id || ''"

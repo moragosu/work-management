@@ -140,7 +140,67 @@
         </div>
       </div>
 
-      <!-- ③ 목표 카드 목록 -->
+      <!-- ③ 팀원별 활동 현황 -->
+      <div class="section-header" style="margin-bottom:12px">
+        <span class="section-header-title">팀원별 활동 현황</span>
+      </div>
+      <div v-if="staffList.length === 0" class="card" style="margin-bottom:24px">
+        <div class="card-body text-muted text-sm">팀원 정보가 없습니다.</div>
+      </div>
+      <div v-else class="card" style="margin-bottom:24px;overflow:visible">
+        <table>
+          <thead>
+            <tr>
+              <th>팀원</th>
+              <th>담당 과제</th>
+              <th>이슈 등록</th>
+              <th>Q&A 답변</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="s in staffList" :key="s.id" style="cursor:default">
+              <td style="vertical-align:middle">
+                <div class="member-cell">
+                  <span class="member-avatar">{{ s.name[0] }}</span>
+                  <div>
+                    <div class="member-name">{{ s.name }}</div>
+                    <div class="member-role">{{ s.role }}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="vertical-align:middle;width:22%">
+                <div class="stat-bar-row">
+                  <span class="stat-num">{{ memberStatsMap[s.name]?.tasks ?? 0 }}</span>
+                  <div class="stat-bar">
+                    <div class="stat-fill stat-fill-blue"
+                      :style="{ width: barWidth(memberStatsMap[s.name]?.tasks, maxStats.tasks) }"></div>
+                  </div>
+                </div>
+              </td>
+              <td style="vertical-align:middle;width:22%">
+                <div class="stat-bar-row">
+                  <span class="stat-num">{{ memberStatsMap[s.name]?.issues ?? 0 }}</span>
+                  <div class="stat-bar">
+                    <div class="stat-fill stat-fill-orange"
+                      :style="{ width: barWidth(memberStatsMap[s.name]?.issues, maxStats.issues) }"></div>
+                  </div>
+                </div>
+              </td>
+              <td style="vertical-align:middle;width:22%">
+                <div class="stat-bar-row">
+                  <span class="stat-num">{{ memberStatsMap[s.name]?.answers ?? 0 }}</span>
+                  <div class="stat-bar">
+                    <div class="stat-fill stat-fill-green"
+                      :style="{ width: barWidth(memberStatsMap[s.name]?.answers, maxStats.answers) }"></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ④ 목표 카드 목록 -->
       <div class="section-header" style="margin-bottom:12px">
         <span class="section-header-title">목표 현황</span>
       </div>
@@ -189,6 +249,8 @@ const tasks      = ref([])
 const staffList  = ref([])
 const questions  = ref([])
 const progressList = ref([])
+const allProgressItems = ref([])
+const allQuestions     = ref([])
 
 const loading = ref(false)
 const actionLoading = ref(false)
@@ -228,6 +290,34 @@ const unassignedTasks = computed(() =>
   tasks.value.filter(t => !assignedTaskIds.value.has(t.id))
 )
 
+// ── 팀원별 활동 통계 ──
+const memberStatsMap = computed(() => {
+  const map = {}
+  staffList.value.forEach(s => {
+    map[s.name] = {
+      tasks:   parseIds(s.selected_tasks || '').length,
+      issues:  allProgressItems.value.filter(p => p.assignee === s.name && p.issue?.trim()).length,
+      answers: allQuestions.value.flatMap(q => q.answers || []).filter(a => a.answer_by === s.name).length,
+    }
+  })
+  return map
+})
+
+const maxStats = computed(() => {
+  const vals = Object.values(memberStatsMap.value)
+  if (!vals.length) return { tasks: 1, issues: 1, answers: 1 }
+  return {
+    tasks:   Math.max(1, ...vals.map(v => v.tasks)),
+    issues:  Math.max(1, ...vals.map(v => v.issues)),
+    answers: Math.max(1, ...vals.map(v => v.answers)),
+  }
+})
+
+function barWidth(val, max) {
+  if (!val) return '0%'
+  return `${Math.max(3, Math.round((val / max) * 100))}%`
+}
+
 // ── 헬퍼 ──
 function getTaskName(taskId) {
   return tasks.value.find(t => t.id === taskId)?.name || taskId
@@ -264,12 +354,16 @@ async function refresh() {
     tasks.value      = tRes.data
     staffList.value  = sRes.data
 
-    const [qRes, pRes] = await Promise.all([
+    const [qRes, pRes, allPRes, allQRes] = await Promise.all([
       axios.get('/api/qna/questions', { params: { week: currentWeek } }),
       axios.get('/api/progress',      { params: { week: currentWeek } }),
+      axios.get('/api/progress'),
+      axios.get('/api/qna/questions'),
     ])
-    questions.value    = qRes.data
-    progressList.value = pRes.data
+    questions.value        = qRes.data
+    progressList.value     = pRes.data
+    allProgressItems.value = allPRes.data
+    allQuestions.value     = allQRes.data
   } finally {
     loading.value = false
     actionLoading.value = false
@@ -397,6 +491,26 @@ onMounted(refresh)
   transition: color 0.15s;
 }
 .panel-item-link:hover .panel-goto { color: var(--primary); }
+
+/* ── 팀원별 활동 현황 ── */
+.member-cell { display: flex; align-items: center; gap: 10px; }
+.member-avatar {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--primary-light); color: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; flex-shrink: 0;
+}
+.member-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.member-role { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+.stat-bar-row { display: flex; align-items: center; gap: 8px; }
+.stat-num { font-size: 13px; font-weight: 600; color: var(--text-primary); min-width: 18px; text-align: right; }
+.stat-bar { flex: 1; height: 6px; background: var(--gray-100); border-radius: var(--radius-full); overflow: hidden; }
+.stat-fill { height: 100%; border-radius: var(--radius-full); transition: width 0.4s ease; }
+.stat-fill-blue   { background: var(--primary); }
+.stat-fill-orange { background: var(--orange); }
+.stat-fill-green  { background: var(--success); }
 
 /* ── 섹션 헤더 ── */
 .section-header { display: flex; align-items: center; gap: 8px; }
