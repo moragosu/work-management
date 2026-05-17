@@ -10,17 +10,24 @@
     <div class="page-body">
       <!-- 주차 선택 + 인력 필터 -->
       <div class="filter-bar" style="flex-direction:column;align-items:flex-start;gap:10px">
-        <div class="week-nav">
-          <button class="week-nav-btn" @click="prevWeek" :disabled="getCurrentWeekIndex() <= 0">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <div class="week-nav-info">
-            <span class="week-nav-label">{{ selectedWeek }}</span>
-            <span class="week-nav-range">{{ getWeekDateRange(selectedWeek) }}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="week-nav">
+            <button class="week-nav-btn" @click="prevWeek" :disabled="getCurrentWeekIndex() <= 0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div class="week-nav-info">
+              <span class="week-nav-label">{{ selectedWeek }}</span>
+              <span class="week-nav-range">{{ getWeekDateRange(selectedWeek) }}</span>
+            </div>
+            <button class="week-nav-btn" @click="nextWeek" :disabled="getCurrentWeekIndex() >= availableWeeks.length - 1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
           </div>
-          <button class="week-nav-btn" @click="nextWeek" :disabled="getCurrentWeekIndex() >= availableWeeks.length - 1">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
+          <button
+            v-if="selectedWeek !== `W${getCurrentWeekNumber()}`"
+            class="btn btn-ghost btn-sm week-today-btn"
+            @click="goToCurrentWeek"
+          >이번 주</button>
         </div>
         <div v-if="staffList.length > 0" class="flex gap-6" style="align-items:center;flex-wrap:wrap">
           <span class="filter-label-sm">인력</span>
@@ -373,6 +380,10 @@ function nextWeek() {
   const i = getCurrentWeekIndex()
   if (i < availableWeeks.value.length - 1) { selectedWeek.value = availableWeeks.value[i + 1]; onWeekChange() }
 }
+function goToCurrentWeek() {
+  selectedWeek.value = `W${getCurrentWeekNumber()}`
+  onWeekChange()
+}
 async function onWeekChange() {
   if (!selectedWeek.value) return
   initLinkInputs()
@@ -698,6 +709,13 @@ onMounted(() => {
 .week-nav-range {
   font-size: 12px;
   color: var(--text-muted);
+}
+.week-today-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: var(--color-primary, #4f8ef7);
+  border-color: var(--color-primary, #4f8ef7);
 }
 
 .staff-chip {
