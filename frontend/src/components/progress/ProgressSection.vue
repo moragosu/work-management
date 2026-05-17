@@ -53,6 +53,8 @@
       <button class="btn btn-ghost btn-sm" @click="startAdd">+ 진행 내용 입력</button>
     </template>
   </div>
+
+  <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
 </template>
 
 <script setup>
@@ -72,7 +74,7 @@ const props = defineProps({
   show: { type: Boolean, default: true },
 })
 const emit = defineEmits(['update:progress'])
-const { showToast } = useToast()
+const { toastMsg, showToast } = useToast()
 
 const adding = ref(false)
 const editing = ref(false)

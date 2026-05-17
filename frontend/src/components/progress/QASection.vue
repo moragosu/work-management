@@ -124,6 +124,8 @@
       </div>
     </div>
   </div>
+
+  <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
 </template>
 
 <script setup>
@@ -141,7 +143,7 @@ const props = defineProps({
   week: { type: String, required: true },
 })
 const emit = defineEmits(['update:questions'])
-const { showToast } = useToast()
+const { toastMsg, showToast } = useToast()
 
 function hasContent(text) { return !!(text && text.trim()) }
 

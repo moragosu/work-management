@@ -125,6 +125,8 @@
       </div>
     </div>
   </div>
+
+  <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
 </template>
 
 <script setup>
@@ -143,7 +145,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['refresh'])
 const route = useRoute()
-const { showToast } = useToast()
+const { toastMsg, showToast } = useToast()
 
 // ── 통계 ──
 const stats = computed(() => ({

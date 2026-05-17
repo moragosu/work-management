@@ -151,6 +151,8 @@
       </div>
     </div>
   </div>
+
+  <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
 </template>
 
 <script setup>
@@ -167,7 +169,7 @@ const props = defineProps({
   nextId: { type: String, default: 'O1' },
 })
 const emit = defineEmits(['refresh'])
-const { showToast } = useToast()
+const { toastMsg, showToast } = useToast()
 
 // ── 통계 ──
 const stats = computed(() => ({
