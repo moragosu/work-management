@@ -118,15 +118,15 @@
               모든 과제에 담당자가 배정되어 있습니다 👍
             </div>
             <ul v-else class="panel-list">
-              <li v-for="t in unassignedTasks" :key="t.id" class="panel-item">
+              <li v-for="t in unassignedTasks" :key="t.id" class="panel-item panel-item-link" @click="goToTask(t)">
                 <div class="panel-item-main">{{ t.name }}</div>
                 <div class="panel-item-sub">
                   <span class="badge badge-blue">{{ t.id }}</span>
                   <span class="badge badge-gray">{{ getObjectiveName(t.objective_id) }}</span>
+                  <span class="panel-goto">바로가기 →</span>
                 </div>
               </li>
             </ul>
-            <router-link to="/admin" class="panel-link">관리 도구에서 인력 배정하기 →</router-link>
           </div>
         </div>
       </div>
@@ -235,6 +235,9 @@ function goToQuestion(q) {
 }
 function goToIssue(p) {
   router.push({ path: '/progress', query: { week: currentWeek, focusIssue: p.task_id } })
+}
+function goToTask(t) {
+  router.push({ path: '/admin', query: { tab: 'task', focusTask: t.id } })
 }
 
 // ── 데이터 로드 ──

@@ -168,7 +168,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="t in tasks" :key="t.id">
+                <tr v-for="t in tasks" :key="t.id" :id="'task-row-' + t.id">
                   <td><span class="badge badge-blue">{{ t.id }}</span></td>
                   <td style="font-weight:600">{{ t.name }}</td>
                   <td><span class="text-sm">{{ getObjectiveName(t.objective_id) }}</span></td>
@@ -424,10 +424,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import axios from 'axios'
 import StaffView from './Staff.vue'
 
+const route = useRoute()
 const adminMode = ref(false)
 
 const tabs = computed(() => {
@@ -911,9 +913,19 @@ async function resetData(target) {
 }
 
 onMounted(async () => {
-  // localStorage에서 관리자 모드 상태 복원
   adminMode.value = localStorage.getItem('adminMode') === 'true'
+  if (route.query.tab) activeTab.value = route.query.tab
   await Promise.all([fetchObjectives(), fetchTasks(), fetchStaff()])
+  if (route.query.focusTask) {
+    await nextTick()
+    await new Promise(r => setTimeout(r, 80))
+    const el = document.getElementById(`task-row-${route.query.focusTask}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.classList.add('highlight-focus')
+      setTimeout(() => el?.classList.remove('highlight-focus'), 2200)
+    }
+  }
 })
 </script>
 

@@ -710,19 +710,6 @@ onMounted(fetchAll)
 </style>
 
 <style>
-/* 포커스 하이라이트 */
-@keyframes focusPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.45), var(--shadow-l1); }
-  50%  { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.15), var(--shadow-l1); }
-  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0), var(--shadow-l1); }
-}
-.highlight-focus {
-  animation: focusPulse 1.8s ease-out;
-  outline: 2px solid rgba(99, 102, 241, 0.5);
-  outline-offset: 2px;
-  border-radius: 8px;
-}
-
 /* MdPreview 인라인 렌더링 - 카드 내부에 자연스럽게 통합 */
 .md-preview-inline.md-editor-previewOnly {
   background: transparent !important;
