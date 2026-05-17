@@ -21,6 +21,7 @@ class ProgressItem(BaseModel):
     issue: str = ""
     assignee: str = ""
     solution: str = ""
+    images: List[str] = []
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
@@ -37,6 +38,7 @@ class ProgressUpdate(BaseModel):
     issue: Optional[str] = None
     assignee: Optional[str] = None
     solution: Optional[str] = None
+    images: Optional[List[str]] = None
 
 
 def _load():

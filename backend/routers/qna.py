@@ -31,11 +31,13 @@ class AnswerCreate(BaseModel):
     question_id: str
     answer: str
     answer_by: str
+    images: list = []
 
 
 class AnswerUpdate(BaseModel):
     answer: str
     answer_by: str
+    images: list = []
 
 
 @router.get("/questions")
@@ -98,6 +100,7 @@ def create_answer(body: AnswerCreate):
         "question_id": body.question_id,
         "answer": body.answer,
         "answer_by": body.answer_by,
+        "images": body.images,
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }
     answers.append(new_a)
@@ -112,6 +115,7 @@ def update_answer(answer_id: str, body: AnswerUpdate):
         if a["id"] == answer_id:
             a["answer"] = body.answer
             a["answer_by"] = body.answer_by
+            a["images"] = body.images
             a["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M")
             _save(questions, answers)
             return a

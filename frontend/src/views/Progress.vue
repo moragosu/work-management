@@ -79,6 +79,11 @@
                     <span class="badge badge-gray">{{ getProgress(task.id).assignee || '담당자 없음' }}</span>
                   </div>
                   <p class="progress-text">{{ getProgress(task.id).result }}</p>
+                  <div v-if="getProgress(task.id).images?.length" class="image-preview-list">
+                    <a v-for="(url, i) in getProgress(task.id).images" :key="i" :href="url" target="_blank" class="image-preview-item">
+                      <img :src="url" class="preview-thumb" />
+                    </a>
+                  </div>
                   <div v-if="getProgress(task.id).issue" class="issue-box">
                     <span class="issue-label">⚠ 이슈</span>
                     <p class="progress-text">{{ getProgress(task.id).issue }}</p>
@@ -106,7 +111,14 @@
                   <div class="form-group">
                     <label class="form-label">진행 내용</label>
                     <textarea v-model="progressForm[task.id].result" class="form-control" rows="3"
-                      placeholder="이번 주 진행한 내용을 입력하세요..." />
+                      placeholder="이번 주 진행한 내용을 입력하세요... (Ctrl+V로 이미지 붙여넣기)"
+                      @paste="handleImgPaste($event, progressForm[task.id].images)" />
+                    <div v-if="progressForm[task.id].images?.length" class="image-preview-list">
+                      <div v-for="(url, i) in progressForm[task.id].images" :key="i" class="image-preview-item">
+                        <img :src="url" class="preview-thumb" />
+                        <button class="image-remove-btn" @click="progressForm[task.id].images.splice(i, 1)">×</button>
+                      </div>
+                    </div>
                   </div>
                   <div class="form-group">
                     <label class="form-label">이슈 / 블로커 <span class="text-muted text-sm">(선택)</span></label>
@@ -167,7 +179,14 @@
                 <div class="qa-content">
                   <template v-if="editingAnswerId === ans.id">
                     <div style="flex:1">
-                      <textarea v-model="editingAnswerText" class="form-control" rows="2" />
+                      <textarea v-model="editingAnswerText" class="form-control" rows="2"
+                        @paste="handleImgPaste($event, editingAnswerImages)" />
+                      <div v-if="editingAnswerImages.length" class="image-preview-list">
+                        <div v-for="(url, i) in editingAnswerImages" :key="i" class="image-preview-item">
+                          <img :src="url" class="preview-thumb" />
+                          <button class="image-remove-btn" @click="editingAnswerImages.splice(i, 1)">×</button>
+                        </div>
+                      </div>
                       <select v-model="editingAnswerBy" class="form-control mt-8">
                         <option value="">작성자 선택</option>
                         <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
@@ -185,6 +204,11 @@
                       <span class="answer-date">{{ ans.updated_at ?? ans.created_at }}</span>
                       <span v-if="ans.updated_at" class="answer-edited">(수정됨)</span>
                     </span>
+                    <div v-if="ans.images?.length" class="image-preview-list">
+                      <a v-for="(url, i) in ans.images" :key="i" :href="url" target="_blank" class="image-preview-item">
+                        <img :src="url" class="preview-thumb" />
+                      </a>
+                    </div>
                   </template>
                 </div>
                 <div v-if="editingAnswerId !== ans.id" class="qa-actions">
@@ -197,7 +221,15 @@
               <div v-if="addingAnswerToId === qa.id" class="answer-row">
                 <span class="badge badge-green">A</span>
                 <div style="flex:1">
-                  <textarea v-model="newAnswerText" class="form-control" rows="2" placeholder="답변을 입력하세요..." />
+                  <textarea v-model="newAnswerText" class="form-control" rows="2"
+                    placeholder="답변을 입력하세요... (Ctrl+V로 이미지 붙여넣기)"
+                    @paste="handleImgPaste($event, newAnswerImages)" />
+                  <div v-if="newAnswerImages.length" class="image-preview-list">
+                    <div v-for="(url, i) in newAnswerImages" :key="i" class="image-preview-item">
+                      <img :src="url" class="preview-thumb" />
+                      <button class="image-remove-btn" @click="newAnswerImages.splice(i, 1)">×</button>
+                    </div>
+                  </div>
                   <select v-model="newAnswerBy" class="form-control mt-8">
                     <option value="">작성자 선택</option>
                     <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
@@ -238,6 +270,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
+import { useImageUpload } from '../composables/useImageUpload.js'
 
 const tasks = ref([])
 const objectives = ref([])
@@ -269,9 +302,13 @@ const editingQuestionText = ref('')
 const addingAnswerToId = ref('')
 const newAnswerText = ref('')
 const newAnswerBy = ref('')
+const newAnswerImages = ref([])
 const editingAnswerId = ref('')
 const editingAnswerText = ref('')
 const editingAnswerBy = ref('')
+const editingAnswerImages = ref([])
+
+const { uploading: imgUploading, handlePaste: handleImgPaste } = useImageUpload(showToast)
 
 // ── 주차 ──
 const availableWeeks = computed(() => {
@@ -326,12 +363,12 @@ async function loadProgress() {
 
 function startAddProgress(taskId) {
   addingProgressToTask.value = taskId
-  progressForm.value[taskId] = { assignee: '', result: '', issue: '' }
+  progressForm.value[taskId] = { assignee: '', result: '', issue: '', images: [] }
 }
 function startEditProgress(taskId) {
   const p = progressMap.value[taskId]
   editingProgressId.value = { ...editingProgressId.value, [taskId]: true }
-  progressForm.value[taskId] = { assignee: p.assignee || '', result: p.result || '', issue: p.issue || '' }
+  progressForm.value[taskId] = { assignee: p.assignee || '', result: p.result || '', issue: p.issue || '', images: [...(p.images || [])] }
 }
 function cancelProgress(taskId) {
   addingProgressToTask.value = ''
@@ -452,24 +489,24 @@ async function deleteQuestion(questionId) {
 }
 
 // ── 답변 ──
-function startAddAnswer(questionId) { addingAnswerToId.value = questionId; newAnswerText.value = ''; newAnswerBy.value = '' }
-function cancelAddAnswer() { addingAnswerToId.value = ''; newAnswerText.value = ''; newAnswerBy.value = '' }
+function startAddAnswer(questionId) { addingAnswerToId.value = questionId; newAnswerText.value = ''; newAnswerBy.value = ''; newAnswerImages.value = [] }
+function cancelAddAnswer() { addingAnswerToId.value = ''; newAnswerText.value = ''; newAnswerBy.value = ''; newAnswerImages.value = [] }
 async function addAnswer(questionId) {
   if (!newAnswerText.value.trim() || !newAnswerBy.value) return
   try {
-    const { data } = await axios.post('/api/qna/answers', { question_id: questionId, answer: newAnswerText.value.trim(), answer_by: newAnswerBy.value })
+    const { data } = await axios.post('/api/qna/answers', { question_id: questionId, answer: newAnswerText.value.trim(), answer_by: newAnswerBy.value, images: newAnswerImages.value })
     const idx = qnaList.value.findIndex(q => q.id === questionId)
     if (idx !== -1) qnaList.value[idx] = { ...qnaList.value[idx], answers: [...(qnaList.value[idx].answers || []), data] }
     cancelAddAnswer()
     showToast('답변이 저장되었습니다')
   } catch { showToast('답변 저장 실패') }
 }
-function startEditAnswer(answer) { editingAnswerId.value = answer.id; editingAnswerText.value = answer.answer; editingAnswerBy.value = answer.answer_by }
-function cancelEditAnswer() { editingAnswerId.value = ''; editingAnswerText.value = ''; editingAnswerBy.value = '' }
+function startEditAnswer(answer) { editingAnswerId.value = answer.id; editingAnswerText.value = answer.answer; editingAnswerBy.value = answer.answer_by; editingAnswerImages.value = [...(answer.images || [])] }
+function cancelEditAnswer() { editingAnswerId.value = ''; editingAnswerText.value = ''; editingAnswerBy.value = ''; editingAnswerImages.value = [] }
 async function updateAnswer(answerId) {
   if (!editingAnswerText.value.trim() || !editingAnswerBy.value) return
   try {
-    const { data } = await axios.put(`/api/qna/answers/${answerId}`, { answer: editingAnswerText.value.trim(), answer_by: editingAnswerBy.value })
+    const { data } = await axios.put(`/api/qna/answers/${answerId}`, { answer: editingAnswerText.value.trim(), answer_by: editingAnswerBy.value, images: editingAnswerImages.value })
     const idx = qnaList.value.findIndex(q => q.answers?.some(a => a.id === answerId))
     if (idx !== -1) qnaList.value[idx] = { ...qnaList.value[idx], answers: qnaList.value[idx].answers.map(a => a.id === answerId ? data : a) }
     cancelEditAnswer()
@@ -509,7 +546,7 @@ function initLinkInputs() {
 
 function initProgressForms() {
   const forms = {}
-  tasks.value.forEach(t => { forms[t.id] = { assignee: '', result: '', issue: '' } })
+  tasks.value.forEach(t => { forms[t.id] = { assignee: '', result: '', issue: '', images: [] } })
   progressForm.value = forms
 }
 
@@ -626,4 +663,45 @@ onMounted(fetchAll)
 }
 .answer-date { color: var(--text-muted); }
 .answer-edited { font-size: 11px; opacity: 0.7; }
+
+/* 이미지 미리보기 */
+.image-preview-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.image-preview-item {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.preview-thumb {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--outline);
+  cursor: pointer;
+  display: block;
+}
+.image-remove-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.image-remove-btn:hover { background: #b91c1c; }
 </style>

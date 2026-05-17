@@ -1,7 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import okrs, progress, staff, admin, tasks, qna, confluence
+from fastapi.staticfiles import StaticFiles
+from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload
 import uvicorn
+import os
+
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'uploads')
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 app = FastAPI(title="OKR Management API", version="1.0.0")
 
@@ -20,6 +25,9 @@ app.include_router(staff.router, prefix="/api/staff", tags=["Staff"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(qna.router, prefix="/api/qna", tags=["Q&A"])
 app.include_router(confluence.router, prefix="/api/confluence", tags=["Confluence"])
+app.include_router(upload.router, prefix="/api/upload", tags=["Upload"])
+
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
 @app.get("/api/health")
