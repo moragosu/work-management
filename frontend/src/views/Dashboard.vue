@@ -197,7 +197,7 @@ const dangerCount     = computed(() => objectives.value.filter(o => o.status ===
 
 // ── 액션 패널 데이터 ──
 const unansweredQuestions = computed(() =>
-  questions.value.filter(q => !q.answer)
+  questions.value.filter(q => !q.answers || q.answers.length === 0)
 )
 
 const weekIssues = computed(() =>

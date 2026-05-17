@@ -47,8 +47,8 @@ def list_questions(week: Optional[str] = Query(None), task_id: Optional[str] = Q
         questions = [q for q in questions if q.get("task_id") == task_id]
     result = []
     for q in questions:
-        answer = next((a for a in answers if a["question_id"] == q["id"]), None)
-        result.append({**q, "answer": answer})
+        q_answers = [a for a in answers if a["question_id"] == q["id"]]
+        result.append({**q, "answers": q_answers})
     return result
 
 
@@ -93,8 +93,6 @@ def create_answer(body: AnswerCreate):
     questions, answers = _load()
     if not any(q["id"] == body.question_id for q in questions):
         raise HTTPException(status_code=404, detail="Question not found")
-    if any(a["question_id"] == body.question_id for a in answers):
-        raise HTTPException(status_code=400, detail="Answer already exists")
     new_a = {
         "id": f"A{str(uuid.uuid4())[:8].upper()}",
         "question_id": body.question_id,

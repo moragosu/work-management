@@ -98,8 +98,9 @@
                     <select v-model="progressForm[task.id].assignee" class="form-control">
                       <option value="">선택</option>
                       <option v-for="m in getTaskMembers(task.id)" :key="m.id" :value="m.name">{{ m.name }}</option>
-                      <option v-for="s in staffList" :key="s.id" :value="s.name"
-                        v-if="!getTaskMembers(task.id).find(m => m.id === s.id)">{{ s.name }}</option>
+                      <template v-for="s in staffList" :key="s.id">
+                        <option v-if="!getTaskMembers(task.id).find(m => m.id === s.id)" :value="s.name">{{ s.name }}</option>
+                      </template>
                     </select>
                   </div>
                   <div class="form-group">
@@ -149,19 +150,22 @@
                 </div>
               </div>
 
-              <!-- 답변 -->
-              <div class="answer-row">
+              <!-- 답변 없을 때 -->
+              <div v-if="qa.answers.length === 0 && addingAnswerToId !== qa.id" class="answer-row">
                 <span class="badge badge-green">A</span>
                 <div class="qa-content">
-                  <template v-if="qa.answer && editingAnswerId !== qa.answer.id">
-                    <span class="qa-text">{{ qa.answer.answer }}</span>
-                    <span class="answer-by">
-                      — {{ qa.answer.answer_by }}
-                      <span class="answer-date">{{ qa.answer.updated_at ?? qa.answer.created_at }}</span>
-                      <span v-if="qa.answer.updated_at" class="answer-edited">(수정됨)</span>
-                    </span>
-                  </template>
-                  <template v-else-if="editingAnswerId === qa.answer?.id">
+                  <span class="text-muted text-sm">답변 대기중</span>
+                </div>
+                <div class="qa-actions">
+                  <button class="btn btn-ghost btn-xs" @click="startAddAnswer(qa.id)">답변 달기</button>
+                </div>
+              </div>
+
+              <!-- 기존 답변들 -->
+              <div v-for="ans in qa.answers" :key="ans.id" class="answer-row">
+                <span class="badge badge-green">A</span>
+                <div class="qa-content">
+                  <template v-if="editingAnswerId === ans.id">
                     <div style="flex:1">
                       <textarea v-model="editingAnswerText" class="form-control" rows="2" />
                       <select v-model="editingAnswerBy" class="form-control mt-8">
@@ -170,32 +174,44 @@
                       </select>
                       <div class="flex gap-4 mt-8" style="justify-content:flex-end">
                         <button class="btn btn-ghost btn-xs" @click="cancelEditAnswer">취소</button>
-                        <button class="btn btn-primary btn-xs" @click="updateAnswer(qa.answer.id)" :disabled="!editingAnswerText || !editingAnswerBy">저장</button>
+                        <button class="btn btn-primary btn-xs" @click="updateAnswer(ans.id)" :disabled="!editingAnswerText || !editingAnswerBy">저장</button>
                       </div>
                     </div>
                   </template>
-                  <template v-else-if="addingAnswerToId === qa.id">
-                    <div style="flex:1">
-                      <textarea v-model="newAnswerText" class="form-control" rows="2" placeholder="답변을 입력하세요..." />
-                      <select v-model="newAnswerBy" class="form-control mt-8">
-                        <option value="">작성자 선택</option>
-                        <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
-                      </select>
-                      <div class="flex gap-4 mt-8" style="justify-content:flex-end">
-                        <button class="btn btn-ghost btn-xs" @click="cancelAddAnswer">취소</button>
-                        <button class="btn btn-primary btn-xs" @click="addAnswer(qa.id)" :disabled="!newAnswerText || !newAnswerBy">저장</button>
-                      </div>
-                    </div>
+                  <template v-else>
+                    <span class="qa-text">{{ ans.answer }}</span>
+                    <span class="answer-by">
+                      — {{ ans.answer_by }}
+                      <span class="answer-date">{{ ans.updated_at ?? ans.created_at }}</span>
+                      <span v-if="ans.updated_at" class="answer-edited">(수정됨)</span>
+                    </span>
                   </template>
-                  <span v-else class="text-muted text-sm">답변 대기중</span>
                 </div>
-                <div v-if="qa.answer && editingAnswerId !== qa.answer.id && addingAnswerToId !== qa.id" class="qa-actions">
-                  <button class="btn btn-ghost btn-xs" @click="startEditAnswer(qa.answer)">수정</button>
-                  <button class="btn btn-danger btn-xs" @click="deleteAnswer(qa.answer.id, qa.id)">삭제</button>
+                <div v-if="editingAnswerId !== ans.id" class="qa-actions">
+                  <button class="btn btn-ghost btn-xs" @click="startEditAnswer(ans)">수정</button>
+                  <button class="btn btn-danger btn-xs" @click="deleteAnswer(ans.id, qa.id)">삭제</button>
                 </div>
-                <div v-else-if="!qa.answer && addingAnswerToId !== qa.id" class="qa-actions">
-                  <button class="btn btn-ghost btn-xs" @click="startAddAnswer(qa.id)">답변 달기</button>
+              </div>
+
+              <!-- 답변 추가 폼 -->
+              <div v-if="addingAnswerToId === qa.id" class="answer-row">
+                <span class="badge badge-green">A</span>
+                <div style="flex:1">
+                  <textarea v-model="newAnswerText" class="form-control" rows="2" placeholder="답변을 입력하세요..." />
+                  <select v-model="newAnswerBy" class="form-control mt-8">
+                    <option value="">작성자 선택</option>
+                    <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
+                  </select>
+                  <div class="flex gap-4 mt-8" style="justify-content:flex-end">
+                    <button class="btn btn-ghost btn-xs" @click="cancelAddAnswer">취소</button>
+                    <button class="btn btn-primary btn-xs" @click="addAnswer(qa.id)" :disabled="!newAnswerText || !newAnswerBy">저장</button>
+                  </div>
                 </div>
+              </div>
+
+              <!-- 답변 추가 버튼 (기존 답변이 있을 때) -->
+              <div v-if="qa.answers.length > 0 && addingAnswerToId !== qa.id" style="padding-left:8px;margin-top:4px">
+                <button class="btn btn-ghost btn-xs" @click="startAddAnswer(qa.id)">+ 답변 추가</button>
               </div>
             </div>
 
@@ -281,6 +297,9 @@ function nextWeek() {
 }
 async function onWeekChange() {
   if (!selectedWeek.value) return
+  initLinkInputs()
+  initProgressForms()
+  editingLinkId.value = {}
   await Promise.all([loadQnA(), loadLinks(), loadProgress()])
 }
 
@@ -378,6 +397,7 @@ async function saveLink(taskId) {
       ? (await axios.put(`/api/confluence/${existing.id}`, { url })).data
       : (await axios.post('/api/confluence', { week: selectedWeek.value, task_id: taskId, url })).data
     linkMap.value = { ...linkMap.value, [taskId]: saved }
+    linkInputs.value[taskId] = ''
     cancelEditLink(taskId)
     showToast('링크가 저장되었습니다')
   } catch { showToast('링크 저장 실패') }
@@ -439,7 +459,7 @@ async function addAnswer(questionId) {
   try {
     const { data } = await axios.post('/api/qna/answers', { question_id: questionId, answer: newAnswerText.value.trim(), answer_by: newAnswerBy.value })
     const idx = qnaList.value.findIndex(q => q.id === questionId)
-    if (idx !== -1) qnaList.value[idx] = { ...qnaList.value[idx], answer: data }
+    if (idx !== -1) qnaList.value[idx] = { ...qnaList.value[idx], answers: [...(qnaList.value[idx].answers || []), data] }
     cancelAddAnswer()
     showToast('답변이 저장되었습니다')
   } catch { showToast('답변 저장 실패') }
@@ -450,8 +470,8 @@ async function updateAnswer(answerId) {
   if (!editingAnswerText.value.trim() || !editingAnswerBy.value) return
   try {
     const { data } = await axios.put(`/api/qna/answers/${answerId}`, { answer: editingAnswerText.value.trim(), answer_by: editingAnswerBy.value })
-    const idx = qnaList.value.findIndex(q => q.answer?.id === answerId)
-    if (idx !== -1) qnaList.value[idx] = { ...qnaList.value[idx], answer: data }
+    const idx = qnaList.value.findIndex(q => q.answers?.some(a => a.id === answerId))
+    if (idx !== -1) qnaList.value[idx] = { ...qnaList.value[idx], answers: qnaList.value[idx].answers.map(a => a.id === answerId ? data : a) }
     cancelEditAnswer()
     showToast('수정되었습니다')
   } catch { showToast('수정 실패') }
@@ -461,7 +481,7 @@ async function deleteAnswer(answerId, questionId) {
   try {
     await axios.delete(`/api/qna/answers/${answerId}`)
     const idx = qnaList.value.findIndex(q => q.id === questionId)
-    if (idx !== -1) qnaList.value[idx] = { ...qnaList.value[idx], answer: null }
+    if (idx !== -1) qnaList.value[idx] = { ...qnaList.value[idx], answers: qnaList.value[idx].answers.filter(a => a.id !== answerId) }
     showToast('삭제되었습니다')
   } catch { showToast('삭제 실패') }
 }
@@ -474,9 +494,23 @@ async function fetchAll() {
     tasks.value = tRes.data
     objectives.value = oRes.data
     staffList.value = sRes.data
+    initLinkInputs()
+    initProgressForms()
     selectedWeek.value = `W${getCurrentWeekNumber()}`
     await onWeekChange()
   } finally { loading.value = false }
+}
+
+function initLinkInputs() {
+  const inputs = {}
+  tasks.value.forEach(t => { inputs[t.id] = '' })
+  linkInputs.value = inputs
+}
+
+function initProgressForms() {
+  const forms = {}
+  tasks.value.forEach(t => { forms[t.id] = { assignee: '', result: '', issue: '' } })
+  progressForm.value = forms
 }
 
 onMounted(fetchAll)
