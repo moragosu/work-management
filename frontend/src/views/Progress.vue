@@ -11,12 +11,15 @@
       <!-- 주차 선택 + 인력 필터 -->
       <div class="filter-bar" style="flex-direction:column;align-items:flex-start;gap:10px">
         <div style="display:flex;align-items:center;gap:8px">
-          <div class="week-nav">
+          <div class="week-nav" :class="{ 'week-nav-current': selectedWeek === `W${getCurrentWeekNumber()}` }">
             <button class="week-nav-btn" @click="prevWeek" :disabled="getCurrentWeekIndex() <= 0">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <div class="week-nav-info">
-              <span class="week-nav-label">{{ selectedWeek }}</span>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span class="week-nav-label">{{ selectedWeek }}</span>
+                <span v-if="selectedWeek === `W${getCurrentWeekNumber()}`" class="week-current-badge">이번 주</span>
+              </div>
               <span class="week-nav-range">{{ getWeekDateRange(selectedWeek) }}</span>
             </div>
             <button class="week-nav-btn" @click="nextWeek" :disabled="getCurrentWeekIndex() >= availableWeeks.length - 1">
@@ -709,6 +712,24 @@ onMounted(() => {
 .week-nav-range {
   font-size: 12px;
   color: var(--text-muted);
+}
+.week-nav-current {
+  border-color: var(--color-primary, #4f8ef7);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary, #4f8ef7) 15%, transparent);
+}
+.week-nav-current .week-nav-btn { color: var(--color-primary, #4f8ef7); }
+.week-nav-current .week-nav-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary, #4f8ef7) 8%, transparent); }
+.week-nav-current .week-nav-info { border-color: var(--color-primary, #4f8ef7); }
+.week-nav-current .week-nav-label { color: var(--color-primary, #4f8ef7); }
+.week-current-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--color-primary, #4f8ef7);
+  color: #fff;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
 }
 .week-today-btn {
   font-size: 12px;
