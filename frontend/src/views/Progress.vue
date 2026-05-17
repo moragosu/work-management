@@ -8,8 +8,8 @@
     </div>
 
     <div class="page-body">
-      <!-- 주차 선택 -->
-      <div class="filter-bar">
+      <!-- 주차 선택 + 인력 필터 -->
+      <div class="filter-bar" style="flex-direction:column;align-items:flex-start;gap:10px">
         <div class="flex gap-8" style="align-items:center">
           <button class="btn btn-ghost btn-sm" @click="prevWeek" :disabled="getCurrentWeekIndex() <= 0">←</button>
           <select v-model="selectedWeek" class="form-control" @change="onWeekChange" style="min-width:120px">
@@ -17,6 +17,17 @@
             <option v-for="w in availableWeeks" :key="w" :value="w">{{ w }}</option>
           </select>
           <button class="btn btn-ghost btn-sm" @click="nextWeek" :disabled="getCurrentWeekIndex() >= availableWeeks.length - 1">→</button>
+        </div>
+        <div v-if="staffList.length > 0" class="flex gap-6" style="align-items:center;flex-wrap:wrap">
+          <span class="filter-label-sm">인력</span>
+          <button
+            v-for="s in staffList"
+            :key="s.id"
+            class="staff-chip"
+            :class="{ 'staff-chip-active': selectedStaff.includes(s.name) }"
+            @click="toggleStaff(s.name)"
+          >{{ s.name }}</button>
+          <button v-if="selectedStaff.length > 0" class="btn btn-ghost btn-xs" @click="selectedStaff = []">전체 보기</button>
         </div>
       </div>
 
@@ -26,7 +37,7 @@
       </div>
 
       <div v-else>
-        <div v-for="task in tasks" :key="task.id" class="card mb-16">
+        <div v-for="task in filteredTasks" :key="task.id" :id="'task-' + task.id" class="card mb-16">
           <!-- 카드 헤더: 과제명 + Objective + 담당 인력 -->
           <div class="card-header" style="flex-wrap:wrap;gap:8px">
             <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
@@ -108,7 +119,7 @@
                     <MarkdownEditor v-model="progressForm[task.id].result" height="220px" />
                   </div>
                   <div class="form-group">
-                    <label class="form-label">이슈 / 블로커 <span class="text-muted text-sm">(선택)</span></label>
+                    <label class="form-label">이슈 <span class="text-muted text-sm">(선택)</span></label>
                     <MarkdownEditor v-model="progressForm[task.id].issue" height="140px" />
                   </div>
                   <div class="flex gap-8" style="justify-content:flex-end">
@@ -128,7 +139,7 @@
             <!-- ③ Q&A -->
             <div class="section-label">💬 Q&A</div>
 
-            <div v-for="qa in getQuestionsForTask(task.id)" :key="qa.id" class="qa-block">
+            <div v-for="qa in getQuestionsForTask(task.id)" :key="qa.id" :id="'qa-' + qa.id" class="qa-block">
               <!-- 질문 -->
               <div class="question-row">
                 <span class="badge badge-orange">Q</span>
@@ -234,16 +245,33 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { MdPreview } from 'md-editor-v3'
 import MarkdownEditor from '../components/MarkdownEditor.vue'
+
+const route = useRoute()
 
 const tasks = ref([])
 const objectives = ref([])
 const staffList = ref([])
 const loading = ref(false)
 const toastMsg = ref('')
+
+// 인력 필터
+const selectedStaff = ref([])
+const filteredTasks = computed(() => {
+  if (selectedStaff.value.length === 0) return tasks.value
+  return tasks.value.filter(task =>
+    getTaskMembers(task.id).some(m => selectedStaff.value.includes(m.name))
+  )
+})
+function toggleStaff(name) {
+  const idx = selectedStaff.value.indexOf(name)
+  if (idx === -1) selectedStaff.value.push(name)
+  else selectedStaff.value.splice(idx, 1)
+}
 
 const selectedWeek = ref('')
 const qnaList = ref([])
@@ -489,6 +517,21 @@ async function deleteAnswer(answerId, questionId) {
   } catch { showToast('삭제 실패') }
 }
 
+// ── 포커스 이동 ──
+async function handleFocusQuery() {
+  const { focusQuestion, focusIssue } = route.query
+  if (!focusQuestion && !focusIssue) return
+  await nextTick()
+  await new Promise(r => setTimeout(r, 80))
+  let el = null
+  if (focusQuestion) el = document.getElementById(`qa-${focusQuestion}`)
+  else if (focusIssue) el = document.getElementById(`task-${focusIssue}`)
+  if (!el) return
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  el.classList.add('highlight-focus')
+  setTimeout(() => el?.classList.remove('highlight-focus'), 2200)
+}
+
 // ── 초기 로드 ──
 async function fetchAll() {
   loading.value = true
@@ -499,8 +542,9 @@ async function fetchAll() {
     staffList.value = sRes.data
     initLinkInputs()
     initProgressForms()
-    selectedWeek.value = `W${getCurrentWeekNumber()}`
+    selectedWeek.value = route.query.week || `W${getCurrentWeekNumber()}`
     await onWeekChange()
+    await handleFocusQuery()
   } finally { loading.value = false }
 }
 
@@ -523,6 +567,36 @@ onMounted(fetchAll)
 .mb-16 { margin-bottom: 16px; }
 .mt-8  { margin-top: 8px; }
 .mt-16 { margin-top: 16px; }
+
+.gap-6 { gap: 6px; }
+
+.filter-label-sm {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.staff-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--outline);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+.staff-chip:hover { border-color: var(--primary); color: var(--primary); }
+.staff-chip-active {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
+  font-weight: 600;
+}
 
 .member-badges {
   display: flex;
@@ -633,6 +707,19 @@ onMounted(fetchAll)
 </style>
 
 <style>
+/* 포커스 하이라이트 */
+@keyframes focusPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.45), var(--shadow-l1); }
+  50%  { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.15), var(--shadow-l1); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0), var(--shadow-l1); }
+}
+.highlight-focus {
+  animation: focusPulse 1.8s ease-out;
+  outline: 2px solid rgba(99, 102, 241, 0.5);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
 /* MdPreview 인라인 렌더링 - 카드 내부에 자연스럽게 통합 */
 .md-preview-inline.md-editor-previewOnly {
   background: transparent !important;

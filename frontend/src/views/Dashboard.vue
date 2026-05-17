@@ -61,23 +61,23 @@
               이번 주 미답변 질문이 없습니다 👍
             </div>
             <ul v-else class="panel-list">
-              <li v-for="q in unansweredQuestions" :key="q.id" class="panel-item">
+              <li v-for="q in unansweredQuestions" :key="q.id" class="panel-item panel-item-link" @click="goToQuestion(q)">
                 <div class="panel-item-main">{{ q.question }}</div>
                 <div class="panel-item-sub">
                   <span class="badge badge-blue">{{ getTaskName(q.task_id) }}</span>
+                  <span class="panel-goto">바로가기 →</span>
                 </div>
               </li>
             </ul>
-            <router-link to="/progress" class="panel-link">주간 진행현황에서 답변하기 →</router-link>
           </div>
         </div>
 
-        <!-- 이슈 / 블로커 -->
+        <!-- 이슈 -->
         <div class="card action-panel">
           <div class="card-header">
             <div class="panel-title">
               <span class="panel-icon" style="background:#fff7ed;color:var(--warning)">🚧</span>
-              이슈 / 블로커
+              이슈
             </div>
             <span class="badge" :class="weekIssues.length ? 'badge-yellow' : 'badge-gray'">
               {{ weekIssues.length }}건
@@ -89,15 +89,15 @@
               이번 주 등록된 이슈가 없습니다 👍
             </div>
             <ul v-else class="panel-list">
-              <li v-for="p in weekIssues" :key="p.id" class="panel-item">
+              <li v-for="p in weekIssues" :key="p.id" class="panel-item panel-item-link" @click="goToIssue(p)">
                 <div class="issue-text">{{ p.issue }}</div>
                 <div class="panel-item-sub">
                   <span class="badge badge-blue">{{ getTaskName(p.task_id) }}</span>
                   <span v-if="p.assignee" class="badge badge-gray">{{ p.assignee }}</span>
+                  <span class="panel-goto">바로가기 →</span>
                 </div>
               </li>
             </ul>
-            <router-link to="/progress" class="panel-link">주간 진행현황 바로가기 →</router-link>
           </div>
         </div>
 
@@ -169,8 +169,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import axios from 'axios'
+
+const router = useRouter()
 
 const objectives = ref([])
 const tasks      = ref([])
@@ -225,6 +227,14 @@ function getObjectiveName(objectiveId) {
 }
 function statusBadgeClass(status) {
   return { '진행중': 'badge badge-blue', '완료': 'badge badge-green', '위험': 'badge badge-red' }[status] || 'badge badge-gray'
+}
+
+// ── 바로가기 네비게이션 ──
+function goToQuestion(q) {
+  router.push({ path: '/progress', query: { week: currentWeek, focusQuestion: q.id } })
+}
+function goToIssue(p) {
+  router.push({ path: '/progress', query: { week: currentWeek, focusIssue: p.task_id } })
 }
 
 // ── 데이터 로드 ──
@@ -340,16 +350,24 @@ onMounted(refresh)
   flex-wrap: wrap;
 }
 
-.panel-link {
-  display: block;
-  font-size: 12px;
-  color: var(--primary);
-  text-decoration: none;
-  text-align: right;
-  margin-top: 4px;
-  opacity: 0.8;
+.panel-item-link {
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
 }
-.panel-link:hover { opacity: 1; text-decoration: underline; }
+.panel-item-link:hover {
+  background: var(--primary-light);
+  border-left-color: var(--primary);
+}
+
+.panel-goto {
+  font-size: 11px;
+  color: var(--primary);
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.panel-item-link:hover .panel-goto { opacity: 1; }
 
 /* ── 섹션 헤더 ── */
 .section-header { display: flex; align-items: center; gap: 8px; }
