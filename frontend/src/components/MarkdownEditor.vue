@@ -2,6 +2,7 @@
   <div class="md-editor-wrap">
     <MdEditor
       v-model="content"
+      language="en-US"
       :onUploadImg="handleUpload"
       :toolbars="toolbars"
       :style="{ height: editorHeight }"

@@ -78,10 +78,10 @@
                   <div class="progress-meta">
                     <span class="badge badge-gray">{{ getProgress(task.id).assignee || '담당자 없음' }}</span>
                   </div>
-                  <MdPreview :modelValue="getProgress(task.id).result" class="md-preview-inline" />
+                  <MdPreview language="en-US" :modelValue="getProgress(task.id).result" class="md-preview-inline" />
                   <div v-if="getProgress(task.id).issue" class="issue-box">
                     <span class="issue-label">⚠ 이슈</span>
-                    <MdPreview :modelValue="getProgress(task.id).issue" class="md-preview-inline" />
+                    <MdPreview language="en-US" :modelValue="getProgress(task.id).issue" class="md-preview-inline" />
                   </div>
                   <div class="flex gap-4 mt-8" style="justify-content:flex-end">
                     <button class="btn btn-ghost btn-xs" @click="startEditProgress(task.id)">수정</button>
@@ -140,7 +140,7 @@
                       <button class="btn btn-primary btn-xs" @click="updateQuestion(qa.id)" :disabled="!hasContent(editingQuestionText)">저장</button>
                     </div>
                   </template>
-                  <MdPreview v-else :modelValue="qa.question" class="md-preview-inline" />
+                  <MdPreview v-else language="en-US" :modelValue="qa.question" class="md-preview-inline" />
                 </div>
                 <div v-if="editingQuestionId !== qa.id" class="qa-actions">
                   <button class="btn btn-ghost btn-xs" @click="startEditQuestion(qa)">수정</button>
@@ -177,7 +177,7 @@
                     </div>
                   </template>
                   <template v-else>
-                    <MdPreview :modelValue="ans.answer" class="md-preview-inline" />
+                    <MdPreview language="en-US" :modelValue="ans.answer" class="md-preview-inline" />
                     <span class="answer-by">
                       — {{ ans.answer_by }}
                       <span class="answer-date">{{ ans.updated_at ?? ans.created_at }}</span>
