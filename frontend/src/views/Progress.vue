@@ -12,7 +12,7 @@
       <div class="filter-bar" style="flex-direction:column;align-items:flex-start;gap:10px">
         <div style="display:flex;align-items:center;gap:8px">
           <div class="week-nav" :class="{ 'week-nav-current': selectedWeek === `W${getCurrentWeekNumber()}` }">
-            <button class="week-nav-btn" @click="prevWeek" :disabled="getCurrentWeekIndex() <= 0">
+            <button class="week-nav-btn" @click="prevWeek" :disabled="getCurrentWeekIndex() <= 0" data-tooltip="이전 주">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <div class="week-nav-info">
@@ -22,7 +22,7 @@
               </div>
               <span class="week-nav-range">{{ selectedWeek }}</span>
             </div>
-            <button class="week-nav-btn" @click="nextWeek" :disabled="getCurrentWeekIndex() >= availableWeeks.length - 1">
+            <button class="week-nav-btn" @click="nextWeek" :disabled="getCurrentWeekIndex() >= availableWeeks.length - 1" data-tooltip="다음 주">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
           </div>
@@ -30,6 +30,7 @@
             v-if="selectedWeek !== `W${getCurrentWeekNumber()}`"
             class="btn btn-ghost btn-sm week-today-btn"
             @click="goToCurrentWeek"
+            data-tooltip="현재 주차로 이동"
           >이번 주</button>
         </div>
         <div v-if="staffList.length > 0" class="flex gap-6" style="align-items:center;flex-wrap:wrap">
@@ -41,7 +42,7 @@
             :class="{ 'staff-chip-active': selectedStaff.includes(s.name) }"
             @click="toggleStaff(s.name)"
           >{{ s.name }}</button>
-          <button v-if="selectedStaff.length > 0" class="btn btn-ghost btn-xs" @click="selectedStaff = []">전체 보기</button>
+          <button v-if="selectedStaff.length > 0" class="btn btn-ghost btn-xs" @click="selectedStaff = []" data-tooltip="인력 필터 초기화">전체 보기</button>
         </div>
       </div>
 
@@ -81,8 +82,8 @@
                 <a :href="getTaskLink(task.id).url" target="_blank" class="text-primary link-text">
                   {{ getTaskLink(task.id).url }}
                 </a>
-                <button class="btn btn-ghost btn-xs" @click="startEditLink(task.id)">수정</button>
-                <button class="btn btn-danger btn-xs" @click="deleteLink(task.id)">삭제</button>
+                <button class="btn btn-ghost btn-xs" @click="startEditLink(task.id)" data-tooltip="링크 수정">수정</button>
+                <button class="btn btn-danger btn-xs" @click="deleteLink(task.id)" data-tooltip="링크 삭제">삭제</button>
               </div>
               <div v-else class="flex gap-8">
                 <input
@@ -92,8 +93,8 @@
                   style="flex:1"
                   @keyup.enter="saveLink(task.id)"
                 />
-                <button class="btn btn-primary btn-xs" @click="saveLink(task.id)" :disabled="!linkInputs[task.id]">저장</button>
-                <button v-if="getTaskLink(task.id)" class="btn btn-ghost btn-xs" @click="cancelEditLink(task.id)">취소</button>
+                <button class="btn btn-primary btn-xs" @click="saveLink(task.id)" :disabled="!linkInputs[task.id]" data-tooltip="링크 저장">저장</button>
+                <button v-if="getTaskLink(task.id)" class="btn btn-ghost btn-xs" @click="cancelEditLink(task.id)" data-tooltip="수정 취소">취소</button>
               </div>
             </div>
 

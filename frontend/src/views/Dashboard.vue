@@ -5,7 +5,7 @@
         <h2>대시보드</h2>
         <div class="subtitle">{{ currentWeek }} · {{ today }}</div>
       </div>
-      <button class="btn btn-ghost btn-sm" @click="refresh">
+      <button class="btn btn-ghost btn-sm" @click="refresh" data-tooltip="데이터를 최신 상태로 갱신">
         <span class="material-symbols-outlined" style="font-size:16px;width:16px;height:16px">refresh</span>
         새로고침
       </button>
@@ -14,28 +14,28 @@
     <div class="page-body">
       <!-- ① 목표 요약 카드 -->
       <div class="grid-4" style="margin-bottom:24px">
-        <div class="card stat-accent stat-accent-blue">
+        <div class="card stat-accent stat-accent-blue" data-tooltip="등록된 전체 목표(Objective) 수" data-tooltip-pos="bottom">
           <div class="card-body stat-card">
             <span class="material-symbols-outlined stat-icon stat-icon-blue">assignment</span>
             <div class="stat-value">{{ objectives.length }}</div>
             <div class="stat-label">전체 목표</div>
           </div>
         </div>
-        <div class="card stat-accent stat-accent-primary">
+        <div class="card stat-accent stat-accent-primary" data-tooltip="현재 진행 중인 목표 수" data-tooltip-pos="bottom">
           <div class="card-body stat-card">
             <span class="material-symbols-outlined stat-icon stat-icon-primary">sync</span>
             <div class="stat-value" style="color:var(--primary)">{{ inProgressCount }}</div>
             <div class="stat-label">진행중</div>
           </div>
         </div>
-        <div class="card stat-accent stat-accent-green">
+        <div class="card stat-accent stat-accent-green" data-tooltip="완료된 목표 수" data-tooltip-pos="bottom">
           <div class="card-body stat-card">
             <span class="material-symbols-outlined stat-icon stat-icon-green">check_circle</span>
             <div class="stat-value" style="color:var(--success)">{{ completedCount }}</div>
             <div class="stat-label">완료</div>
           </div>
         </div>
-        <div class="card stat-accent stat-accent-red">
+        <div class="card stat-accent stat-accent-red" data-tooltip="위험 상태의 목표 수 — 즉각적인 조치가 필요합니다" data-tooltip-pos="bottom">
           <div class="card-body stat-card">
             <span class="material-symbols-outlined stat-icon stat-icon-red">warning</span>
             <div class="stat-value" style="color:var(--danger)">{{ dangerCount }}</div>
@@ -174,7 +174,7 @@
       </div>
 
       <!-- ④ 파트원별 활동 현황 -->
-      <div class="section-header section-header-toggle" style="margin-top:32px" @click="activityOpen = !activityOpen">
+      <div class="section-header section-header-toggle" style="margin-top:32px" @click="activityOpen = !activityOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
         <span class="section-header-title">파트원별 활동 현황</span>
         <span class="material-symbols-outlined section-chevron" :class="{ open: activityOpen }">expand_more</span>
       </div>
@@ -187,9 +187,9 @@
             <tr>
               <th style="width:160px">파트원</th>
               <th>최근 이슈</th>
-              <th style="width:130px">담당 과제</th>
-              <th style="width:130px">이슈 등록</th>
-              <th style="width:130px">Q&A 답변</th>
+              <th style="width:130px" data-tooltip="배정된 과제 수 (누적)">담당 과제</th>
+              <th style="width:130px" data-tooltip="등록한 이슈 수 (누적)">이슈 등록</th>
+              <th style="width:130px" data-tooltip="Q&A에 달린 답변 수 (누적)">Q&A 답변</th>
             </tr>
           </thead>
           <tbody>

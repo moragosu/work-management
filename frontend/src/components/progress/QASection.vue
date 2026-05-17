@@ -20,8 +20,8 @@
           <MdPreview v-else language="en-US" :modelValue="qa.question" class="md-preview-inline" />
         </div>
         <div v-if="editingQuestionId !== qa.id" class="qa-actions">
-          <button class="btn btn-ghost btn-xs" @click="startEditQuestion(qa)">수정</button>
-          <button class="btn btn-danger btn-xs" @click="deleteQuestion(qa.id)">삭제</button>
+          <button class="btn btn-ghost btn-xs" @click="startEditQuestion(qa)" data-tooltip="질문 수정">수정</button>
+          <button class="btn btn-danger btn-xs" @click="deleteQuestion(qa.id)" data-tooltip="질문 및 모든 답변 삭제">삭제</button>
         </div>
       </div>
 
@@ -32,7 +32,7 @@
           <span class="text-muted text-sm">답변 대기중</span>
         </div>
         <div class="qa-actions">
-          <button class="btn btn-ghost btn-xs" @click="startAddAnswer(qa.id)">답변 달기</button>
+          <button class="btn btn-ghost btn-xs" @click="startAddAnswer(qa.id)" data-tooltip="이 질문에 답변 작성">답변 달기</button>
         </div>
       </div>
 
@@ -63,8 +63,8 @@
           </template>
         </div>
         <div v-if="editingAnswerId !== ans.id" class="qa-actions">
-          <button class="btn btn-ghost btn-xs" @click="startEditAnswer(ans)">수정</button>
-          <button class="btn btn-danger btn-xs" @click="deleteAnswer(ans.id, qa.id)">삭제</button>
+          <button class="btn btn-ghost btn-xs" @click="startEditAnswer(ans)" data-tooltip="답변 수정">수정</button>
+          <button class="btn btn-danger btn-xs" @click="deleteAnswer(ans.id, qa.id)" data-tooltip="답변 삭제">삭제</button>
         </div>
       </div>
 
@@ -86,7 +86,7 @@
 
       <!-- 답변 추가 버튼 (기존 답변이 있을 때) -->
       <div v-if="qa.answers.length > 0 && addingAnswerToId !== qa.id" style="padding-left:8px;margin-top:4px">
-        <button class="btn btn-ghost btn-xs" @click="startAddAnswer(qa.id)">+ 답변 추가</button>
+        <button class="btn btn-ghost btn-xs" @click="startAddAnswer(qa.id)" data-tooltip="기존 답변에 추가로 답변 작성">+ 답변 추가</button>
       </div>
     </div>
 
@@ -99,7 +99,7 @@
       </div>
     </div>
     <div v-else class="mt-8">
-      <button class="btn btn-ghost btn-sm" @click="addingQuestion = true">+ 질문 추가</button>
+      <button class="btn btn-ghost btn-sm" @click="addingQuestion = true" data-tooltip="이 과제에 질문 등록">+ 질문 추가</button>
     </div>
 
   </div>

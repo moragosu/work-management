@@ -13,8 +13,8 @@
       <div class="flex gap-4 mt-8" style="align-items:center">
         <span v-if="progress.assignee" class="badge badge-gray">{{ progress.assignee }}</span>
         <div style="margin-left:auto;display:flex;gap:4px">
-          <button class="btn btn-ghost btn-xs" @click="startEdit">수정</button>
-          <button class="btn btn-danger btn-xs" @click="handleDelete">삭제</button>
+          <button class="btn btn-ghost btn-xs" @click="startEdit" data-tooltip="이슈 내용 수정">수정</button>
+          <button class="btn btn-danger btn-xs" @click="handleDelete" data-tooltip="이슈 삭제">삭제</button>
         </div>
       </div>
     </template>
@@ -30,14 +30,14 @@
       </div>
       <MarkdownEditor v-model="issueText" height="140px" />
       <div class="flex gap-8 mt-8" style="justify-content:flex-end">
-        <button class="btn btn-ghost btn-sm" @click="cancel">취소</button>
-        <button class="btn btn-primary btn-sm" @click="handleSave" :disabled="!hasContent(issueText) || !assigneeName">저장</button>
+        <button class="btn btn-ghost btn-sm" @click="cancel" data-tooltip="작성 취소">취소</button>
+        <button class="btn btn-primary btn-sm" @click="handleSave" :disabled="!hasContent(issueText) || !assigneeName" data-tooltip="이슈 저장">저장</button>
       </div>
     </template>
 
     <!-- 이슈 없을 때 -->
     <template v-else>
-      <button class="btn btn-ghost btn-sm" @click="startAdd">+ 이슈 등록</button>
+      <button class="btn btn-ghost btn-sm" @click="startAdd" data-tooltip="이번 주 이슈를 등록합니다">+ 이슈 등록</button>
     </template>
   </div>
 
