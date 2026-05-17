@@ -140,67 +140,7 @@
         </div>
       </div>
 
-      <!-- ③ 팀원별 활동 현황 -->
-      <div class="section-header" style="margin-bottom:12px">
-        <span class="section-header-title">팀원별 활동 현황</span>
-      </div>
-      <div v-if="staffList.length === 0" class="card" style="margin-bottom:24px">
-        <div class="card-body text-muted text-sm">팀원 정보가 없습니다.</div>
-      </div>
-      <div v-else class="card" style="margin-bottom:24px;overflow:visible">
-        <table>
-          <thead>
-            <tr>
-              <th>팀원</th>
-              <th>담당 과제</th>
-              <th>이슈 등록</th>
-              <th>Q&A 답변</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="s in staffList" :key="s.id" style="cursor:default">
-              <td style="vertical-align:middle">
-                <div class="member-cell">
-                  <span class="member-avatar">{{ s.name[0] }}</span>
-                  <div>
-                    <div class="member-name">{{ s.name }}</div>
-                    <div class="member-role">{{ s.role }}</div>
-                  </div>
-                </div>
-              </td>
-              <td style="vertical-align:middle;width:22%">
-                <div class="stat-bar-row">
-                  <span class="stat-num">{{ memberStatsMap[s.name]?.tasks ?? 0 }}</span>
-                  <div class="stat-bar">
-                    <div class="stat-fill stat-fill-blue"
-                      :style="{ width: barWidth(memberStatsMap[s.name]?.tasks, maxStats.tasks) }"></div>
-                  </div>
-                </div>
-              </td>
-              <td style="vertical-align:middle;width:22%">
-                <div class="stat-bar-row">
-                  <span class="stat-num">{{ memberStatsMap[s.name]?.issues ?? 0 }}</span>
-                  <div class="stat-bar">
-                    <div class="stat-fill stat-fill-orange"
-                      :style="{ width: barWidth(memberStatsMap[s.name]?.issues, maxStats.issues) }"></div>
-                  </div>
-                </div>
-              </td>
-              <td style="vertical-align:middle;width:22%">
-                <div class="stat-bar-row">
-                  <span class="stat-num">{{ memberStatsMap[s.name]?.answers ?? 0 }}</span>
-                  <div class="stat-bar">
-                    <div class="stat-fill stat-fill-green"
-                      :style="{ width: barWidth(memberStatsMap[s.name]?.answers, maxStats.answers) }"></div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- ④ 목표 카드 목록 -->
+      <!-- ③ 목표 카드 목록 -->
       <div class="section-header" style="margin-bottom:12px">
         <span class="section-header-title">목표 현황</span>
       </div>
@@ -231,6 +171,71 @@
             <div v-else class="text-sm text-muted">Key Results 없음</div>
           </div>
         </div>
+      </div>
+
+      <!-- ④ 파트원별 활동 현황 -->
+      <div class="section-header" style="margin-bottom:12px;margin-top:32px">
+        <span class="section-header-title">파트원별 활동 현황</span>
+      </div>
+      <div v-if="staffList.length === 0" class="card">
+        <div class="card-body text-muted text-sm">파트원 정보가 없습니다.</div>
+      </div>
+      <div v-else class="card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:160px">파트원</th>
+              <th>최근 이슈</th>
+              <th style="width:130px">담당 과제</th>
+              <th style="width:130px">이슈 등록</th>
+              <th style="width:130px">Q&A 답변</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="s in staffList" :key="s.id" style="cursor:default">
+              <td style="vertical-align:middle">
+                <div class="member-cell">
+                  <span class="member-avatar">{{ s.name[0] }}</span>
+                  <div>
+                    <div class="member-name">{{ s.name }}</div>
+                    <div class="member-role">{{ s.role }}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="vertical-align:middle">
+                <div v-if="latestIssueMap[s.name]" class="latest-issue">
+                  <span class="badge badge-gray" style="flex-shrink:0">{{ latestIssueMap[s.name].week }}</span>
+                  <span class="latest-issue-text">{{ truncate(latestIssueMap[s.name].issue, 60) }}</span>
+                </div>
+                <span v-else class="text-muted text-sm">—</span>
+              </td>
+              <td style="vertical-align:middle">
+                <div class="stat-bar-row">
+                  <span class="stat-num">{{ memberStatsMap[s.name]?.tasks ?? 0 }}</span>
+                  <div class="stat-bar">
+                    <div class="stat-fill stat-fill-blue" :style="{ width: barWidth(memberStatsMap[s.name]?.tasks, maxStats.tasks) }"></div>
+                  </div>
+                </div>
+              </td>
+              <td style="vertical-align:middle">
+                <div class="stat-bar-row">
+                  <span class="stat-num">{{ memberStatsMap[s.name]?.issues ?? 0 }}</span>
+                  <div class="stat-bar">
+                    <div class="stat-fill stat-fill-orange" :style="{ width: barWidth(memberStatsMap[s.name]?.issues, maxStats.issues) }"></div>
+                  </div>
+                </div>
+              </td>
+              <td style="vertical-align:middle">
+                <div class="stat-bar-row">
+                  <span class="stat-num">{{ memberStatsMap[s.name]?.answers ?? 0 }}</span>
+                  <div class="stat-bar">
+                    <div class="stat-fill stat-fill-green" :style="{ width: barWidth(memberStatsMap[s.name]?.answers, maxStats.answers) }"></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -316,6 +321,27 @@ const maxStats = computed(() => {
 function barWidth(val, max) {
   if (!val) return '0%'
   return `${Math.max(3, Math.round((val / max) * 100))}%`
+}
+
+const latestIssueMap = computed(() => {
+  const map = {}
+  staffList.value.forEach(s => {
+    const items = allProgressItems.value
+      .filter(p => p.assignee === s.name && p.issue?.trim())
+      .sort((a, b) => {
+        const wa = parseInt((a.week || 'W0').slice(1))
+        const wb = parseInt((b.week || 'W0').slice(1))
+        return wb - wa
+      })
+    map[s.name] = items[0] ? { week: items[0].week, issue: items[0].issue } : null
+  })
+  return map
+})
+
+function truncate(text, len) {
+  if (!text) return ''
+  const first = text.split('\n')[0].trim()
+  return first.length > len ? first.slice(0, len) + '…' : first
 }
 
 // ── 헬퍼 ──
@@ -511,6 +537,15 @@ onMounted(refresh)
 .stat-fill-blue   { background: var(--primary); }
 .stat-fill-orange { background: var(--orange); }
 .stat-fill-green  { background: var(--success); }
+
+.latest-issue { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.latest-issue-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ── 섹션 헤더 ── */
 .section-header { display: flex; align-items: center; gap: 8px; }
