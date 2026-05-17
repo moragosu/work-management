@@ -120,7 +120,11 @@ body {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
 }
+.sidebar-logo:hover { opacity: 0.8; }
 .logo-icon { flex-shrink: 0; }
 .logo-text h1 {
   font-size: 13px;
