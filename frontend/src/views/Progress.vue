@@ -78,15 +78,10 @@
                   <div class="progress-meta">
                     <span class="badge badge-gray">{{ getProgress(task.id).assignee || '담당자 없음' }}</span>
                   </div>
-                  <p class="progress-text">{{ getProgress(task.id).result }}</p>
-                  <div v-if="getProgress(task.id).images?.length" class="image-preview-list">
-                    <a v-for="(url, i) in getProgress(task.id).images" :key="i" :href="url" target="_blank" class="image-preview-item">
-                      <img :src="url" class="preview-thumb" />
-                    </a>
-                  </div>
+                  <div class="rich-content" v-html="renderContent(getProgress(task.id).result)" />
                   <div v-if="getProgress(task.id).issue" class="issue-box">
                     <span class="issue-label">⚠ 이슈</span>
-                    <p class="progress-text">{{ getProgress(task.id).issue }}</p>
+                    <div class="rich-content" v-html="renderContent(getProgress(task.id).issue)" />
                   </div>
                   <div class="flex gap-4 mt-8" style="justify-content:flex-end">
                     <button class="btn btn-ghost btn-xs" @click="startEditProgress(task.id)">수정</button>
@@ -110,25 +105,24 @@
                   </div>
                   <div class="form-group">
                     <label class="form-label">진행 내용</label>
-                    <textarea v-model="progressForm[task.id].result" class="form-control" rows="3"
+                    <RichTextarea
+                      v-model="progressForm[task.id].result"
                       placeholder="이번 주 진행한 내용을 입력하세요... (Ctrl+V로 이미지 붙여넣기)"
-                      @paste="handleImgPaste($event, progressForm[task.id].images)" />
-                    <div v-if="progressForm[task.id].images?.length" class="image-preview-list">
-                      <div v-for="(url, i) in progressForm[task.id].images" :key="i" class="image-preview-item">
-                        <img :src="url" class="preview-thumb" />
-                        <button class="image-remove-btn" @click="progressForm[task.id].images.splice(i, 1)">×</button>
-                      </div>
-                    </div>
+                      :rows="4"
+                    />
                   </div>
                   <div class="form-group">
                     <label class="form-label">이슈 / 블로커 <span class="text-muted text-sm">(선택)</span></label>
-                    <textarea v-model="progressForm[task.id].issue" class="form-control" rows="2"
-                      placeholder="이슈나 블로커가 있으면 입력하세요..." />
+                    <RichTextarea
+                      v-model="progressForm[task.id].issue"
+                      placeholder="이슈나 블로커가 있으면 입력하세요... (Ctrl+V로 이미지 붙여넣기)"
+                      :rows="2"
+                    />
                   </div>
                   <div class="flex gap-8" style="justify-content:flex-end">
                     <button class="btn btn-ghost btn-sm" @click="cancelProgress(task.id)">취소</button>
                     <button class="btn btn-primary btn-sm" @click="saveProgress(task.id)"
-                      :disabled="!progressForm[task.id]?.result">저장</button>
+                      :disabled="!hasContent(progressForm[task.id]?.result)">저장</button>
                   </div>
                 </div>
               </template>
@@ -179,36 +173,28 @@
                 <div class="qa-content">
                   <template v-if="editingAnswerId === ans.id">
                     <div style="flex:1">
-                      <textarea v-model="editingAnswerText" class="form-control" rows="2"
-                        @paste="handleImgPaste($event, editingAnswerImages)" />
-                      <div v-if="editingAnswerImages.length" class="image-preview-list">
-                        <div v-for="(url, i) in editingAnswerImages" :key="i" class="image-preview-item">
-                          <img :src="url" class="preview-thumb" />
-                          <button class="image-remove-btn" @click="editingAnswerImages.splice(i, 1)">×</button>
-                        </div>
-                      </div>
+                      <RichTextarea
+                        v-model="editingAnswerText"
+                        placeholder="답변을 입력하세요... (Ctrl+V로 이미지 붙여넣기)"
+                        :rows="2"
+                      />
                       <select v-model="editingAnswerBy" class="form-control mt-8">
                         <option value="">작성자 선택</option>
                         <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
                       </select>
                       <div class="flex gap-4 mt-8" style="justify-content:flex-end">
                         <button class="btn btn-ghost btn-xs" @click="cancelEditAnswer">취소</button>
-                        <button class="btn btn-primary btn-xs" @click="updateAnswer(ans.id)" :disabled="!editingAnswerText || !editingAnswerBy">저장</button>
+                        <button class="btn btn-primary btn-xs" @click="updateAnswer(ans.id)" :disabled="!hasContent(editingAnswerText) || !editingAnswerBy">저장</button>
                       </div>
                     </div>
                   </template>
                   <template v-else>
-                    <span class="qa-text">{{ ans.answer }}</span>
+                    <div class="rich-content" v-html="renderContent(ans.answer)" />
                     <span class="answer-by">
                       — {{ ans.answer_by }}
                       <span class="answer-date">{{ ans.updated_at ?? ans.created_at }}</span>
                       <span v-if="ans.updated_at" class="answer-edited">(수정됨)</span>
                     </span>
-                    <div v-if="ans.images?.length" class="image-preview-list">
-                      <a v-for="(url, i) in ans.images" :key="i" :href="url" target="_blank" class="image-preview-item">
-                        <img :src="url" class="preview-thumb" />
-                      </a>
-                    </div>
                   </template>
                 </div>
                 <div v-if="editingAnswerId !== ans.id" class="qa-actions">
@@ -221,22 +207,18 @@
               <div v-if="addingAnswerToId === qa.id" class="answer-row">
                 <span class="badge badge-green">A</span>
                 <div style="flex:1">
-                  <textarea v-model="newAnswerText" class="form-control" rows="2"
+                  <RichTextarea
+                    v-model="newAnswerText"
                     placeholder="답변을 입력하세요... (Ctrl+V로 이미지 붙여넣기)"
-                    @paste="handleImgPaste($event, newAnswerImages)" />
-                  <div v-if="newAnswerImages.length" class="image-preview-list">
-                    <div v-for="(url, i) in newAnswerImages" :key="i" class="image-preview-item">
-                      <img :src="url" class="preview-thumb" />
-                      <button class="image-remove-btn" @click="newAnswerImages.splice(i, 1)">×</button>
-                    </div>
-                  </div>
+                    :rows="2"
+                  />
                   <select v-model="newAnswerBy" class="form-control mt-8">
                     <option value="">작성자 선택</option>
                     <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
                   </select>
                   <div class="flex gap-4 mt-8" style="justify-content:flex-end">
                     <button class="btn btn-ghost btn-xs" @click="cancelAddAnswer">취소</button>
-                    <button class="btn btn-primary btn-xs" @click="addAnswer(qa.id)" :disabled="!newAnswerText || !newAnswerBy">저장</button>
+                    <button class="btn btn-primary btn-xs" @click="addAnswer(qa.id)" :disabled="!hasContent(newAnswerText) || !newAnswerBy">저장</button>
                   </div>
                 </div>
               </div>
@@ -270,7 +252,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
-import { useImageUpload } from '../composables/useImageUpload.js'
+import RichTextarea from '../components/RichTextarea.vue'
 
 const tasks = ref([])
 const objectives = ref([])
@@ -302,13 +284,9 @@ const editingQuestionText = ref('')
 const addingAnswerToId = ref('')
 const newAnswerText = ref('')
 const newAnswerBy = ref('')
-const newAnswerImages = ref([])
 const editingAnswerId = ref('')
 const editingAnswerText = ref('')
 const editingAnswerBy = ref('')
-const editingAnswerImages = ref([])
-
-const { uploading: imgUploading, handlePaste: handleImgPaste } = useImageUpload(showToast)
 
 // ── 주차 ──
 const availableWeeks = computed(() => {
@@ -342,6 +320,15 @@ async function onWeekChange() {
 
 // ── 헬퍼 ──
 function getObjectiveName(id) { return objectives.value.find(o => o.id === id)?.name ?? id }
+function renderContent(text) {
+  if (!text) return ''
+  if (/<[a-zA-Z]/.test(text)) return text
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
+}
+function hasContent(html) {
+  if (!html) return false
+  return html.replace(/<(?!img)[^>]+>/gi, '').trim().length > 0 || /<img/i.test(html)
+}
 function showToast(msg) { toastMsg.value = msg; setTimeout(() => { toastMsg.value = '' }, 2000) }
 
 function getTaskMembers(taskId) {
@@ -363,12 +350,12 @@ async function loadProgress() {
 
 function startAddProgress(taskId) {
   addingProgressToTask.value = taskId
-  progressForm.value[taskId] = { assignee: '', result: '', issue: '', images: [] }
+  progressForm.value[taskId] = { assignee: '', result: '', issue: '' }
 }
 function startEditProgress(taskId) {
   const p = progressMap.value[taskId]
   editingProgressId.value = { ...editingProgressId.value, [taskId]: true }
-  progressForm.value[taskId] = { assignee: p.assignee || '', result: p.result || '', issue: p.issue || '', images: [...(p.images || [])] }
+  progressForm.value[taskId] = { assignee: p.assignee || '', result: p.result || '', issue: p.issue || '' }
 }
 function cancelProgress(taskId) {
   addingProgressToTask.value = ''
@@ -379,7 +366,7 @@ function cancelProgress(taskId) {
 
 async function saveProgress(taskId) {
   const form = progressForm.value[taskId]
-  if (!form?.result?.trim()) return
+  if (!hasContent(form?.result)) return
   try {
     const existing = progressMap.value[taskId]
     const payload = { week: selectedWeek.value, task_id: taskId, objective: tasks.value.find(t => t.id === taskId)?.objective_id || '', ...form }
@@ -489,24 +476,24 @@ async function deleteQuestion(questionId) {
 }
 
 // ── 답변 ──
-function startAddAnswer(questionId) { addingAnswerToId.value = questionId; newAnswerText.value = ''; newAnswerBy.value = ''; newAnswerImages.value = [] }
-function cancelAddAnswer() { addingAnswerToId.value = ''; newAnswerText.value = ''; newAnswerBy.value = ''; newAnswerImages.value = [] }
+function startAddAnswer(questionId) { addingAnswerToId.value = questionId; newAnswerText.value = ''; newAnswerBy.value = '' }
+function cancelAddAnswer() { addingAnswerToId.value = ''; newAnswerText.value = ''; newAnswerBy.value = '' }
 async function addAnswer(questionId) {
-  if (!newAnswerText.value.trim() || !newAnswerBy.value) return
+  if (!hasContent(newAnswerText.value) || !newAnswerBy.value) return
   try {
-    const { data } = await axios.post('/api/qna/answers', { question_id: questionId, answer: newAnswerText.value.trim(), answer_by: newAnswerBy.value, images: newAnswerImages.value })
+    const { data } = await axios.post('/api/qna/answers', { question_id: questionId, answer: newAnswerText.value.trim(), answer_by: newAnswerBy.value })
     const idx = qnaList.value.findIndex(q => q.id === questionId)
     if (idx !== -1) qnaList.value[idx] = { ...qnaList.value[idx], answers: [...(qnaList.value[idx].answers || []), data] }
     cancelAddAnswer()
     showToast('답변이 저장되었습니다')
   } catch { showToast('답변 저장 실패') }
 }
-function startEditAnswer(answer) { editingAnswerId.value = answer.id; editingAnswerText.value = answer.answer; editingAnswerBy.value = answer.answer_by; editingAnswerImages.value = [...(answer.images || [])] }
-function cancelEditAnswer() { editingAnswerId.value = ''; editingAnswerText.value = ''; editingAnswerBy.value = ''; editingAnswerImages.value = [] }
+function startEditAnswer(answer) { editingAnswerId.value = answer.id; editingAnswerText.value = answer.answer; editingAnswerBy.value = answer.answer_by }
+function cancelEditAnswer() { editingAnswerId.value = ''; editingAnswerText.value = ''; editingAnswerBy.value = '' }
 async function updateAnswer(answerId) {
-  if (!editingAnswerText.value.trim() || !editingAnswerBy.value) return
+  if (!hasContent(editingAnswerText.value) || !editingAnswerBy.value) return
   try {
-    const { data } = await axios.put(`/api/qna/answers/${answerId}`, { answer: editingAnswerText.value.trim(), answer_by: editingAnswerBy.value, images: editingAnswerImages.value })
+    const { data } = await axios.put(`/api/qna/answers/${answerId}`, { answer: editingAnswerText.value.trim(), answer_by: editingAnswerBy.value })
     const idx = qnaList.value.findIndex(q => q.answers?.some(a => a.id === answerId))
     if (idx !== -1) qnaList.value[idx] = { ...qnaList.value[idx], answers: qnaList.value[idx].answers.map(a => a.id === answerId ? data : a) }
     cancelEditAnswer()
@@ -546,7 +533,7 @@ function initLinkInputs() {
 
 function initProgressForms() {
   const forms = {}
-  tasks.value.forEach(t => { forms[t.id] = { assignee: '', result: '', issue: '', images: [] } })
+  tasks.value.forEach(t => { forms[t.id] = { assignee: '', result: '', issue: '' } })
   progressForm.value = forms
 }
 
@@ -664,44 +651,4 @@ onMounted(fetchAll)
 .answer-date { color: var(--text-muted); }
 .answer-edited { font-size: 11px; opacity: 0.7; }
 
-/* 이미지 미리보기 */
-.image-preview-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-.image-preview-item {
-  position: relative;
-  display: inline-block;
-  flex-shrink: 0;
-}
-.preview-thumb {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--outline);
-  cursor: pointer;
-  display: block;
-}
-.image-remove-btn {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--danger);
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-.image-remove-btn:hover { background: #b91c1c; }
 </style>
