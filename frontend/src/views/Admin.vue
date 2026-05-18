@@ -105,18 +105,6 @@
             </div>
           </div>
 
-          <div class="settings-group">
-            <label class="form-label">화면 설정</label>
-            <div class="toggle-row mt-16">
-              <label class="toggle-label">
-                <input type="checkbox" v-model="showWeeklyProgress" @change="saveShowWeeklyProgress" />
-                <span class="toggle-track"></span>
-              </label>
-              <span class="text-sm">주간 진행 현황 — <strong>이번 주 진행 내용</strong> 섹션 표시</span>
-            </div>
-            <p class="text-sm text-muted hint-text">비활성화 시 Q&A와 컨플루언스 링크만 표시됩니다.</p>
-          </div>
-
           <div class="form-group">
             <label class="form-label">정보</label>
             <div class="info-list text-sm text-muted">
@@ -247,12 +235,6 @@ function deactivateAdminMode() {
   showToast('관리자 모드가 비활성화되었습니다')
 }
 
-const showWeeklyProgress = ref(false)
-function saveShowWeeklyProgress() {
-  localStorage.setItem('showWeeklyProgress', showWeeklyProgress.value ? 'true' : 'false')
-  showToast(showWeeklyProgress.value ? '이번 주 진행 내용 섹션이 표시됩니다' : '이번 주 진행 내용 섹션이 숨겨집니다')
-}
-
 async function resetData(target) {
   const labels = { objectives: '목표', tasks: '과제', staff: '인력', progress: '진행도', all: '모든' }
   if (!confirm(`${labels[target]} 데이터를 전부 삭제하시겠습니까?`)) return
@@ -263,7 +245,6 @@ async function resetData(target) {
 
 onMounted(async () => {
   adminMode.value = localStorage.getItem('adminMode') === 'true'
-  showWeeklyProgress.value = localStorage.getItem('showWeeklyProgress') === 'true'
   if (route.query.tab) activeTab.value = route.query.tab
   await fetchAll()
 })
@@ -280,8 +261,6 @@ onMounted(async () => {
 .settings-group { margin-bottom: 32px; }
 .password-form { margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; }
 .admin-status-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-.toggle-row { display: flex; align-items: center; gap: 12px; }
-.hint-text { margin-top: 6px; }
 .info-list { margin-top: 8px; }
 .info-item { margin-top: 4px; }
 </style>

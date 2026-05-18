@@ -38,12 +38,16 @@
       </div>
 
       <!-- Filter bar -->
-      <div class="filter-bar">
-        <div class="search-input">
-          <span class="search-icon">🔍</span>
-          <input v-model="search" class="form-control" placeholder="이름, 기술, 목표 검색..." @input="fetchStaff" />
-        </div>
-        <button class="btn btn-ghost btn-sm" @click="search = ''; fetchStaff()">초기화</button>
+      <div v-if="staff.length > 0" class="filter-bar staff-filter-bar">
+        <span class="filter-label-sm">인력</span>
+        <button
+          v-for="s in staff"
+          :key="s.id"
+          class="staff-chip"
+          :class="{ 'staff-chip-active': selectedStaffFilter.includes(s.id) }"
+          @click="toggleStaffFilter(s.id)"
+        >{{ s.name }}</button>
+        <button v-if="selectedStaffFilter.length > 0" class="btn btn-ghost btn-xs" @click="selectedStaffFilter = []" data-tooltip="인력 필터 초기화">전체 보기</button>
       </div>
 
       <div class="card">
@@ -266,9 +270,9 @@ const vIndeterminate = {
 
 const staff = ref([])
 const objectives = ref([])
-const tasks = ref([])  // 과제 목록 추가
+const tasks = ref([])
 const loading = ref(false)
-const search = ref('')
+const selectedStaffFilter = ref([])
 const { show: showModal, open: openModal, close: closeModal } = useModal()
 const { show: showObjectiveModal, open: openObjectiveModal, close: closeObjectiveModal } = useModal()
 const { toastMsg, showToast, toastError } = useToast()
@@ -326,12 +330,17 @@ const getObjectiveIds = parseIds
 async function fetchStaff() {
   loading.value = true
   try {
-    const params = search.value ? { search: search.value } : {}
-    const { data } = await axios.get('/api/staff', { params })
+    const { data } = await axios.get('/api/staff')
     staff.value = data
   } finally {
     loading.value = false
   }
+}
+
+function toggleStaffFilter(staffId) {
+  const idx = selectedStaffFilter.value.indexOf(staffId)
+  if (idx === -1) selectedStaffFilter.value.push(staffId)
+  else selectedStaffFilter.value.splice(idx, 1)
 }
 
 async function fetchObjectives() {
@@ -472,9 +481,13 @@ const sortKey = ref('name')
 const sortOrder = ref('asc')
 
 const sortedStaff = computed(() => {
-  if (!sortKey.value) return staff.value
-  
-  return [...staff.value].sort((a, b) => {
+  const filtered = selectedStaffFilter.value.length > 0
+    ? staff.value.filter(s => selectedStaffFilter.value.includes(s.id))
+    : staff.value
+
+  if (!sortKey.value) return filtered
+
+  return [...filtered].sort((a, b) => {
     let aVal = a[sortKey.value]
     let bVal = b[sortKey.value]
     
@@ -593,6 +606,31 @@ defineExpose({ openAddModal })
 </script>
 
 <style scoped>
+.staff-filter-bar { gap: 6px; }
+
+.filter-label-sm {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.staff-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--outline);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+.staff-chip:hover { border-color: var(--primary); color: var(--primary); }
+.staff-chip-active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); font-weight: 600; }
+
 .checkbox-label {
   display: inline-flex;
   align-items: center;
