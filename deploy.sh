@@ -58,6 +58,9 @@ echo "[3/7] Python 환경 설정 (uv)..."
 cp -r "$REPO_DIR/backend/." "$APP_DIR/backend/"
 cp -r "$REPO_DIR/data/"*.json "$APP_DIR/data/" 2>/dev/null || true
 cd "$APP_DIR/backend"
+# UV_PYTHON_INSTALL_DIR을 공용 경로로 설정 (www-data 접근 가능)
+export UV_PYTHON_INSTALL_DIR=/usr/local/share/uv-python
+mkdir -p /usr/local/share/uv-python
 uv sync --no-dev --python 3.12 --native-tls
 
 # 4. Frontend build
@@ -83,6 +86,7 @@ WorkingDirectory=$APP_DIR/backend
 Environment="DATA_DIR=$APP_DIR/data"
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
 Environment="UV_CACHE_DIR=/var/cache/okr-app/uv"
+Environment="UV_PYTHON_INSTALL_DIR=/usr/local/share/uv-python"
 ExecStart=/usr/local/bin/uv run gunicorn -c $APP_DIR/backend/gunicorn.conf.py main:app
 Restart=always
 RestartSec=5
