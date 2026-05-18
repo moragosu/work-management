@@ -30,3 +30,6 @@ Thumbs.db
 # User uploads (runtime files)
 backend/uploads/*
 !backend/uploads/.gitkeep
+
+# Runtime data
+data/
