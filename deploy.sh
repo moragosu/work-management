@@ -69,6 +69,8 @@ cp -r "$REPO_DIR/dist/." "$APP_DIR/dist/"
 
 # 5. Systemd service
 echo "[5/7] Systemd 서비스 등록..."
+mkdir -p /var/cache/okr-app/uv
+chown -R www-data:www-data /var/cache/okr-app
 cat > /etc/systemd/system/okr-app.service <<EOF
 [Unit]
 Description=OKR Management FastAPI App
@@ -80,6 +82,7 @@ Group=www-data
 WorkingDirectory=$APP_DIR/backend
 Environment="DATA_DIR=$APP_DIR/data"
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+Environment="UV_CACHE_DIR=/var/cache/okr-app/uv"
 ExecStart=/usr/local/bin/uv run gunicorn -c $APP_DIR/backend/gunicorn.conf.py main:app
 Restart=always
 RestartSec=5
