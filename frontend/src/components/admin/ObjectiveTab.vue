@@ -197,7 +197,7 @@ const stats = computed(() => ({
 }))
 
 // ── 정렬 ──
-const sortKey = ref('')
+const sortKey = ref('id')
 const sortOrder = ref('asc')
 function sortBy(key) {
   if (sortKey.value === key) {

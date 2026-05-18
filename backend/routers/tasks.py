@@ -85,11 +85,41 @@ def update_task(task_id: str, update: TaskUpdate):
     tasks = _load()
     for i, t in enumerate(tasks):
         if t["id"] == task_id:
+            old_objective_id = t.get("objective_id", "")
+            new_objective_id = update.objective_id if update.objective_id is not None else old_objective_id
             patch = update.model_dump(exclude_none=True)
             tasks[i] = {**t, **patch}
             _save(tasks)
+            if old_objective_id != new_objective_id:
+                member_ids = {m["staff_id"] for m in t.get("members", [])}
+                if member_ids:
+                    _sync_staff_okrs(member_ids, old_objective_id, new_objective_id, tasks)
             return tasks[i]
     raise HTTPException(status_code=404, detail="Task not found")
+
+
+def _sync_staff_okrs(member_ids: set, old_obj_id: str, new_obj_id: str, all_tasks: list):
+    """task objective_id 변경 시 관련 staff.okrs 자동 동기화."""
+    staff_data = data_store.load("staff.json")
+    changed = False
+    for staff in staff_data.get("staff", []):
+        if staff["id"] not in member_ids:
+            continue
+        okrs = [x.strip() for x in staff.get("okrs", "").split(",") if x.strip()]
+        if old_obj_id:
+            still_connected = any(
+                t.get("objective_id") == old_obj_id and
+                any(m["staff_id"] == staff["id"] for m in t.get("members", []))
+                for t in all_tasks
+            )
+            if not still_connected and old_obj_id in okrs:
+                okrs.remove(old_obj_id)
+        if new_obj_id and new_obj_id not in okrs:
+            okrs.append(new_obj_id)
+        staff["okrs"] = ",".join(okrs)
+        changed = True
+    if changed:
+        data_store.save("staff.json", staff_data)
 
 
 @router.delete("/{task_id}")

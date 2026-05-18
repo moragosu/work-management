@@ -37,7 +37,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="t in tasks" :key="t.id" :id="'task-row-' + t.id">
+            <tr v-for="t in sortedTasks" :key="t.id" :id="'task-row-' + t.id">
               <td><span class="badge badge-blue">{{ t.id }}</span></td>
               <td style="font-weight:600">{{ t.name }}</td>
               <td><span class="text-sm">{{ getObjectiveName(t.objective_id) }}</span></td>
@@ -179,6 +179,14 @@ function getObjectiveName(id) {
   return o ? `${o.id}: ${o.name}` : id
 }
 function exportCsv() { window.open('/api/admin/export/tasks', '_blank') }
+
+const sortedTasks = computed(() =>
+  [...props.tasks].sort((a, b) => {
+    const aNum = parseInt(a.id.replace('T', '')) || 0
+    const bNum = parseInt(b.id.replace('T', '')) || 0
+    return aNum - bNum
+  })
+)
 
 // ── Task Form Modal ──
 const showModal = ref(false)

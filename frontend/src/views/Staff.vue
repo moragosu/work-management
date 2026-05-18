@@ -468,7 +468,7 @@ async function saveObjectives() {
 }
 
 // 정렬 기능
-const sortKey = ref('')
+const sortKey = ref('name')
 const sortOrder = ref('asc')
 
 const sortedStaff = computed(() => {
