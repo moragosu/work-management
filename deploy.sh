@@ -1,10 +1,12 @@
 #!/bin/bash
 # OKR Management System - Deployment Script
-# Usage: sudo bash deploy.sh
+# Usage: sudo bash deploy.sh [PORT]
+# Example: sudo bash deploy.sh 8080
 set -e
 
 APP_DIR="/var/www/okr-app"
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
+PORT="${1:-8080}"
 
 echo "=== OKR 관리 시스템 배포 시작 ==="
 
@@ -87,8 +89,37 @@ WantedBy=multi-user.target
 EOF
 
 # 6. Nginx config
-echo "[6/7] Nginx 설정..."
-cp "$REPO_DIR/nginx/okr-app.conf" /etc/nginx/sites-available/okr-app
+echo "[6/7] Nginx 설정 (포트: $PORT)..."
+cat > /etc/nginx/sites-available/okr-app <<NGINXEOF
+server {
+    listen $PORT;
+    server_name _;
+
+    root $APP_DIR/dist;
+    index index.html;
+
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_read_timeout 60s;
+    }
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?)$ {
+        expires 7d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
+    gzip_min_length 1024;
+}
+NGINXEOF
 ln -sf /etc/nginx/sites-available/okr-app /etc/nginx/sites-enabled/okr-app
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
@@ -104,6 +135,6 @@ systemctl reload nginx
 
 echo ""
 echo "✅ 배포 완료!"
-echo "   접속 주소: http://$(hostname -I | awk '{print $1}')/"
+echo "   접속 주소: http://$(hostname -I | awk '{print $1}'):$PORT"
 echo "   서비스 상태: systemctl status okr-app"
 echo "   로그 확인:   journalctl -u okr-app -f"
