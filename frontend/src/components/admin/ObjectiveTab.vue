@@ -220,7 +220,16 @@ const sortedObjectives = computed(() => {
 
 // ── 헬퍼 ──
 function getObjectiveTasks(id) { return props.tasks.filter(t => t.objective_id === id) }
-function getObjectiveStaff(id) { return props.staffList.filter(s => parseIds(s.okrs).includes(id)) }
+function getObjectiveStaff(id) {
+  const fromOkrs = props.staffList.filter(s => parseIds(s.okrs).includes(id))
+  const fromOkrsIds = new Set(fromOkrs.map(s => s.id))
+  const connectedTaskIds = new Set(props.tasks.filter(t => t.objective_id === id).map(t => t.id))
+  const fromTasks = props.staffList.filter(s =>
+    !fromOkrsIds.has(s.id) &&
+    parseIds(s.selected_tasks).some(tid => connectedTaskIds.has(tid))
+  )
+  return [...fromOkrs, ...fromTasks]
+}
 function exportCsv() { window.open('/api/admin/export/objectives', '_blank') }
 
 // ── Objective Form Modal ──
