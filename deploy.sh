@@ -58,10 +58,13 @@ echo "[3/7] Python 환경 설정 (uv)..."
 cp -r "$REPO_DIR/backend/." "$APP_DIR/backend/"
 cp -r "$REPO_DIR/data/"*.json "$APP_DIR/data/" 2>/dev/null || true
 cd "$APP_DIR/backend"
-# UV_PYTHON_INSTALL_DIR을 공용 경로로 설정 (www-data 접근 가능)
+# sudo 실행 시 HOME이 호출자 홈으로 유지되는 문제 방지
+export HOME=/root
 export UV_PYTHON_INSTALL_DIR=/usr/local/share/uv-python
 mkdir -p /usr/local/share/uv-python
+rm -rf .venv  # 기존 venv 삭제 후 재생성
 uv sync --no-dev --python 3.12 --native-tls
+chmod -R a+rX /usr/local/share/uv-python
 
 # 4. Frontend build
 echo "[4/7] 프론트엔드 빌드..."
