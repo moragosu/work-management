@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 import data_store
-from utils.id_generator import next_sequential_id
+from utils.id_generator import next_counter_id, get_reusable_ids, get_next_id_preview, sync_counter
 
 router = APIRouter()
 
@@ -35,10 +35,6 @@ def _save(tasks: list) -> None:
     data_store.save("tasks.json", {"tasks": tasks})
 
 
-def _get_next_task_id() -> str:
-    return next_sequential_id(_load(), "T")
-
-
 # ── Task endpoints ─────────────────────────────────────────────────────────────
 
 @router.get("", response_model=List[Task])
@@ -47,6 +43,18 @@ def list_tasks(objective_id: Optional[str] = None):
     if objective_id:
         tasks = [t for t in tasks if t.get("objective_id") == objective_id]
     return tasks
+
+
+@router.get("/next-id")
+def get_next_id():
+    tasks = _load()
+    return {"next_id": get_next_id_preview("T", tasks)}
+
+
+@router.get("/reusable-ids")
+def get_reusable_task_ids():
+    tasks = _load()
+    return {"reusable_ids": get_reusable_ids(tasks, "T")}
 
 
 @router.get("/{task_id}", response_model=Task)
@@ -61,9 +69,10 @@ def get_task(task_id: str):
 @router.post("", response_model=Task, status_code=201)
 def create_task(task: Task):
     tasks = _load()
-    # Auto-generate ID if not provided
     if not task.id:
-        task.id = _get_next_task_id()
+        task.id = next_counter_id("T", tasks)
+    else:
+        sync_counter("T", task.id, tasks)
     if any(t["id"] == task.id for t in tasks):
         raise HTTPException(status_code=400, detail="Task id already exists")
     tasks.append(task.model_dump())
@@ -86,52 +95,63 @@ def update_task(task_id: str, update: TaskUpdate):
 @router.delete("/{task_id}")
 def delete_task(task_id: str):
     tasks = _load()
-    new_tasks = [t for t in tasks if t["id"] != task_id]
-    if len(new_tasks) == len(tasks):
+    task = next((t for t in tasks if t["id"] == task_id), None)
+    if not task:
         raise HTTPException(status_code=404, detail="Task not found")
+
+    task_name = task["name"]
+
+    # Cascade: staff.selected_tasks에서 제거
+    staff_data = data_store.load("staff.json")
+    staff_changed = False
+    for staff in staff_data.get("staff", []):
+        tasks_str = staff.get("selected_tasks", "")
+        if tasks_str:
+            ids = [x.strip() for x in tasks_str.split(",") if x.strip()]
+            new_ids = [x for x in ids if x != task_id]
+            if len(new_ids) != len(ids):
+                staff["selected_tasks"] = ",".join(new_ids)
+                staff_changed = True
+    if staff_changed:
+        data_store.save("staff.json", staff_data)
+
+    # Cascade: progress의 task_id를 초기화하고 task_name에 이름 텍스트 보존 (이력 보존)
+    progress_data = data_store.load("progress.json")
+    progress_changed = False
+    for item in progress_data.get("progress_items", []):
+        if item.get("task_id") == task_id:
+            item["task_id"] = ""
+            item["task_name"] = task_name
+            progress_changed = True
+    if progress_changed:
+        data_store.save("progress.json", progress_data)
+
+    new_tasks = [t for t in tasks if t["id"] != task_id]
     _save(new_tasks)
     return {"deleted": task_id}
-
-
-# ── Utility endpoints ─────────────────────────────────────────────────────────
-
-@router.get("/next-id")
-def get_next_id():
-    """Get next available task ID."""
-    return {"next_id": _get_next_task_id()}
 
 
 # ── Related data endpoints ────────────────────────────────────────────────────
 
 @router.get("/{task_id}/related")
 def get_task_related_data(task_id: str):
-    """Get related objective and staff data for a task"""
     tasks = _load()
     task = next((t for t in tasks if t["id"] == task_id), None)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    
-    # Load related data
-    import data_store
+
     objectives_data = data_store.load("okrs.json")
     staff_data = data_store.load("staff.json")
-    
-    result = {
-        "task": task,
-        "related_objective": None,
-        "related_staff": []
-    }
-    
-    # Get related objective
+
+    related_objective = None
     if task.get("objective_id"):
-        objective = next((o for o in objectives_data.get("objectives", []) if o["id"] == task["objective_id"]), None)
-        if objective:
-            result["related_objective"] = objective
-    
-    # Get related staff
-    for member in task.get("members", []):
-        staff = next((s for s in staff_data.get("staff", []) if s["id"] == member["staff_id"]), None)
-        if staff:
-            result["related_staff"].append(staff)
-    
-    return result
+        related_objective = next(
+            (o for o in objectives_data.get("objectives", []) if o["id"] == task["objective_id"]), None
+        )
+
+    related_staff = [
+        s for s in staff_data.get("staff", [])
+        if any(m["staff_id"] == s["id"] for m in task.get("members", []))
+    ]
+
+    return {"task": task, "related_objective": related_objective, "related_staff": related_staff}

@@ -169,8 +169,14 @@ def reset_data(target: str):
         raise HTTPException(status_code=400, detail=f"target must be one of {allowed}")
     if target in ("objectives", "all"):
         data_store.save("okrs.json", {"objectives": []})
+        counters = data_store.load("id_counters.json")
+        counters.pop("O", None)
+        data_store.save("id_counters.json", counters)
     if target in ("tasks", "all"):
         data_store.save("tasks.json", {"tasks": []})
+        counters = data_store.load("id_counters.json")
+        counters.pop("T", None)
+        data_store.save("id_counters.json", counters)
     if target in ("staff", "all"):
         data_store.save("staff.json", {"staff": []})
     if target in ("progress", "all"):

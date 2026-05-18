@@ -95,8 +95,23 @@
         <div class="modal-body">
           <div class="form-group">
             <label class="form-label">목표 ID</label>
-            <input v-model="form.id" class="form-control" :placeholder="nextId" disabled />
-            <span class="text-sm text-muted">자동 생성</span>
+            <input
+              v-model="form.id"
+              class="form-control"
+              :class="{ 'input-error': idConflict }"
+              :disabled="!!editingId"
+            />
+            <span v-if="idConflict" class="text-sm" style="color:var(--danger)">이미 존재하는 ID입니다</span>
+            <div v-if="!editingId && props.reusableIds.length > 0" class="reusable-ids">
+              <span class="text-sm text-muted">재사용 가능:</span>
+              <button
+                v-for="rid in props.reusableIds"
+                :key="rid"
+                type="button"
+                class="reusable-chip"
+                @click="form.id = rid"
+              >{{ rid }}</button>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">목표명 *</label>
@@ -115,7 +130,7 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-ghost" @click="showModal = false" data-tooltip="변경사항 취소">취소</button>
-          <button class="btn btn-primary" @click="submitObjective" :disabled="!form.name" data-tooltip="목표 저장">저장</button>
+          <button class="btn btn-primary" @click="submitObjective" :disabled="!form.name || !form.id || idConflict" data-tooltip="목표 저장">저장</button>
         </div>
       </div>
     </div>
@@ -168,6 +183,7 @@ const props = defineProps({
   staffList: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
   nextId: { type: String, default: 'O1' },
+  reusableIds: { type: Array, default: () => [] },
 })
 const emit = defineEmits(['refresh'])
 const { toastMsg, showToast, toastError } = useToast()
@@ -211,6 +227,10 @@ function exportCsv() { window.open('/api/admin/export/objectives', '_blank') }
 const showModal = ref(false)
 const editingId = ref(null)
 const defaultForm = () => ({ id: '', name: '', tech_stack: '', status: '진행중' })
+
+const idConflict = computed(() =>
+  !editingId.value && !!form.value.id && props.objectives.some(o => o.id === form.value.id)
+)
 const form = ref(defaultForm())
 
 function openModal(o = null) {
@@ -292,6 +312,14 @@ async function deleteKr(krId) {
 </script>
 
 <style scoped>
+.reusable-ids { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.reusable-chip {
+  padding: 2px 10px; border-radius: 12px; font-size: 12px; cursor: pointer;
+  border: 1px solid var(--primary); color: var(--primary); background: transparent;
+  transition: background 0.15s;
+}
+.reusable-chip:hover { background: var(--primary); color: #fff; }
+.input-error { border-color: var(--danger) !important; }
 .kr-edit-item {
   background: var(--gray-50);
   border-radius: 6px;

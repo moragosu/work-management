@@ -25,6 +25,7 @@
         :staff-list="staffList"
         :loading="loading"
         :next-id="nextObjectiveId"
+        :reusable-ids="reusableObjectiveIds"
         @refresh="fetchAll"
       />
 
@@ -35,6 +36,7 @@
         :staff-list="staffList"
         :loading="taskLoading"
         :next-id="nextTaskId"
+        :reusable-ids="reusableTaskIds"
         @refresh="fetchAll"
       />
 
@@ -164,6 +166,8 @@ const taskLoading = ref(false)
 const { toastMsg, showToast } = useToast(2500)
 const nextObjectiveId = ref('O1')
 const nextTaskId = ref('T1')
+const reusableObjectiveIds = ref([])
+const reusableTaskIds = ref([])
 const staffViewRef = ref(null)
 
 const staffStats = computed(() => {
@@ -179,8 +183,12 @@ async function fetchObjectives() {
   try {
     const { data } = await axios.get('/api/okrs')
     objectives.value = data
-    const { data: nextId } = await axios.get('/api/okrs/next-id')
+    const [{ data: nextId }, { data: reusable }] = await Promise.all([
+      axios.get('/api/okrs/next-id'),
+      axios.get('/api/okrs/reusable-ids'),
+    ])
     nextObjectiveId.value = nextId.next_id
+    reusableObjectiveIds.value = reusable.reusable_ids
   } finally { loading.value = false }
 }
 
@@ -189,8 +197,12 @@ async function fetchTasks() {
   try {
     const { data } = await axios.get('/api/tasks')
     tasks.value = data
-    const { data: nextId } = await axios.get('/api/tasks/next-id')
+    const [{ data: nextId }, { data: reusable }] = await Promise.all([
+      axios.get('/api/tasks/next-id'),
+      axios.get('/api/tasks/reusable-ids'),
+    ])
     nextTaskId.value = nextId.next_id
+    reusableTaskIds.value = reusable.reusable_ids
   } finally { taskLoading.value = false }
 }
 

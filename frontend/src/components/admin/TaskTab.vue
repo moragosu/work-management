@@ -69,8 +69,23 @@
         <div class="modal-body">
           <div class="form-group">
             <label class="form-label">과제 ID</label>
-            <input v-model="form.id" class="form-control" :placeholder="nextId" disabled />
-            <span class="text-sm text-muted">자동 생성</span>
+            <input
+              v-model="form.id"
+              class="form-control"
+              :class="{ 'input-error': idConflict }"
+              :disabled="!!editingId"
+            />
+            <span v-if="idConflict" class="text-sm" style="color:var(--danger)">이미 존재하는 ID입니다</span>
+            <div v-if="!editingId && props.reusableIds.length > 0" class="reusable-ids">
+              <span class="text-sm text-muted">재사용 가능:</span>
+              <button
+                v-for="rid in props.reusableIds"
+                :key="rid"
+                type="button"
+                class="reusable-chip"
+                @click="form.id = rid"
+              >{{ rid }}</button>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">과제명 *</label>
@@ -86,7 +101,7 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-ghost" @click="showModal = false" data-tooltip="변경사항 취소">취소</button>
-          <button class="btn btn-primary" @click="submitTask" :disabled="!form.name" data-tooltip="과제 저장">저장</button>
+          <button class="btn btn-primary" @click="submitTask" :disabled="!form.name || !form.id || idConflict" data-tooltip="과제 저장">저장</button>
         </div>
       </div>
     </div>
@@ -142,6 +157,7 @@ const props = defineProps({
   staffList: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
   nextId: { type: String, default: 'T1' },
+  reusableIds: { type: Array, default: () => [] },
 })
 const emit = defineEmits(['refresh'])
 const route = useRoute()
@@ -169,6 +185,10 @@ const showModal = ref(false)
 const editingId = ref(null)
 const defaultForm = () => ({ id: '', name: '', objective_id: '' })
 const form = ref(defaultForm())
+
+const idConflict = computed(() =>
+  !editingId.value && !!form.value.id && props.tasks.some(t => t.id === form.value.id)
+)
 
 function openModal(t = null) {
   if (t) {
@@ -253,6 +273,14 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.reusable-ids { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.reusable-chip {
+  padding: 2px 10px; border-radius: 12px; font-size: 12px; cursor: pointer;
+  border: 1px solid var(--primary); color: var(--primary); background: transparent;
+  transition: background 0.15s;
+}
+.reusable-chip:hover { background: var(--primary); color: #fff; }
+.input-error { border-color: var(--danger) !important; }
 .kr-edit-item {
   background: var(--gray-50);
   border-radius: 6px;
