@@ -1,5 +1,5 @@
 <template>
-  <div class="layout" @mousemove="onMouseMove" @mouseover="onMouseOver" @mouseout="onMouseOut">
+  <div class="layout" @mousemove="onMouseMove" @mouseover="onMouseOver" @mouseout="onMouseOut" @click="tooltip.visible = false" @mouseleave="tooltip.visible = false">
     <aside class="sidebar">
       <RouterLink to="/dashboard" class="sidebar-logo">
         <div class="logo-badge">
