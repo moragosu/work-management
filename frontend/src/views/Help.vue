@@ -156,7 +156,7 @@
               <div class="step-number">2</div>
               <div class="step-body">
                 <strong>과제 찾기</strong>
-                <p>목표 → KR → 과제 순으로 나열된 목록에서 이슈를 등록할 과제를 찾습니다. 이름 칩을 클릭하면 해당 파트원 과제만 필터링됩니다.</p>
+                <p>목표 → KR → 과제 순으로 나열된 목록에서 이슈를 등록할 과제를 찾습니다. 상단의 이름 칩을 클릭하면 해당 파트원의 과제만 필터링됩니다. 여러 명 동시 선택도 가능합니다.</p>
               </div>
             </div>
             <div class="step">
@@ -244,6 +244,96 @@
       </div>
     </section>
 
+    <!-- ⑤ 관리 도구 -->
+    <section id="admin" class="help-section card">
+      <div class="card-body">
+        <div class="section-heading">
+          <span class="material-symbols-outlined section-icon-lg">settings</span>
+          <h3 class="section-title">관리 도구</h3>
+        </div>
+        <p class="section-desc">목표·과제·인력 데이터를 등록하고 관리하는 화면입니다. 총 4개의 탭으로 구성됩니다.</p>
+
+        <!-- 목표 탭 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">bar_chart</span>
+            목표(Objective) 탭
+          </div>
+          <ul class="feature-list">
+            <li>목표(Objective)와 각 목표에 딸린 <strong>Key Result(핵심 결과)</strong>를 등록·수정·삭제합니다</li>
+            <li>목표 카드에서 <strong>참여 인력</strong>을 확인할 수 있습니다 — 해당 목표의 과제를 담당하는 파트원이 자동으로 표시됩니다</li>
+            <li>목록은 <strong>ID 오름차순</strong>으로 자동 정렬됩니다</li>
+          </ul>
+          <div class="callout callout-warning">
+            <span class="material-symbols-outlined callout-icon">info</span>
+            <div>목표를 삭제하면 연결된 과제의 목표 연결이 자동으로 해제됩니다. 과제 자체나 파트원 데이터는 삭제되지 않습니다.</div>
+          </div>
+        </div>
+
+        <!-- 과제 탭 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--warning)">assignment</span>
+            과제(Task) 탭
+          </div>
+          <ul class="feature-list">
+            <li>과제를 등록하고 목표와 연결합니다</li>
+            <li>목록은 <strong>ID 오름차순</strong>으로 자동 정렬됩니다</li>
+            <li>과제를 삭제하면 파트원의 담당 과제 목록에서도 자동으로 제거됩니다</li>
+            <li>삭제된 과제와 연결된 주간 진행 현황 이력은 과제명이 텍스트로 보존됩니다</li>
+          </ul>
+        </div>
+
+        <!-- ID 정책 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px">tag</span>
+            ID 부여 방식
+          </div>
+          <ul class="feature-list">
+            <li>목표는 <strong>O1, O2, O3…</strong>, 과제는 <strong>T1, T2, T3…</strong> 형식으로 순차 자동 부여됩니다</li>
+            <li>항목을 삭제해도 카운터는 유지됩니다 — 예: O1·O2·O3이 있을 때 O2를 삭제하면 다음 생성 ID는 O4입니다</li>
+            <li>삭제로 생긴 빈 번호(O2)는 <strong>재사용 가능한 ID</strong>로 추가 창에 표시됩니다. 클릭하면 해당 ID를 선택할 수 있습니다</li>
+          </ul>
+          <div class="callout callout-tip">
+            <span class="material-symbols-outlined callout-icon">star</span>
+            <div>ID는 직접 입력도 가능합니다. 이미 사용 중인 ID를 입력하면 중복 경고가 표시됩니다.</div>
+          </div>
+        </div>
+
+        <!-- 인력 탭 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:#6b7280">group</span>
+            인력(Staff) 탭
+          </div>
+          <ul class="feature-list">
+            <li>파트원 정보(이름·역할·기술·담당 과제)를 등록·수정·삭제합니다</li>
+            <li>상단의 <strong>이름 칩</strong>을 클릭하면 해당 파트원만 필터링됩니다. 여러 명을 동시에 선택할 수 있습니다</li>
+            <li>필터를 초기화하려면 <strong>"전체 보기"</strong> 버튼을 클릭합니다</li>
+            <li>목록은 <strong>이름 가나다순</strong>으로 자동 정렬됩니다</li>
+            <li>파트원을 삭제하면 담당 과제 연결도 자동으로 정리됩니다</li>
+          </ul>
+          <div class="callout callout-info">
+            <span class="material-symbols-outlined callout-icon">lightbulb</span>
+            <div>인력 추가 시 과제를 목표별로 그룹핑해서 선택할 수 있습니다. 과제를 선택하면 연결된 목표가 자동으로 설정됩니다.</div>
+          </div>
+        </div>
+
+        <!-- 설정 탭 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px">tune</span>
+            설정 탭
+          </div>
+          <ul class="feature-list">
+            <li><strong>관리자 모드</strong>: 비밀번호를 입력해 활성화하면 데이터 초기화 탭이 추가됩니다</li>
+            <li>활성화된 관리자 모드는 브라우저를 닫아도 유지됩니다. 해제하려면 "관리자 모드 해제" 버튼을 클릭합니다</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
     <!-- FAQ -->
     <section id="faq" class="help-section card">
       <div class="card-body">
@@ -273,6 +363,7 @@ const toc = [
   { id: 'dashboard', icon: 'dashboard', title: '대시보드' },
   { id: 'progress',  icon: 'assignment', title: '주간 진행 현황' },
   { id: 'markdown',  icon: 'edit_note', title: '마크다운 작성법' },
+  { id: 'admin',     icon: 'settings',  title: '관리 도구' },
   { id: 'faq',       icon: 'help',      title: 'FAQ' },
 ]
 
@@ -316,6 +407,21 @@ const faqs = reactive([
   {
     q: '파트원 정보나 목표가 잘못 표시되면?',
     a: '관리 도구 메뉴에서 파트원, 목표(Objective), 핵심결과(KR), 과제 정보를 수정할 수 있습니다. 권한이 없다면 관리자에게 문의하세요.',
+    open: false,
+  },
+  {
+    q: '목표 O2를 삭제한 뒤 새로 만들면 ID가 O4가 되나요?',
+    a: '네. ID 카운터는 삭제해도 초기화되지 않습니다. 다음 생성 ID는 기존 최댓값 +1입니다. 다만 삭제로 생긴 빈 번호(O2·O3)는 추가 화면에 재사용 가능 ID로 표시되므로 필요하면 선택해 재사용할 수 있습니다.',
+    open: false,
+  },
+  {
+    q: '목표를 삭제하면 연결된 과제와 인력 데이터도 사라지나요?',
+    a: '과제와 파트원 데이터는 삭제되지 않습니다. 목표 삭제 시 과제의 목표 연결만 해제됩니다. 과제를 삭제할 경우에는 파트원의 담당 과제 목록에서 자동으로 제거되고, 기존 이슈 이력에는 과제명이 텍스트로 보존됩니다.',
+    open: false,
+  },
+  {
+    q: '인력 탭에서 특정 파트원만 보고 싶을 때는?',
+    a: '인력 탭 상단의 이름 칩을 클릭하면 해당 파트원만 필터링됩니다. 여러 명을 동시에 선택할 수 있으며, "전체 보기" 버튼으로 필터를 초기화할 수 있습니다.',
     open: false,
   },
 ])
