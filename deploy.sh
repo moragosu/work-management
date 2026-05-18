@@ -56,7 +56,7 @@ echo "[3/7] Python 환경 설정 (uv)..."
 cp -r "$REPO_DIR/backend/." "$APP_DIR/backend/"
 cp -r "$REPO_DIR/data/"*.json "$APP_DIR/data/" 2>/dev/null || true
 cd "$APP_DIR/backend"
-uv sync --no-dev --python 3.12
+uv sync --no-dev --python 3.12 --native-tls
 
 # 4. Frontend build
 echo "[4/7] 프론트엔드 빌드..."
