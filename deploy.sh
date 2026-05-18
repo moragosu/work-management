@@ -90,7 +90,7 @@ Environment="DATA_DIR=$APP_DIR/data"
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
 Environment="UV_CACHE_DIR=/var/cache/okr-app/uv"
 Environment="UV_PYTHON_INSTALL_DIR=/usr/local/share/uv-python"
-ExecStart=/usr/local/bin/uv run gunicorn -c $APP_DIR/backend/gunicorn.conf.py main:app
+ExecStart=$APP_DIR/backend/.venv/bin/gunicorn -c $APP_DIR/backend/gunicorn.conf.py main:app
 Restart=always
 RestartSec=5
 
