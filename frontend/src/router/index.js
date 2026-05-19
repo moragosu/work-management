@@ -3,6 +3,7 @@ import Dashboard from '../views/Dashboard.vue'
 import Progress from '../views/Progress.vue'
 import Admin from '../views/Admin.vue'
 import Help from '../views/Help.vue'
+import GoRedirect from '../views/GoRedirect.vue'
 
 const routes = [
   { path: '/', redirect: '/dashboard' },
@@ -11,6 +12,7 @@ const routes = [
   { path: '/staff', redirect: '/admin' },
   { path: '/admin', component: Admin, meta: { title: '관리 도구' } },
   { path: '/help', component: Help, meta: { title: '도움말' } },
+  { path: '/go/:id', component: GoRedirect, meta: { title: '이동 중...' } },
 ]
 
 export default createRouter({

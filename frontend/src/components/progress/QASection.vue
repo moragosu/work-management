@@ -173,6 +173,7 @@ import MarkdownEditor from '../MarkdownEditor.vue'
 import { useToast } from '../../composables/useToast.js'
 import { hasContent } from '../../utils/content.js'
 import { ADMIN_PASSWORD } from '../../config.js'
+import { copyToClipboard } from '../../utils/clipboard.js'
 
 const props = defineProps({
   questions: { type: Array, default: () => [] },
@@ -185,8 +186,8 @@ const { toastMsg, showToast, toastError } = useToast()
 
 // ── 링크 복사 ──
 async function copyLink(type, id) {
-  const url = `${window.location.origin}/progress?week=${props.week}&focus${type === 'question' ? 'Question' : 'Issue'}=${id}`
-  await navigator.clipboard.writeText(url)
+  const url = `${window.location.origin}/go/${id}`
+  await copyToClipboard(url)
   showToast('링크가 복사되었습니다')
 }
 

@@ -201,6 +201,10 @@
             <span class="material-symbols-outlined callout-icon">star</span>
             <div>과제당 이슈는 <strong>여러 건</strong> 등록할 수 있습니다. 등록된 이슈 목록 아래 <strong>"+ 이슈 등록"</strong> 버튼을 클릭해 이슈를 추가하세요.</div>
           </div>
+          <div class="callout callout-info">
+            <span class="material-symbols-outlined callout-icon">link</span>
+            <div><strong>메신저 공유</strong> — 이슈 우측의 <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">link</span> 버튼을 클릭하면 해당 이슈로 바로 이동하는 단축 링크가 클립보드에 복사됩니다. 메신저에 붙여넣어 공유하면 받는 사람이 클릭 시 해당 주차·해당 이슈 위치로 바로 이동합니다.</div>
+          </div>
         </div>
 
         <!-- Q&A -->
@@ -216,6 +220,7 @@
             <li>답변이 없는 질문에는 <span class="inline-badge badge-green">A</span> 옆에 <strong>"답변 달기"</strong> 버튼이 표시됩니다</li>
             <li>답변 작성 시 <strong>작성자(본인 이름)를 반드시 선택</strong>해야 저장됩니다</li>
             <li>하나의 질문에 여러 명이 <strong>"+ 답변 추가"</strong>로 추가 답변을 달 수 있습니다</li>
+            <li>질문 우측의 <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">link</span> 버튼을 클릭하면 해당 질문으로 바로 이동하는 <strong>단축 링크</strong>가 복사됩니다 — 메신저로 공유하면 받는 사람이 바로 해당 위치로 이동합니다</li>
             <li>질문 삭제 시 <span class="highlight-red">해당 질문의 모든 답변도 함께 삭제</span>됩니다 — 삭제 전 <strong>관리자 암호 입력</strong>이 필요합니다</li>
           </ul>
           <div class="callout callout-tip">
@@ -475,6 +480,11 @@ const markdownGuide = [
 ]
 
 const faqs = reactive([
+  {
+    q: '이슈나 질문 링크를 메신저로 공유하려면?',
+    a: '이슈 또는 질문 우측의 링크(🔗) 버튼을 클릭하면 단축 링크가 클립보드에 복사됩니다. 메신저에 붙여넣어 공유하면 받는 사람이 클릭 시 해당 주차·해당 위치로 바로 이동합니다. 링크 형식은 "http://서버주소/go/{ID}" 형태입니다.',
+    open: false,
+  },
   {
     q: '이슈 내용은 어떤 형식으로 작성하나요?',
     a: '마크다운 형식을 지원합니다. 에디터 상단의 툴바 버튼을 클릭하거나, 직접 **굵게**, - 목록 등의 문법을 입력할 수 있습니다.',
