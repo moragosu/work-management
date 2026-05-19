@@ -21,7 +21,18 @@
 
     <div class="flex-between" style="margin-bottom:12px">
       <button class="btn btn-ghost btn-sm" @click="exportCsv" data-tooltip="과제 목록을 CSV 파일로 내보내기">⬇ CSV 다운로드</button>
-      <button class="btn btn-primary btn-sm" @click="openModal()" data-tooltip="새 과제 추가">+ 과제 추가</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button
+          v-if="hasAnySubTasks"
+          class="btn btn-ghost btn-sm"
+          @click="toggleAllExpand"
+          :data-tooltip="allExpanded ? '소과제 행을 모두 접습니다' : '소과제 행을 모두 펼칩니다'"
+        >
+          <span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px">{{ allExpanded ? 'unfold_less' : 'unfold_more' }}</span>
+          {{ allExpanded ? '전체 접기' : '전체 펼치기' }}
+        </button>
+        <button class="btn btn-primary btn-sm" @click="openModal()" data-tooltip="새 과제 추가">+ 과제 추가</button>
+      </div>
     </div>
 
     <div v-if="props.staffList.length > 0" class="filter-bar staff-filter-bar">
@@ -67,8 +78,19 @@
               <tr :id="'task-row-' + t.id" :class="{ 'row-selected': selectedTaskIds.includes(t.id) }">
                 <td><input type="checkbox" :checked="selectedTaskIds.includes(t.id)" @change="toggleTask(t.id)" /></td>
                 <td>
-                  <span class="badge badge-blue">{{ t.id }}</span>
-                  <span v-if="t.sub_tasks && t.sub_tasks.length > 0" class="sub-count-badge" :title="`소과제 ${t.sub_tasks.length}개`">{{ t.sub_tasks.length }}</span>
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <button
+                      v-if="t.sub_tasks && t.sub_tasks.length > 0"
+                      class="expand-btn"
+                      @click="toggleExpand(t.id)"
+                      :data-tooltip="collapsedTaskIds.has(t.id) ? '소과제 펼치기' : '소과제 접기'"
+                    >
+                      <span class="material-symbols-outlined expand-icon" :class="{ collapsed: collapsedTaskIds.has(t.id) }">expand_more</span>
+                    </button>
+                    <span v-else style="width:20px;display:inline-block"></span>
+                    <span class="badge badge-blue">{{ t.id }}</span>
+                    <span v-if="t.sub_tasks && t.sub_tasks.length > 0" class="sub-count-badge" :title="`소과제 ${t.sub_tasks.length}개`">{{ t.sub_tasks.length }}</span>
+                  </div>
                 </td>
                 <td><span v-if="t.target" :class="targetBadgeClass(t.target)">{{ t.target }}</span><span v-else class="text-muted text-sm">-</span></td>
                 <td style="font-weight:600">{{ t.name }}</td>
@@ -87,7 +109,7 @@
                 </td>
               </tr>
               <tr
-                v-for="st in (t.sub_tasks || [])"
+                v-for="st in (collapsedTaskIds.has(t.id) ? [] : (t.sub_tasks || []))"
                 :key="st.id"
                 class="sub-task-row"
                 :class="{ 'sub-task-row-done': st.done }"
@@ -264,6 +286,30 @@ function exportCsv() { window.open('/api/admin/export/tasks', '_blank') }
 
 const TARGET_CLASSES = { MX: 'badge badge-blue', VD: 'badge badge-green', DA: 'badge badge-orange', '공통': 'badge badge-gray' }
 function targetBadgeClass(target) { return TARGET_CLASSES[target] || 'badge badge-gray' }
+
+// ── 소과제 접기/펼치기 ──
+const collapsedTaskIds = ref(new Set())
+
+function toggleExpand(taskId) {
+  const next = new Set(collapsedTaskIds.value)
+  if (next.has(taskId)) next.delete(taskId)
+  else next.add(taskId)
+  collapsedTaskIds.value = next
+}
+
+const hasAnySubTasks = computed(() =>
+  props.tasks.some(t => t.sub_tasks?.length > 0)
+)
+const allExpanded = computed(() =>
+  props.tasks.filter(t => t.sub_tasks?.length > 0).every(t => !collapsedTaskIds.value.has(t.id))
+)
+function toggleAllExpand() {
+  if (allExpanded.value) {
+    collapsedTaskIds.value = new Set(props.tasks.filter(t => t.sub_tasks?.length > 0).map(t => t.id))
+  } else {
+    collapsedTaskIds.value = new Set()
+  }
+}
 
 // ── 인력 필터 ──
 const selectedStaffFilter = ref([])
@@ -479,6 +525,28 @@ onMounted(async () => {
 .bulk-count { font-size: 13px; font-weight: 600; color: var(--primary); white-space: nowrap; }
 .bulk-select { max-width: 140px; padding: 4px 8px; font-size: 13px; height: auto; }
 .row-selected { background: var(--primary-light) !important; }
+
+.expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--text-muted);
+  padding: 0;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.expand-btn:hover { background: var(--gray-100); color: var(--text-primary); }
+.expand-icon {
+  font-size: 16px;
+  transition: transform 0.2s;
+}
+.expand-icon.collapsed { transform: rotate(-90deg); }
 
 .sub-task-row { background: var(--gray-50); }
 .sub-task-row:hover { background: var(--gray-100) !important; }
