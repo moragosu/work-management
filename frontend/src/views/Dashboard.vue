@@ -150,6 +150,7 @@
         <div class="side-panel-col">
           <div class="section-header section-header-toggle" @click="activityOpen = !activityOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
             <span class="section-header-title">파트원별 활동 현황</span>
+            <span class="panel-count-badge">파트원 {{ staffList.length }}명</span>
             <span class="material-symbols-outlined section-chevron" :class="{ open: activityOpen }">expand_more</span>
           </div>
           <div v-if="activityOpen" class="card panel-card">
@@ -204,6 +205,7 @@
         <div class="side-panel-col">
           <div class="section-header section-header-toggle" @click="matrixOpen = !matrixOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
             <span class="section-header-title">주간 등록 현황</span>
+            <span class="panel-count-badge">과제 {{ flatTaskRows.length }}건</span>
             <div class="matrix-legend-inline">
               <span class="material-symbols-outlined matrix-legend-icon matrix-icon-link">link</span><span>컨플루언스</span>
               <span class="material-symbols-outlined matrix-legend-icon matrix-icon-issue">warning</span><span>이슈</span>
@@ -648,8 +650,22 @@ onMounted(refresh)
   margin-top: 24px;
 }
 .side-panel-col { display: flex; flex-direction: column; min-width: 0; }
-.panel-card { margin-top: 12px; }
-.activity-scroll { overflow-x: auto; overflow-y: auto; max-height: 420px; }
+.panel-card {
+  margin-top: 12px;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.activity-scroll { flex: 1; overflow-x: auto; overflow-y: auto; min-height: 0; }
+.panel-count-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--gray-100);
+  color: var(--text-muted);
+}
 
 /* ── 팀원별 활동 현황 ── */
 .member-cell { display: flex; align-items: center; gap: 10px; }
@@ -774,9 +790,10 @@ onMounted(refresh)
   margin-left: 6px;
 }
 .matrix-wrap {
+  flex: 1;
   overflow-x: auto;
-  max-height: 360px;
   overflow-y: auto;
+  min-height: 0;
 }
 .matrix-table {
   width: max-content;
