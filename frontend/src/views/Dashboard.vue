@@ -206,7 +206,100 @@
         </table>
       </div>
 
-      <!-- ④ 목표 카드 목록 -->
+      <!-- ④ 컨플루언스 링크 현황 -->
+      <div class="section-header section-header-toggle" style="margin-top:32px" @click="confluenceOpen = !confluenceOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
+        <span class="section-header-title">컨플루언스 링크 현황</span>
+        <span class="matrix-badge">이번 주 {{ confluenceThisWeek }}/{{ flatTaskRows.length }}</span>
+        <span class="material-symbols-outlined section-chevron" :class="{ open: confluenceOpen }">expand_more</span>
+      </div>
+      <div v-if="confluenceOpen" class="card" style="margin-top:12px;overflow:hidden">
+        <div v-if="flatTaskRows.length === 0" class="panel-empty" style="padding:24px">등록된 과제가 없습니다</div>
+        <div v-else class="matrix-wrap">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th class="matrix-task-th">과제</th>
+                <th v-for="w in allWeeks" :key="w" class="matrix-week-th" :class="{ 'matrix-col-current': w === currentWeek }">{{ w }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in flatTaskRows" :key="row.id">
+                <td class="matrix-task-td">
+                  <span v-if="row.parentName" class="matrix-parent">{{ row.parentName }} › </span>{{ row.selfName }}
+                </td>
+                <td v-for="w in allWeeks" :key="w" class="matrix-cell" :class="{ 'matrix-col-current': w === currentWeek }">
+                  <span v-if="confluenceMap[row.id]?.has(w)" class="matrix-dot-ok">✓</span>
+                  <span v-else class="matrix-dot-no">–</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ⑤ 이슈 등록 현황 -->
+      <div class="section-header section-header-toggle" style="margin-top:24px" @click="issuesOpen = !issuesOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
+        <span class="section-header-title">이슈 등록 현황</span>
+        <span class="matrix-badge">이번 주 {{ issueThisWeek }}/{{ flatTaskRows.length }}</span>
+        <span class="material-symbols-outlined section-chevron" :class="{ open: issuesOpen }">expand_more</span>
+      </div>
+      <div v-if="issuesOpen" class="card" style="margin-top:12px;overflow:hidden">
+        <div v-if="flatTaskRows.length === 0" class="panel-empty" style="padding:24px">등록된 과제가 없습니다</div>
+        <div v-else class="matrix-wrap">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th class="matrix-task-th">과제</th>
+                <th v-for="w in allWeeks" :key="w" class="matrix-week-th" :class="{ 'matrix-col-current': w === currentWeek }">{{ w }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in flatTaskRows" :key="row.id">
+                <td class="matrix-task-td">
+                  <span v-if="row.parentName" class="matrix-parent">{{ row.parentName }} › </span>{{ row.selfName }}
+                </td>
+                <td v-for="w in allWeeks" :key="w" class="matrix-cell" :class="{ 'matrix-col-current': w === currentWeek }">
+                  <span v-if="issueMap[row.id]?.has(w)" class="matrix-dot-issue">✓</span>
+                  <span v-else class="matrix-dot-no">–</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ⑥ 질의응답 현황 -->
+      <div class="section-header section-header-toggle" style="margin-top:24px" @click="qnaOpen = !qnaOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
+        <span class="section-header-title">질의응답 현황</span>
+        <span class="matrix-badge">이번 주 {{ qnaThisWeek }}건</span>
+        <span class="material-symbols-outlined section-chevron" :class="{ open: qnaOpen }">expand_more</span>
+      </div>
+      <div v-if="qnaOpen" class="card" style="margin-top:12px;overflow:hidden">
+        <div v-if="flatTaskRows.length === 0" class="panel-empty" style="padding:24px">등록된 과제가 없습니다</div>
+        <div v-else class="matrix-wrap">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th class="matrix-task-th">과제</th>
+                <th v-for="w in allWeeks" :key="w" class="matrix-week-th" :class="{ 'matrix-col-current': w === currentWeek }">{{ w }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in flatTaskRows" :key="row.id">
+                <td class="matrix-task-td">
+                  <span v-if="row.parentName" class="matrix-parent">{{ row.parentName }} › </span>{{ row.selfName }}
+                </td>
+                <td v-for="w in allWeeks" :key="w" class="matrix-cell" :class="{ 'matrix-col-current': w === currentWeek }">
+                  <span v-if="qnaMap[row.id]?.[w]" class="matrix-count">{{ qnaMap[row.id][w] }}</span>
+                  <span v-else class="matrix-dot-no">–</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ⑦ 목표 카드 목록 -->
       <div class="section-header" style="margin-top:32px;margin-bottom:12px">
         <span class="section-header-title">목표 현황</span>
       </div>
@@ -259,6 +352,11 @@ const questions  = ref([])
 const progressList = ref([])
 const allProgressItems = ref([])
 const allQuestions     = ref([])
+const allConfluenceLinks = ref([])
+
+const confluenceOpen = ref(false)
+const issuesOpen = ref(false)
+const qnaOpen = ref(false)
 
 const loading = ref(false)
 const actionLoading = ref(false)
@@ -341,6 +439,69 @@ const latestIssueMap = computed(() => {
   return map
 })
 
+// ── 매트릭스 공통 ──
+const allWeeks = computed(() => {
+  const s = new Set([currentWeek])
+  allProgressItems.value.forEach(p => { if (p.week) s.add(p.week) })
+  allQuestions.value.forEach(q => { if (q.week) s.add(q.week) })
+  allConfluenceLinks.value.forEach(l => { if (l.week) s.add(l.week) })
+  return [...s].sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)))
+})
+
+const flatTaskRows = computed(() => {
+  const rows = []
+  tasks.value.forEach(t => {
+    if (t.sub_tasks && t.sub_tasks.length > 0) {
+      t.sub_tasks.forEach(st => {
+        rows.push({ id: st.id, selfName: st.name || st.id, parentName: t.name })
+      })
+    } else {
+      rows.push({ id: t.id, selfName: t.name, parentName: null })
+    }
+  })
+  return rows
+})
+
+const confluenceMap = computed(() => {
+  const m = {}
+  allConfluenceLinks.value.forEach(l => {
+    if (!l.task_id) return
+    if (!m[l.task_id]) m[l.task_id] = new Set()
+    m[l.task_id].add(l.week)
+  })
+  return m
+})
+
+const issueMap = computed(() => {
+  const m = {}
+  allProgressItems.value.filter(p => p.issue?.trim()).forEach(p => {
+    if (!p.task_id) return
+    if (!m[p.task_id]) m[p.task_id] = new Set()
+    m[p.task_id].add(p.week)
+  })
+  return m
+})
+
+const qnaMap = computed(() => {
+  const m = {}
+  allQuestions.value.forEach(q => {
+    if (!q.task_id) return
+    if (!m[q.task_id]) m[q.task_id] = {}
+    m[q.task_id][q.week] = (m[q.task_id][q.week] || 0) + 1
+  })
+  return m
+})
+
+const confluenceThisWeek = computed(() =>
+  flatTaskRows.value.filter(r => confluenceMap.value[r.id]?.has(currentWeek)).length
+)
+const issueThisWeek = computed(() =>
+  flatTaskRows.value.filter(r => issueMap.value[r.id]?.has(currentWeek)).length
+)
+const qnaThisWeek = computed(() =>
+  allQuestions.value.filter(q => q.week === currentWeek).length
+)
+
 function truncate(text, len) {
   if (!text) return ''
   const first = text.split('\n')[0].trim()
@@ -392,16 +553,18 @@ async function refresh() {
     tasks.value      = tRes.data
     staffList.value  = sRes.data
 
-    const [qRes, pRes, allPRes, allQRes] = await Promise.all([
+    const [qRes, pRes, allPRes, allQRes, clRes] = await Promise.all([
       axios.get('/api/qna/questions', { params: { week: currentWeek } }),
       axios.get('/api/progress',      { params: { week: currentWeek } }),
       axios.get('/api/progress'),
       axios.get('/api/qna/questions'),
+      axios.get('/api/confluence'),
     ])
-    questions.value        = qRes.data
-    progressList.value     = pRes.data
-    allProgressItems.value = allPRes.data
-    allQuestions.value     = allQRes.data
+    questions.value          = qRes.data
+    progressList.value       = pRes.data
+    allProgressItems.value   = allPRes.data
+    allQuestions.value       = allQRes.data
+    allConfluenceLinks.value = clRes.data
   } finally {
     loading.value = false
     actionLoading.value = false
@@ -597,6 +760,108 @@ onMounted(refresh)
   font-weight: 600; font-size: 14px;
   color: var(--text-primary);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── 매트릭스 테이블 ── */
+.matrix-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--gray-100);
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+.matrix-wrap {
+  overflow-x: auto;
+  max-height: 360px;
+  overflow-y: auto;
+}
+.matrix-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.matrix-task-th {
+  text-align: left;
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--outline);
+  white-space: nowrap;
+  min-width: 200px;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+.matrix-week-th {
+  text-align: center;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--outline);
+  border-left: 1px solid var(--outline);
+  white-space: nowrap;
+  min-width: 56px;
+}
+.matrix-col-current {
+  background: color-mix(in srgb, var(--primary) 7%, var(--gray-50)) !important;
+}
+.matrix-task-td {
+  padding: 7px 14px;
+  font-size: 12px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--outline);
+  white-space: nowrap;
+  background: var(--surface);
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+.matrix-parent {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.matrix-cell {
+  text-align: center;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--outline);
+  border-left: 1px solid var(--outline);
+  vertical-align: middle;
+}
+.matrix-dot-ok {
+  color: var(--success);
+  font-weight: 700;
+  font-size: 14px;
+}
+.matrix-dot-issue {
+  color: #d97706;
+  font-weight: 700;
+  font-size: 14px;
+}
+.matrix-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 5px;
+}
+.matrix-dot-no {
+  color: var(--outline);
+  font-size: 14px;
 }
 
 /* ── KR ── */
