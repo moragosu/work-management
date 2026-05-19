@@ -669,7 +669,7 @@ onMounted(refresh)
 }
 .q-targets-icon {
   font-size: 13px;
-  color: var(--primary);
+  color: #7c3aed;
   flex-shrink: 0;
 }
 .q-target-badge {
@@ -677,9 +677,9 @@ onMounted(refresh)
   align-items: center;
   padding: 2px 8px;
   border-radius: 10px;
-  background: var(--primary-light);
-  color: var(--primary);
-  border: 1px solid var(--primary);
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
   font-size: 11px;
   font-weight: 600;
 }
