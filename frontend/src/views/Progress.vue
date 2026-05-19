@@ -132,6 +132,16 @@
                   </div>
                 </div>
 
+                <!-- 접힌 상태에서 링크 미리보기 -->
+                <div
+                  v-if="!expandedSubTaskIds.has(st.id) && getTaskLink(st.id)"
+                  class="sub-task-link-row sub-task-link-collapsed-preview"
+                  @click.stop
+                >
+                  <span class="material-symbols-outlined sub-task-link-icon">link</span>
+                  <a :href="getTaskLink(st.id).url" target="_blank" class="text-primary sub-task-link-text">{{ getTaskLink(st.id).url }}</a>
+                </div>
+
                 <template v-if="expandedSubTaskIds.has(st.id)">
                   <!-- 소과제 컨플루언스 링크 -->
                   <div class="sub-task-link-row">
@@ -584,7 +594,14 @@ onMounted(fetchAll)
   transition: background 0.15s;
 }
 .sub-task-header:hover { background: color-mix(in srgb, var(--color-primary, #4f8ef7) 6%, transparent); }
-.sub-task-header-collapsed { margin-bottom: 0 !important; }
+.sub-task-header-collapsed { margin-bottom: 4px !important; }
+
+.sub-task-link-collapsed-preview {
+  margin-bottom: 0;
+  background: transparent;
+  border-color: transparent;
+  padding: 3px 4px;
+}
 .sub-task-title {
   display: flex;
   align-items: center;
