@@ -63,28 +63,55 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="t in sortedTasks" :key="t.id" :id="'task-row-' + t.id" :class="{ 'row-selected': selectedTaskIds.includes(t.id) }">
-              <td><input type="checkbox" :checked="selectedTaskIds.includes(t.id)" @change="toggleTask(t.id)" /></td>
-              <td>
-                <span class="badge badge-blue">{{ t.id }}</span>
-                <span v-if="t.sub_tasks && t.sub_tasks.length > 0" class="sub-count-badge" :title="`소과제 ${t.sub_tasks.length}개`">{{ t.sub_tasks.length }}</span>
-              </td>
-              <td><span v-if="t.target" :class="targetBadgeClass(t.target)">{{ t.target }}</span><span v-else class="text-muted text-sm">-</span></td>
-              <td style="font-weight:600">{{ t.name }}</td>
-              <td><span class="text-sm">{{ getObjectiveName(t.objective_id) }}</span></td>
-              <td>
-                <div v-if="taskMembers(t.id).length > 0" class="member-chips">
-                  <span v-for="m in taskMembers(t.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
-                </div>
-                <span v-else class="text-muted text-sm">미배정</span>
-              </td>
-              <td>
-                <div class="flex gap-8">
-                  <button class="btn btn-ghost btn-xs" @click="openModal(t)" data-tooltip="과제 정보 수정">수정</button>
-                  <button class="btn btn-danger btn-xs" @click="deleteTask(t)" data-tooltip="과제 삭제">삭제</button>
-                </div>
-              </td>
-            </tr>
+            <template v-for="t in sortedTasks" :key="t.id">
+              <tr :id="'task-row-' + t.id" :class="{ 'row-selected': selectedTaskIds.includes(t.id) }">
+                <td><input type="checkbox" :checked="selectedTaskIds.includes(t.id)" @change="toggleTask(t.id)" /></td>
+                <td>
+                  <span class="badge badge-blue">{{ t.id }}</span>
+                  <span v-if="t.sub_tasks && t.sub_tasks.length > 0" class="sub-count-badge" :title="`소과제 ${t.sub_tasks.length}개`">{{ t.sub_tasks.length }}</span>
+                </td>
+                <td><span v-if="t.target" :class="targetBadgeClass(t.target)">{{ t.target }}</span><span v-else class="text-muted text-sm">-</span></td>
+                <td style="font-weight:600">{{ t.name }}</td>
+                <td><span class="text-sm">{{ getObjectiveName(t.objective_id) }}</span></td>
+                <td>
+                  <div v-if="taskMembers(t.id).length > 0" class="member-chips">
+                    <span v-for="m in taskMembers(t.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                  </div>
+                  <span v-else class="text-muted text-sm">미배정</span>
+                </td>
+                <td>
+                  <div class="flex gap-8">
+                    <button class="btn btn-ghost btn-xs" @click="openModal(t)" data-tooltip="과제 정보 수정">수정</button>
+                    <button class="btn btn-danger btn-xs" @click="deleteTask(t)" data-tooltip="과제 삭제">삭제</button>
+                  </div>
+                </td>
+              </tr>
+              <tr
+                v-for="st in (t.sub_tasks || [])"
+                :key="st.id"
+                class="sub-task-row"
+                :class="{ 'sub-task-row-done': st.done }"
+              >
+                <td></td>
+                <td>
+                  <div class="sub-task-row-id">
+                    <span class="sub-task-row-indent">└</span>
+                    <span class="sub-task-row-badge">{{ st.id }}</span>
+                    <span v-if="st.done" class="sub-task-done-pill">완료</span>
+                  </div>
+                </td>
+                <td></td>
+                <td class="sub-task-row-name">{{ st.name || '(이름 없음)' }}</td>
+                <td></td>
+                <td>
+                  <div v-if="subTaskMembers(st.id).length > 0" class="member-chips">
+                    <span v-for="m in subTaskMembers(st.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                  </div>
+                  <span v-else class="text-muted text-sm">미배정</span>
+                </td>
+                <td></td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>
@@ -227,6 +254,7 @@ const stats = computed(() => ({
 
 // ── 헬퍼 ──
 function taskMembers(taskId) { return getTaskMembers(taskId, props.staffList) }
+function subTaskMembers(subTaskId) { return getTaskMembers(subTaskId, props.staffList) }
 function getObjectiveName(id) {
   if (!id) return '-'
   const o = props.objectives.find(obj => obj.id === id)
@@ -451,4 +479,54 @@ onMounted(async () => {
 .bulk-count { font-size: 13px; font-weight: 600; color: var(--primary); white-space: nowrap; }
 .bulk-select { max-width: 140px; padding: 4px 8px; font-size: 13px; height: auto; }
 .row-selected { background: var(--primary-light) !important; }
+
+.sub-task-row { background: var(--gray-50); }
+.sub-task-row:hover { background: var(--gray-100) !important; }
+.sub-task-row-done { opacity: 0.6; }
+.sub-task-row td { padding-top: 5px !important; padding-bottom: 5px !important; border-bottom: 1px dashed var(--outline); }
+.sub-task-row:last-of-type td { border-bottom: 1px solid var(--outline); }
+
+.sub-task-row-id {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 4px;
+}
+.sub-task-row-indent {
+  color: var(--text-muted);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.sub-task-row-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: monospace;
+  background: color-mix(in srgb, var(--color-primary, #4f8ef7) 10%, transparent);
+  color: var(--color-primary, #4f8ef7);
+  border: 1px solid color-mix(in srgb, var(--color-primary, #4f8ef7) 25%, transparent);
+}
+.sub-task-row-done .sub-task-row-badge {
+  background: color-mix(in srgb, #22c55e 10%, transparent);
+  color: #16a34a;
+  border-color: color-mix(in srgb, #22c55e 25%, transparent);
+}
+.sub-task-done-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  background: color-mix(in srgb, #22c55e 15%, transparent);
+  color: #16a34a;
+}
+.sub-task-row-name {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding-left: 24px !important;
+}
 </style>

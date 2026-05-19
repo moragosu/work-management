@@ -84,33 +84,7 @@
           </div>
 
           <div class="card-body">
-            <!-- ① 컨플루언스 링크 -->
-            <div class="section-block">
-              <div class="section-label">
-                <span class="material-symbols-outlined section-icon">link</span>
-                컨플루언스
-              </div>
-              <div v-if="getTaskLink(task.id) && !editingLinkId[task.id]" class="flex gap-8" style="align-items:center">
-                <a :href="getTaskLink(task.id).url" target="_blank" class="text-primary link-text">
-                  {{ getTaskLink(task.id).url }}
-                </a>
-                <button class="btn btn-ghost btn-xs" @click="startEditLink(task.id)" data-tooltip="링크 수정">수정</button>
-                <button class="btn btn-danger btn-xs" @click="deleteLink(task.id)" data-tooltip="링크 삭제">삭제</button>
-              </div>
-              <div v-else class="flex gap-8">
-                <input
-                  v-model="linkInputs[task.id]"
-                  class="form-control"
-                  placeholder="링크를 입력하세요"
-                  style="flex:1"
-                  @keyup.enter="saveLink(task.id)"
-                />
-                <button class="btn btn-primary btn-xs" @click="saveLink(task.id)" :disabled="!linkInputs[task.id]" data-tooltip="링크 저장">저장</button>
-                <button v-if="getTaskLink(task.id)" class="btn btn-ghost btn-xs" @click="cancelEditLink(task.id)" data-tooltip="수정 취소">취소</button>
-              </div>
-            </div>
-
-            <!-- 소과제가 있는 경우: 소과제별 섹션 -->
+            <!-- 소과제가 있는 경우: 소과제별 섹션 (컨플루언스 포함) -->
             <template v-if="task.sub_tasks && task.sub_tasks.length > 0">
               <div
                 v-for="st in task.sub_tasks"
@@ -140,6 +114,26 @@
                   </div>
                 </div>
 
+                <!-- 소과제 컨플루언스 링크 -->
+                <div class="sub-task-link-row">
+                  <span class="material-symbols-outlined sub-task-link-icon">link</span>
+                  <template v-if="getTaskLink(st.id) && !editingLinkId[st.id]">
+                    <a :href="getTaskLink(st.id).url" target="_blank" class="text-primary sub-task-link-text">{{ getTaskLink(st.id).url }}</a>
+                    <button class="btn btn-ghost btn-xs" @click="startEditLink(st.id)" data-tooltip="링크 수정">수정</button>
+                    <button class="btn btn-danger btn-xs" @click="deleteLink(st.id)" data-tooltip="링크 삭제">삭제</button>
+                  </template>
+                  <template v-else>
+                    <input
+                      v-model="linkInputs[st.id]"
+                      class="form-control sub-task-link-input"
+                      placeholder="컨플루언스 링크"
+                      @keyup.enter="saveLink(st.id)"
+                    />
+                    <button class="btn btn-primary btn-xs" @click="saveLink(st.id)" :disabled="!linkInputs[st.id]" data-tooltip="링크 저장">저장</button>
+                    <button v-if="getTaskLink(st.id)" class="btn btn-ghost btn-xs" @click="cancelEditLink(st.id)" data-tooltip="수정 취소">취소</button>
+                  </template>
+                </div>
+
                 <ProgressSection
                   :progress="progressMap[st.id] || null"
                   :staff-list="staffList"
@@ -161,6 +155,32 @@
 
             <!-- 소과제가 없는 경우: 기존 방식 -->
             <template v-else>
+              <!-- ① 컨플루언스 링크 -->
+              <div class="section-block">
+                <div class="section-label">
+                  <span class="material-symbols-outlined section-icon">link</span>
+                  컨플루언스
+                </div>
+                <div v-if="getTaskLink(task.id) && !editingLinkId[task.id]" class="flex gap-8" style="align-items:center">
+                  <a :href="getTaskLink(task.id).url" target="_blank" class="text-primary link-text">
+                    {{ getTaskLink(task.id).url }}
+                  </a>
+                  <button class="btn btn-ghost btn-xs" @click="startEditLink(task.id)" data-tooltip="링크 수정">수정</button>
+                  <button class="btn btn-danger btn-xs" @click="deleteLink(task.id)" data-tooltip="링크 삭제">삭제</button>
+                </div>
+                <div v-else class="flex gap-8">
+                  <input
+                    v-model="linkInputs[task.id]"
+                    class="form-control"
+                    placeholder="링크를 입력하세요"
+                    style="flex:1"
+                    @keyup.enter="saveLink(task.id)"
+                  />
+                  <button class="btn btn-primary btn-xs" @click="saveLink(task.id)" :disabled="!linkInputs[task.id]" data-tooltip="링크 저장">저장</button>
+                  <button v-if="getTaskLink(task.id)" class="btn btn-ghost btn-xs" @click="cancelEditLink(task.id)" data-tooltip="수정 취소">취소</button>
+                </div>
+              </div>
+
               <!-- ② 진행 내용 -->
               <ProgressSection
                 :progress="progressMap[task.id] || null"
@@ -249,9 +269,18 @@ function goToCurrentWeek() {
   selectedWeek.value = `W${getCurrentWeekNumber()}`
   onWeekChange()
 }
+function initLinkInputs() {
+  const ids = []
+  tasks.value.forEach(t => {
+    ids.push(t.id)
+    ;(t.sub_tasks || []).forEach(st => ids.push(st.id))
+  })
+  linkInputs.value = Object.fromEntries(ids.map(id => [id, '']))
+}
+
 async function onWeekChange() {
   if (!selectedWeek.value) return
-  linkInputs.value = Object.fromEntries(tasks.value.map(t => [t.id, '']))
+  initLinkInputs()
   editingLinkId.value = {}
   await Promise.all([loadQnA(), loadLinks(), loadProgress()])
 }
@@ -366,7 +395,7 @@ async function fetchAll() {
     tasks.value = tRes.data
     objectives.value = oRes.data
     staffList.value = sRes.data
-    linkInputs.value = Object.fromEntries(tasks.value.map(t => [t.id, '']))
+    initLinkInputs()
     selectedWeek.value = route.query.week || `W${getCurrentWeekNumber()}`
     await onWeekChange()
   } finally { loading.value = false }
@@ -532,6 +561,33 @@ onMounted(fetchAll)
   gap: 4px;
   font-size: 12px;
   white-space: nowrap;
+}
+
+.sub-task-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 7px 10px;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: 6px;
+}
+.sub-task-link-icon {
+  font-size: 15px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.sub-task-link-text {
+  flex: 1;
+  font-size: 13px;
+  word-break: break-all;
+}
+.sub-task-link-input {
+  flex: 1;
+  font-size: 13px;
+  padding: 4px 8px;
+  height: auto;
 }
 </style>
 
