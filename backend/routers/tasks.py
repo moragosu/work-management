@@ -82,6 +82,24 @@ def create_task(task: Task):
     return task
 
 
+class BulkTargetUpdate(BaseModel):
+    task_ids: List[str]
+    target: str
+
+
+@router.put("/bulk-target")
+def bulk_update_target(update: BulkTargetUpdate):
+    tasks = _load()
+    id_set = set(update.task_ids)
+    count = 0
+    for i, t in enumerate(tasks):
+        if t["id"] in id_set:
+            tasks[i] = {**t, "target": update.target}
+            count += 1
+    _save(tasks)
+    return {"updated": count}
+
+
 @router.put("/{task_id}", response_model=Task)
 def update_task(task_id: str, update: TaskUpdate):
     tasks = _load()

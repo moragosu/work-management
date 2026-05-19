@@ -262,9 +262,11 @@ function toggleTask(id) {
 
 async function applyBulkTarget() {
   if (!bulkTarget.value || selectedTaskIds.value.length === 0) return
+  const count = selectedTaskIds.value.length
+  const target = bulkTarget.value
   try {
-    await Promise.all(selectedTaskIds.value.map(id => axios.put(`/api/tasks/${id}`, { target: bulkTarget.value })))
-    showToast(`${selectedTaskIds.value.length}개 과제에 '${bulkTarget.value}' 적용 완료`)
+    await axios.put('/api/tasks/bulk-target', { task_ids: selectedTaskIds.value, target })
+    showToast(`${count}개 과제에 '${target}' 적용 완료`)
     selectedTaskIds.value = []
     bulkTarget.value = ''
     emit('refresh')
