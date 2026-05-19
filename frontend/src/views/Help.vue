@@ -72,16 +72,18 @@
           <span class="material-symbols-outlined section-icon-lg">dashboard</span>
           <h3 class="section-title">대시보드</h3>
         </div>
-        <p class="section-desc">접속 시 가장 먼저 보이는 화면입니다. 파트 전체 현황을 빠르게 파악할 수 있습니다.</p>
+        <p class="section-desc">홈 화면입니다. 파트 전체 현황과 지금 당장 확인해야 할 항목을 한눈에 파악할 수 있습니다.</p>
 
         <div class="feature-block">
           <div class="feature-label">
             <span class="badge-num">1</span>
-            상단 통계 카드
+            상단 통계 카드 (4개)
           </div>
           <ul class="feature-list">
-            <li><strong>전체 목표</strong> — 등록된 목표(Objective)의 총 개수</li>
-            <li><strong>진행중 / 완료 / 위험</strong> — 각 상태별 목표 수. <span class="highlight-red">위험 상태는 즉각적인 조치가 필요한 목표를 의미합니다</span></li>
+            <li><strong>미답변 Q&A</strong> — 전체 기간 중 아직 답변이 없는 질문 수. 주황색이면 확인 필요, 초록이면 양호</li>
+            <li><strong>이번 주 이슈</strong> — 이번 주 등록된 이슈 수</li>
+            <li><strong>미배정 과제</strong> — 담당자가 지정되지 않은 과제 수</li>
+            <li><strong>컨플루언스 등록률</strong> — 이번 주 컨플루언스 링크를 등록한 과제 비율. 진행 바로 확인 가능</li>
           </ul>
         </div>
 
@@ -91,9 +93,9 @@
             액션 패널 (3가지)
           </div>
           <ul class="feature-list">
-            <li><strong>미답변 질문</strong> — 이번 주 등록된 질문 중 아직 답변이 없는 항목. <em>클릭하면 해당 과제 위치로 바로 이동합니다</em></li>
-            <li><strong>이슈</strong> — 이번 주 등록된 이슈 목록. 클릭하면 해당 과제로 이동</li>
-            <li><strong>미배정 과제</strong> — 담당자가 지정되지 않은 과제 목록</li>
+            <li><strong>미답변 질문</strong> — 전체 기간 누적 미답변 목록. 항목에 <em>과제명 + 주차</em>가 표시되며, 클릭하면 해당 주차의 해당 Q&A 위치로 바로 이동합니다</li>
+            <li><strong>이슈</strong> — 이번 주 등록된 이슈 목록. 클릭하면 해당 과제의 이슈 위치로 이동</li>
+            <li><strong>미배정 과제</strong> — 담당자가 없는 과제 목록. 클릭하면 관리 도구 과제 탭으로 이동</li>
           </ul>
         </div>
 
@@ -105,7 +107,20 @@
           <ul class="feature-list">
             <li>각 파트원의 <strong>담당 과제 수 / 이슈 등록 수 / Q&A 답변 수</strong>를 막대 그래프로 비교</li>
             <li>가장 최근에 등록한 이슈도 함께 표시됩니다</li>
-            <li>섹션 제목을 <strong>클릭</strong>하면 접거나 펼칠 수 있습니다</li>
+            <li>우측 상단에 <strong>파트원 N명</strong> 배지로 인원 수를 확인할 수 있습니다</li>
+          </ul>
+        </div>
+
+        <div class="feature-block">
+          <div class="feature-label">
+            <span class="badge-num">4</span>
+            주간 등록 현황 매트릭스
+          </div>
+          <ul class="feature-list">
+            <li>과제(행) × 주차(열) 기준으로 <strong>컨플루언스 · 이슈 · Q&A</strong> 등록 여부를 한눈에 확인합니다</li>
+            <li><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;color:var(--primary)">link</span> <strong>링크 아이콘</strong>을 클릭하면 해당 컨플루언스 페이지가 바로 열립니다</li>
+            <li>섹션 제목을 클릭하면 매트릭스를 접거나 펼칠 수 있습니다</li>
+            <li>현재 주차 열은 파란색 배경으로 강조됩니다</li>
           </ul>
         </div>
       </div>
@@ -199,11 +214,11 @@
             <li>답변이 없는 질문에는 <span class="inline-badge badge-green">A</span> 옆에 <strong>"답변 달기"</strong> 버튼이 표시됩니다</li>
             <li>답변 작성 시 <strong>작성자(본인 이름)를 반드시 선택</strong>해야 저장됩니다</li>
             <li>하나의 질문에 여러 명이 <strong>"+ 답변 추가"</strong>로 추가 답변을 달 수 있습니다</li>
-            <li>질문 삭제 시 <span class="highlight-red">해당 질문의 모든 답변도 함께 삭제</span>됩니다</li>
+            <li>질문 삭제 시 <span class="highlight-red">해당 질문의 모든 답변도 함께 삭제</span>됩니다 — 삭제 전 <strong>관리자 암호 입력</strong>이 필요합니다</li>
           </ul>
           <div class="callout callout-tip">
             <span class="material-symbols-outlined callout-icon">star</span>
-            <div>대시보드의 <strong>미답변 질문 패널</strong>에서 항목을 클릭하면 해당 Q&A 위치로 자동 스크롤됩니다.</div>
+            <div>대시보드의 <strong>미답변 질문 패널</strong>에서 항목을 클릭하면 해당 주차로 이동하며 Q&A 위치로 자동 스크롤됩니다. 소과제 질문이면 해당 소과제 카드가 자동으로 펼쳐집니다.</div>
           </div>
         </div>
 
@@ -465,7 +480,7 @@ const faqs = reactive([
   },
   {
     q: '주차(W#)는 어떻게 계산되나요?',
-    a: '연도 기준 ISO 주차를 사용합니다. 화면에 날짜 범위(예: 5/12 – 5/18)와 W# 번호가 함께 표시되므로 현재 주차를 쉽게 확인할 수 있습니다.',
+    a: '연도 기준 주차를 사용합니다. 날짜 범위(예: 5/12 – 5/18)와 주차 번호(예: 2026년 W21)가 함께 표시됩니다. 연도가 달라지면 자동으로 연도가 함께 표시되어 혼동 없이 이전 연도 데이터를 구분할 수 있습니다.',
     open: false,
   },
   {
@@ -475,7 +490,7 @@ const faqs = reactive([
   },
   {
     q: '이슈나 질문을 삭제하면 복구되나요?',
-    a: '삭제된 항목은 복구되지 않습니다. 삭제 전 확인 팝업이 표시되니 신중하게 결정해 주세요. 특히 질문 삭제 시 모든 답변도 함께 삭제됩니다.',
+    a: '삭제된 항목은 복구되지 않습니다. 질문 삭제는 관리자 암호를 입력해야 진행할 수 있으며, 삭제 시 해당 질문의 모든 답변도 함께 삭제됩니다. 이슈 삭제는 별도 암호 없이 가능합니다.',
     open: false,
   },
   {
