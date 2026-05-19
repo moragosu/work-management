@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Header
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date, datetime
@@ -82,7 +82,11 @@ def update_question(question_id: str, body: QuestionUpdate):
 
 
 @router.delete("/questions/{question_id}")
-def delete_question(question_id: str):
+def delete_question(question_id: str, x_admin_password: str = Header(None)):
+    settings = data_store.load("settings.json")
+    admin_password = settings.get("admin_password", "1234")
+    if x_admin_password != admin_password:
+        raise HTTPException(status_code=401, detail="암호가 올바르지 않습니다")
     questions, answers = _load()
     questions = [q for q in questions if q["id"] != question_id]
     answers = [a for a in answers if a["question_id"] != question_id]

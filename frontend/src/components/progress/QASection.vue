@@ -105,10 +105,34 @@
   </div>
 
   <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
+
+  <!-- 비밀번호 확인 모달 -->
+  <Teleport to="body">
+    <div v-if="pwModal.open" class="pw-overlay" @click.self="closePwModal">
+      <div class="pw-dialog">
+        <div class="pw-title">관리자 암호 확인</div>
+        <p class="pw-desc">질문과 모든 답변이 삭제됩니다.<br>관리자 암호를 입력해주세요.</p>
+        <input
+          ref="pwInputRef"
+          v-model="pwModal.value"
+          type="password"
+          class="pw-input"
+          placeholder="암호 입력"
+          @keyup.enter="confirmDelete"
+          @keyup.esc="closePwModal"
+        />
+        <div v-if="pwModal.error" class="pw-error">{{ pwModal.error }}</div>
+        <div class="pw-actions">
+          <button class="btn btn-ghost btn-sm" @click="closePwModal">취소</button>
+          <button class="btn btn-danger btn-sm" @click="confirmDelete" :disabled="!pwModal.value">삭제</button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import axios from 'axios'
 import { MdPreview } from 'md-editor-v3'
 import MarkdownEditor from '../MarkdownEditor.vue'
@@ -156,14 +180,37 @@ async function updateQuestion(questionId) {
   } catch (e) { toastError(e, '질문 수정 실패') }
 }
 
-// ── 질문 삭제 ──
-async function deleteQuestion(questionId) {
-  if (!confirm('질문과 모든 답변이 삭제됩니다. 계속하시겠습니까?')) return
+// ── 질문 삭제 (비밀번호 확인) ──
+const pwInputRef = ref(null)
+const pwModal = ref({ open: false, questionId: '', value: '', error: '' })
+
+function deleteQuestion(questionId) {
+  pwModal.value = { open: true, questionId, value: '', error: '' }
+  nextTick(() => pwInputRef.value?.focus())
+}
+
+function closePwModal() {
+  pwModal.value = { open: false, questionId: '', value: '', error: '' }
+}
+
+async function confirmDelete() {
+  if (!pwModal.value.value) return
   try {
-    await axios.delete(`/api/qna/questions/${questionId}`)
-    emit('update:questions', props.questions.filter(q => q.id !== questionId))
+    await axios.delete(`/api/qna/questions/${pwModal.value.questionId}`, {
+      headers: { 'X-Admin-Password': pwModal.value.value },
+    })
+    emit('update:questions', props.questions.filter(q => q.id !== pwModal.value.questionId))
+    closePwModal()
     showToast('삭제되었습니다')
-  } catch (e) { toastError(e, '질문 삭제 실패') }
+  } catch (e) {
+    if (e.response?.status === 401) {
+      pwModal.value.error = '암호가 올바르지 않습니다'
+      pwModal.value.value = ''
+      nextTick(() => pwInputRef.value?.focus())
+    } else {
+      toastError(e, '질문 삭제 실패')
+    }
+  }
 }
 
 // ── 답변 ──
@@ -256,4 +303,24 @@ async function deleteAnswer(answerId, questionId) {
 }
 .answer-date { color: var(--text-muted); }
 .answer-edited { font-size: 11px; opacity: 0.7; }
+
+.pw-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.pw-dialog {
+  background: var(--surface); border-radius: 10px; padding: 24px 28px;
+  width: 320px; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.pw-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.pw-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin: 0; }
+.pw-input {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--outline);
+  border-radius: 6px; font-size: 14px; background: var(--background);
+  color: var(--text); outline: none; box-sizing: border-box;
+}
+.pw-input:focus { border-color: var(--primary); }
+.pw-error { font-size: 12px; color: var(--danger); }
+.pw-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 </style>

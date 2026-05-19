@@ -231,7 +231,9 @@
                     </td>
                     <td v-for="w in allWeeks" :key="w" class="matrix-cell" :class="{ 'matrix-col-current': w === currentWeek }">
                       <div class="matrix-cell-icons">
-                        <span v-if="confluenceMap[row.id]?.has(w)" class="material-symbols-outlined matrix-icon matrix-icon-link" title="컨플루언스 등록">link</span>
+                        <a v-if="confluenceMap[row.id]?.has(w)" :href="confluenceUrlMap[row.id]?.[w]" target="_blank" class="matrix-icon-link-anchor" title="컨플루언스 열기">
+                          <span class="material-symbols-outlined matrix-icon matrix-icon-link">link</span>
+                        </a>
                         <span v-if="issueMap[row.id]?.has(w)" class="material-symbols-outlined matrix-icon matrix-icon-issue" title="이슈 등록">warning</span>
                         <span v-if="qnaMap[row.id]?.[w]" class="matrix-count matrix-count-sm" :title="`Q&A ${qnaMap[row.id][w]}건`">{{ qnaMap[row.id][w] }}</span>
                         <span v-if="!confluenceMap[row.id]?.has(w) && !issueMap[row.id]?.has(w) && !qnaMap[row.id]?.[w]" class="matrix-dot-no">–</span>
@@ -412,6 +414,16 @@ const confluenceMap = computed(() => {
     if (!l.task_id) return
     if (!m[l.task_id]) m[l.task_id] = new Set()
     m[l.task_id].add(l.week)
+  })
+  return m
+})
+
+const confluenceUrlMap = computed(() => {
+  const m = {}
+  allConfluenceLinks.value.forEach(l => {
+    if (!l.task_id || !l.url) return
+    if (!m[l.task_id]) m[l.task_id] = {}
+    m[l.task_id][l.week] = l.url
   })
   return m
 })
@@ -773,6 +785,8 @@ onMounted(refresh)
   flex-shrink: 0;
 }
 .matrix-icon-link  { color: var(--primary); }
+.matrix-icon-link-anchor { display: inline-flex; text-decoration: none; }
+.matrix-icon-link-anchor:hover .matrix-icon { opacity: 0.75; }
 .matrix-icon-issue { color: #d97706; }
 .matrix-count-sm {
   font-size: 10px;
