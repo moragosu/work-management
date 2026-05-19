@@ -98,6 +98,7 @@
               <div
                 v-for="st in task.sub_tasks"
                 :key="st.id"
+                :id="'task-' + st.id"
                 class="sub-task-section"
                 :class="{ 'sub-task-done': st.done }"
               >
@@ -449,6 +450,9 @@ async function handleFocusQuery() {
     if (q && q.task_id.includes('-')) {
       expandedSubTaskIds.value = new Set([...expandedSubTaskIds.value, q.task_id])
     }
+  }
+  if (focusIssue && focusIssue.includes('-')) {
+    expandedSubTaskIds.value = new Set([...expandedSubTaskIds.value, focusIssue])
   }
 
   await nextTick()

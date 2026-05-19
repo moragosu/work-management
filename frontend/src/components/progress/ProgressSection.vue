@@ -29,6 +29,9 @@
           <span v-if="iss.assignee" class="badge badge-gray">{{ iss.assignee }}</span>
           <span class="issue-date">{{ iss.updated_at ?? iss.created_at }}</span>
           <div style="margin-left:auto;display:flex;gap:4px">
+            <button class="btn btn-ghost btn-xs" @click="copyLink(iss)" data-tooltip="링크 복사 — 메신저 공유용">
+              <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">link</span>
+            </button>
             <button class="btn btn-ghost btn-xs" @click="startEdit(iss)" data-tooltip="이슈 수정">수정</button>
             <button class="btn btn-danger btn-xs" @click="deleteIssue(iss.id)" data-tooltip="이슈 삭제">삭제</button>
           </div>
@@ -74,6 +77,13 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:issues'])
 const { toastMsg, showToast, toastError } = useToast()
+
+// ── 링크 복사 ──
+async function copyLink(iss) {
+  const url = `${window.location.origin}/progress?week=${iss.week}&focusIssue=${props.taskId}`
+  await navigator.clipboard.writeText(url)
+  showToast('링크가 복사되었습니다')
+}
 
 // ── 추가 ──
 const adding     = ref(false)

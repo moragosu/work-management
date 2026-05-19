@@ -39,6 +39,9 @@
           </template>
         </div>
         <div v-if="editingQuestionId !== qa.id" class="qa-actions">
+          <button class="btn btn-ghost btn-xs" @click="copyLink('question', qa.id)" data-tooltip="링크 복사 — 메신저 공유용">
+            <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">link</span>
+          </button>
           <button class="btn btn-ghost btn-xs" @click="startEditQuestion(qa)" data-tooltip="질문 수정">수정</button>
           <button class="btn btn-danger btn-xs" @click="deleteQuestion(qa.id)" data-tooltip="질문 및 모든 답변 삭제">삭제</button>
         </div>
@@ -179,6 +182,13 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:questions'])
 const { toastMsg, showToast, toastError } = useToast()
+
+// ── 링크 복사 ──
+async function copyLink(type, id) {
+  const url = `${window.location.origin}/progress?week=${props.week}&focus${type === 'question' ? 'Question' : 'Issue'}=${id}`
+  await navigator.clipboard.writeText(url)
+  showToast('링크가 복사되었습니다')
+}
 
 // ── 대상자 토글 ──
 function toggleTarget(arr, name) {
