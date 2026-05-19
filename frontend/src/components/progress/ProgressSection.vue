@@ -82,8 +82,9 @@ const { toastMsg, showToast, toastError } = useToast()
 // ── 링크 복사 ──
 async function copyLink(iss) {
   const url = `${window.location.origin}/go/${iss.id}`
-  await copyToClipboard(url)
-  showToast('링크가 복사되었습니다')
+  const ok = await copyToClipboard(url)
+  if (ok) showToast('링크가 복사되었습니다')
+  else window.prompt('아래 링크를 복사하세요 (Ctrl+C)', url)
 }
 
 // ── 추가 ──
