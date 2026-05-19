@@ -56,7 +56,6 @@ mkdir -p /var/log/okr-app
 # 3. Python 환경 (uv)
 echo "[3/7] Python 환경 설정 (uv)..."
 cp -r "$REPO_DIR/backend/." "$APP_DIR/backend/"
-cp -r "$REPO_DIR/data/"*.json "$APP_DIR/data/" 2>/dev/null || true
 cd "$APP_DIR/backend"
 # sudo 실행 시 HOME이 호출자 홈으로 유지되는 문제 방지
 export HOME=/root
