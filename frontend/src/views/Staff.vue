@@ -204,6 +204,33 @@
                   </label>
                 </div>
               </div>
+              <!-- 목표 미연결 과제 -->
+              <div v-if="unlinkedTasks.length > 0" class="objective-group">
+                <label class="objective-header objective-select-all">
+                  <input
+                    type="checkbox"
+                    :checked="isUnlinkedAllSelected"
+                    v-indeterminate="isUnlinkedPartialSelected"
+                    @change="toggleUnlinkedTasks($event.target.checked)"
+                  />
+                  <span class="badge badge-gray">미연결</span>
+                  <span class="objective-name">목표 없음</span>
+                  <span class="objective-task-count text-sm text-muted">
+                    ({{ unlinkedSelectedCount }}/{{ unlinkedTasks.length }})
+                  </span>
+                </label>
+                <div class="task-checkboxes">
+                  <label v-for="task in unlinkedTasks" :key="task.id" class="task-checkbox-label">
+                    <input
+                      type="checkbox"
+                      :value="task.id"
+                      :checked="form.taskIds.includes(task.id)"
+                      @change="updateTaskSelection(task.id, $event.target.checked)"
+                    />
+                    {{ task.id }}: {{ task.name }}
+                  </label>
+                </div>
+              </div>
             </div>
             <!-- 선택된 과제 요약 -->
             <div v-if="form.taskIds.length > 0" class="selected-tasks-summary mt-16">
@@ -356,6 +383,24 @@ async function fetchTasks() {
 // Objective별 관련 과제 가져오기
 function getObjectiveTasks(objectiveId) {
   return tasks.value.filter(task => task.objective_id === objectiveId)
+}
+
+// 목표 미연결 과제
+const unlinkedTasks = computed(() =>
+  tasks.value.filter(t => !t.objective_id)
+)
+const unlinkedSelectedCount = computed(() =>
+  unlinkedTasks.value.filter(t => form.value.taskIds.includes(t.id)).length
+)
+const isUnlinkedAllSelected = computed(() =>
+  unlinkedTasks.value.length > 0 && unlinkedTasks.value.every(t => form.value.taskIds.includes(t.id))
+)
+const isUnlinkedPartialSelected = computed(() => {
+  const count = unlinkedSelectedCount.value
+  return count > 0 && count < unlinkedTasks.value.length
+})
+function toggleUnlinkedTasks(isSelected) {
+  unlinkedTasks.value.forEach(t => updateTaskSelection(t.id, isSelected))
 }
 
 // Objective ID로 Objective명 가져오기
