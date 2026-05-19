@@ -12,34 +12,37 @@
     </div>
 
     <div class="page-body">
-      <!-- ① 목표 요약 카드 -->
+      <!-- ① 이번 주 실용 지표 -->
       <div class="grid-4" style="margin-bottom:24px">
-        <div class="card stat-accent stat-accent-blue" data-tooltip="등록된 전체 목표(Objective) 수" data-tooltip-pos="bottom">
+        <div class="card stat-accent" :class="unansweredQuestions.length ? 'stat-accent-orange' : 'stat-accent-green'" data-tooltip="이번 주 아직 답변이 달리지 않은 질문 수" data-tooltip-pos="bottom">
           <div class="card-body stat-card">
-            <span class="material-symbols-outlined stat-icon stat-icon-blue">assignment</span>
-            <div class="stat-value">{{ objectives.length }}</div>
-            <div class="stat-label">전체 목표</div>
+            <span class="material-symbols-outlined stat-icon" :class="unansweredQuestions.length ? 'stat-icon-orange' : 'stat-icon-green'">quiz</span>
+            <div class="stat-value" :style="unansweredQuestions.length ? 'color:var(--orange,#f97316)' : 'color:var(--success)'">{{ unansweredQuestions.length }}</div>
+            <div class="stat-label">미답변 Q&A</div>
           </div>
         </div>
-        <div class="card stat-accent stat-accent-primary" data-tooltip="현재 진행 중인 목표 수" data-tooltip-pos="bottom">
+        <div class="card stat-accent" :class="weekIssues.length ? 'stat-accent-yellow' : 'stat-accent-green'" data-tooltip="이번 주 등록된 이슈 수" data-tooltip-pos="bottom">
           <div class="card-body stat-card">
-            <span class="material-symbols-outlined stat-icon stat-icon-primary">sync</span>
-            <div class="stat-value" style="color:var(--primary)">{{ inProgressCount }}</div>
-            <div class="stat-label">진행중</div>
+            <span class="material-symbols-outlined stat-icon" :class="weekIssues.length ? 'stat-icon-yellow' : 'stat-icon-green'">warning</span>
+            <div class="stat-value" :style="weekIssues.length ? 'color:var(--warning)' : 'color:var(--success)'">{{ weekIssues.length }}</div>
+            <div class="stat-label">이번 주 이슈</div>
           </div>
         </div>
-        <div class="card stat-accent stat-accent-green" data-tooltip="완료된 목표 수" data-tooltip-pos="bottom">
+        <div class="card stat-accent" :class="unassignedTasks.length ? 'stat-accent-red' : 'stat-accent-green'" data-tooltip="담당자가 지정되지 않은 과제 수" data-tooltip-pos="bottom">
           <div class="card-body stat-card">
-            <span class="material-symbols-outlined stat-icon stat-icon-green">check_circle</span>
-            <div class="stat-value" style="color:var(--success)">{{ completedCount }}</div>
-            <div class="stat-label">완료</div>
+            <span class="material-symbols-outlined stat-icon" :class="unassignedTasks.length ? 'stat-icon-red' : 'stat-icon-green'">person_off</span>
+            <div class="stat-value" :style="unassignedTasks.length ? 'color:var(--danger)' : 'color:var(--success)'">{{ unassignedTasks.length }}</div>
+            <div class="stat-label">미배정 과제</div>
           </div>
         </div>
-        <div class="card stat-accent stat-accent-red" data-tooltip="위험 상태의 목표 수 — 즉각적인 조치가 필요합니다" data-tooltip-pos="bottom">
+        <div class="card stat-accent stat-accent-blue" data-tooltip="이번 주 컨플루언스 링크 등록 현황" data-tooltip-pos="bottom">
           <div class="card-body stat-card">
-            <span class="material-symbols-outlined stat-icon stat-icon-red">warning</span>
-            <div class="stat-value" style="color:var(--danger)">{{ dangerCount }}</div>
-            <div class="stat-label">위험</div>
+            <span class="material-symbols-outlined stat-icon stat-icon-blue">link</span>
+            <div class="stat-value" style="color:var(--primary)">{{ confluenceThisWeek }}<span class="stat-denom">/{{ flatTaskRows.length }}</span></div>
+            <div class="stat-label">컨플루언스 등록</div>
+            <div class="stat-mini-bar">
+              <div class="stat-mini-fill" :style="{ width: flatTaskRows.length ? `${Math.round(confluenceThisWeek / flatTaskRows.length * 100)}%` : '0%' }"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -206,13 +209,17 @@
         </table>
       </div>
 
-      <!-- ④ 컨플루언스 링크 현황 -->
-      <div class="section-header section-header-toggle" style="margin-top:32px" @click="confluenceOpen = !confluenceOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
-        <span class="section-header-title">컨플루언스 링크 현황</span>
-        <span class="matrix-badge">이번 주 {{ confluenceThisWeek }}/{{ flatTaskRows.length }}</span>
-        <span class="material-symbols-outlined section-chevron" :class="{ open: confluenceOpen }">expand_more</span>
+      <!-- ④ 주간 등록 현황 (통합 매트릭스) -->
+      <div class="section-header section-header-toggle" style="margin-top:32px" @click="matrixOpen = !matrixOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
+        <span class="section-header-title">주간 등록 현황</span>
+        <div class="matrix-legend-inline">
+          <span class="material-symbols-outlined matrix-legend-icon matrix-icon-link">link</span><span>컨플루언스</span>
+          <span class="material-symbols-outlined matrix-legend-icon matrix-icon-issue">warning</span><span>이슈</span>
+          <span class="matrix-count matrix-count-legend">N</span><span>Q&A</span>
+        </div>
+        <span class="material-symbols-outlined section-chevron" :class="{ open: matrixOpen }">expand_more</span>
       </div>
-      <div v-if="confluenceOpen" class="card" style="margin-top:12px;overflow:hidden">
+      <div v-if="matrixOpen" class="card" style="margin-top:12px;overflow:hidden">
         <div v-if="flatTaskRows.length === 0" class="panel-empty" style="padding:24px">등록된 과제가 없습니다</div>
         <div v-else class="matrix-wrap">
           <table class="matrix-table">
@@ -228,8 +235,12 @@
                   <span v-if="row.parentName" class="matrix-parent">{{ row.parentName }} › </span>{{ row.selfName }}
                 </td>
                 <td v-for="w in allWeeks" :key="w" class="matrix-cell" :class="{ 'matrix-col-current': w === currentWeek }">
-                  <span v-if="confluenceMap[row.id]?.has(w)" class="matrix-dot-ok">✓</span>
-                  <span v-else class="matrix-dot-no">–</span>
+                  <div class="matrix-cell-icons">
+                    <span v-if="confluenceMap[row.id]?.has(w)" class="material-symbols-outlined matrix-icon matrix-icon-link" title="컨플루언스 등록">link</span>
+                    <span v-if="issueMap[row.id]?.has(w)" class="material-symbols-outlined matrix-icon matrix-icon-issue" title="이슈 등록">warning</span>
+                    <span v-if="qnaMap[row.id]?.[w]" class="matrix-count matrix-count-sm" :title="`Q&A ${qnaMap[row.id][w]}건`">{{ qnaMap[row.id][w] }}</span>
+                    <span v-if="!confluenceMap[row.id]?.has(w) && !issueMap[row.id]?.has(w) && !qnaMap[row.id]?.[w]" class="matrix-dot-no">–</span>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -237,69 +248,7 @@
         </div>
       </div>
 
-      <!-- ⑤ 이슈 등록 현황 -->
-      <div class="section-header section-header-toggle" style="margin-top:24px" @click="issuesOpen = !issuesOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
-        <span class="section-header-title">이슈 등록 현황</span>
-        <span class="matrix-badge">이번 주 {{ issueThisWeek }}/{{ flatTaskRows.length }}</span>
-        <span class="material-symbols-outlined section-chevron" :class="{ open: issuesOpen }">expand_more</span>
-      </div>
-      <div v-if="issuesOpen" class="card" style="margin-top:12px;overflow:hidden">
-        <div v-if="flatTaskRows.length === 0" class="panel-empty" style="padding:24px">등록된 과제가 없습니다</div>
-        <div v-else class="matrix-wrap">
-          <table class="matrix-table">
-            <thead>
-              <tr>
-                <th class="matrix-task-th">과제</th>
-                <th v-for="w in allWeeks" :key="w" class="matrix-week-th" :class="{ 'matrix-col-current': w === currentWeek }">{{ w }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in flatTaskRows" :key="row.id">
-                <td class="matrix-task-td">
-                  <span v-if="row.parentName" class="matrix-parent">{{ row.parentName }} › </span>{{ row.selfName }}
-                </td>
-                <td v-for="w in allWeeks" :key="w" class="matrix-cell" :class="{ 'matrix-col-current': w === currentWeek }">
-                  <span v-if="issueMap[row.id]?.has(w)" class="matrix-dot-issue">✓</span>
-                  <span v-else class="matrix-dot-no">–</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ⑥ 질의응답 현황 -->
-      <div class="section-header section-header-toggle" style="margin-top:24px" @click="qnaOpen = !qnaOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
-        <span class="section-header-title">질의응답 현황</span>
-        <span class="matrix-badge">이번 주 {{ qnaThisWeek }}건</span>
-        <span class="material-symbols-outlined section-chevron" :class="{ open: qnaOpen }">expand_more</span>
-      </div>
-      <div v-if="qnaOpen" class="card" style="margin-top:12px;overflow:hidden">
-        <div v-if="flatTaskRows.length === 0" class="panel-empty" style="padding:24px">등록된 과제가 없습니다</div>
-        <div v-else class="matrix-wrap">
-          <table class="matrix-table">
-            <thead>
-              <tr>
-                <th class="matrix-task-th">과제</th>
-                <th v-for="w in allWeeks" :key="w" class="matrix-week-th" :class="{ 'matrix-col-current': w === currentWeek }">{{ w }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in flatTaskRows" :key="row.id">
-                <td class="matrix-task-td">
-                  <span v-if="row.parentName" class="matrix-parent">{{ row.parentName }} › </span>{{ row.selfName }}
-                </td>
-                <td v-for="w in allWeeks" :key="w" class="matrix-cell" :class="{ 'matrix-col-current': w === currentWeek }">
-                  <span v-if="qnaMap[row.id]?.[w]" class="matrix-count">{{ qnaMap[row.id][w] }}</span>
-                  <span v-else class="matrix-dot-no">–</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ⑦ 목표 카드 목록 -->
+      <!-- ⑤ 목표 카드 목록 -->
       <div class="section-header" style="margin-top:32px;margin-bottom:12px">
         <span class="section-header-title">목표 현황</span>
       </div>
@@ -353,10 +302,7 @@ const progressList = ref([])
 const allProgressItems = ref([])
 const allQuestions     = ref([])
 const allConfluenceLinks = ref([])
-
-const confluenceOpen = ref(false)
-const issuesOpen = ref(false)
-const qnaOpen = ref(false)
+const matrixOpen = ref(true)
 
 const loading = ref(false)
 const actionLoading = ref(false)
@@ -577,10 +523,11 @@ onMounted(refresh)
 <style scoped>
 /* ── 통계 카드 ── */
 .stat-accent { border-top: 3px solid var(--outline); }
-.stat-accent-blue    { border-top-color: var(--primary); }
-.stat-accent-primary { border-top-color: #6366f1; }
-.stat-accent-green   { border-top-color: var(--success); }
-.stat-accent-red     { border-top-color: var(--danger); }
+.stat-accent-blue   { border-top-color: var(--primary); }
+.stat-accent-green  { border-top-color: var(--success); }
+.stat-accent-red    { border-top-color: var(--danger); }
+.stat-accent-orange { border-top-color: var(--orange, #f97316); }
+.stat-accent-yellow { border-top-color: var(--warning, #f59e0b); }
 .stat-icon {
   font-size: 28px;
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -591,10 +538,14 @@ onMounted(refresh)
   align-items: center;
   justify-content: center;
 }
-.stat-icon-blue    { color: var(--primary); }
-.stat-icon-primary { color: #6366f1; }
-.stat-icon-green   { color: var(--success); }
-.stat-icon-red     { color: var(--danger); }
+.stat-icon-blue   { color: var(--primary); }
+.stat-icon-green  { color: var(--success); }
+.stat-icon-red    { color: var(--danger); }
+.stat-icon-orange { color: var(--orange, #f97316); }
+.stat-icon-yellow { color: var(--warning, #f59e0b); }
+.stat-denom { font-size: 14px; font-weight: 400; color: var(--text-muted); }
+.stat-mini-bar { width: 100%; height: 4px; background: var(--gray-100); border-radius: 999px; overflow: hidden; margin-top: 10px; }
+.stat-mini-fill { height: 100%; background: var(--primary); border-radius: 999px; transition: width 0.5s ease; }
 
 /* ── 액션 패널 ── */
 .action-panel { display: flex; flex-direction: column; }
@@ -763,6 +714,49 @@ onMounted(refresh)
 }
 
 /* ── 매트릭스 테이블 ── */
+.matrix-legend-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 10px;
+}
+.matrix-legend-icon {
+  font-size: 13px;
+  width: 13px;
+  height: 13px;
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.matrix-count-legend {
+  min-width: 16px;
+  height: 16px;
+  font-size: 10px;
+  padding: 0 4px;
+}
+.matrix-cell-icons {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+}
+.matrix-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  flex-shrink: 0;
+}
+.matrix-icon-link  { color: var(--primary); }
+.matrix-icon-issue { color: #d97706; }
+.matrix-count-sm {
+  font-size: 10px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+}
+
 .matrix-badge {
   font-size: 11px;
   font-weight: 600;
@@ -831,20 +825,10 @@ onMounted(refresh)
 }
 .matrix-cell {
   text-align: center;
-  padding: 7px 12px;
+  padding: 6px 8px;
   border-bottom: 1px solid var(--outline);
   border-left: 1px solid var(--outline);
   vertical-align: middle;
-}
-.matrix-dot-ok {
-  color: var(--success);
-  font-weight: 700;
-  font-size: 14px;
-}
-.matrix-dot-issue {
-  color: #d97706;
-  font-weight: 700;
-  font-size: 14px;
 }
 .matrix-count {
   display: inline-flex;
