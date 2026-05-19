@@ -59,15 +59,27 @@
             <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
               <h3 style="margin:0">{{ task.name }}</h3>
               <span class="badge badge-blue">{{ task.objective_id }}: {{ getObjectiveName(task.objective_id) }}</span>
+              <span v-if="task.sub_tasks && task.sub_tasks.length > 0" class="badge badge-outline" style="font-size:11px">소과제 {{ task.sub_tasks.length }}개</span>
             </div>
             <div class="member-badges">
-              <span
-                v-for="m in taskMembers(task.id)"
-                :key="m.id"
-                class="badge badge-gray"
-                :title="m.role"
-              >{{ m.name }}</span>
-              <span v-if="taskMembers(task.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
+              <template v-if="task.sub_tasks && task.sub_tasks.length > 0">
+                <span
+                  v-for="m in allTaskMembers(task)"
+                  :key="m.id"
+                  class="badge badge-gray"
+                  :title="m.role"
+                >{{ m.name }}</span>
+                <span v-if="allTaskMembers(task).length === 0" class="text-muted text-sm">담당자 미배정</span>
+              </template>
+              <template v-else>
+                <span
+                  v-for="m in taskMembers(task.id)"
+                  :key="m.id"
+                  class="badge badge-gray"
+                  :title="m.role"
+                >{{ m.name }}</span>
+                <span v-if="taskMembers(task.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
+              </template>
             </div>
           </div>
 
@@ -98,24 +110,76 @@
               </div>
             </div>
 
-            <!-- ② 진행 내용 -->
-            <ProgressSection
-              :progress="progressMap[task.id] || null"
-              :staff-list="staffList"
-              :task-id="task.id"
-              :week="selectedWeek"
-              :objective-id="task.objective_id || ''"
-              @update:progress="p => onProgressUpdate(task.id, p)"
-            />
+            <!-- 소과제가 있는 경우: 소과제별 섹션 -->
+            <template v-if="task.sub_tasks && task.sub_tasks.length > 0">
+              <div
+                v-for="st in task.sub_tasks"
+                :key="st.id"
+                class="sub-task-section"
+                :class="{ 'sub-task-done': st.done }"
+              >
+                <div class="sub-task-header">
+                  <div class="sub-task-title">
+                    <span class="sub-task-id-badge">{{ st.id }}</span>
+                    <span class="sub-task-name">{{ st.name || '(이름 없음)' }}</span>
+                  </div>
+                  <div class="sub-task-meta">
+                    <div class="member-badges">
+                      <span v-for="m in subTaskMembers(st.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                      <span v-if="subTaskMembers(st.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
+                    </div>
+                    <button
+                      class="btn btn-xs sub-task-done-btn"
+                      :class="st.done ? 'btn-success' : 'btn-ghost'"
+                      @click="toggleSubTaskDone(task.id, st.id, !st.done)"
+                      :data-tooltip="st.done ? '완료됨 — 클릭하여 진행중으로 변경' : '진행중 — 클릭하여 완료 처리'"
+                    >
+                      <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">{{ st.done ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                      {{ st.done ? '완료' : '진행중' }}
+                    </button>
+                  </div>
+                </div>
 
-            <!-- ③ Q&A -->
-            <QASection
-              :questions="getQuestionsForTask(task.id)"
-              :staff-list="staffList"
-              :task-id="task.id"
-              :week="selectedWeek"
-              @update:questions="qs => onQuestionsUpdate(task.id, qs)"
-            />
+                <ProgressSection
+                  :progress="progressMap[st.id] || null"
+                  :staff-list="staffList"
+                  :task-id="st.id"
+                  :week="selectedWeek"
+                  :objective-id="task.objective_id || ''"
+                  @update:progress="p => onProgressUpdate(st.id, p)"
+                />
+
+                <QASection
+                  :questions="getQuestionsForTask(st.id)"
+                  :staff-list="staffList"
+                  :task-id="st.id"
+                  :week="selectedWeek"
+                  @update:questions="qs => onQuestionsUpdate(st.id, qs)"
+                />
+              </div>
+            </template>
+
+            <!-- 소과제가 없는 경우: 기존 방식 -->
+            <template v-else>
+              <!-- ② 진행 내용 -->
+              <ProgressSection
+                :progress="progressMap[task.id] || null"
+                :staff-list="staffList"
+                :task-id="task.id"
+                :week="selectedWeek"
+                :objective-id="task.objective_id || ''"
+                @update:progress="p => onProgressUpdate(task.id, p)"
+              />
+
+              <!-- ③ Q&A -->
+              <QASection
+                :questions="getQuestionsForTask(task.id)"
+                :staff-list="staffList"
+                :task-id="task.id"
+                :week="selectedWeek"
+                @update:questions="qs => onQuestionsUpdate(task.id, qs)"
+              />
+            </template>
           </div>
         </div>
       </div>
@@ -132,7 +196,7 @@ import axios from 'axios'
 import { useToast } from '../composables/useToast.js'
 import { parseIds } from '../utils/parseIds.js'
 import { getCurrentWeekNumber, getWeekDateRange } from '../utils/week.js'
-import { getTaskMembers } from '../utils/staff.js'
+import { getTaskMembers, getAllTaskMembers } from '../utils/staff.js'
 import ProgressSection from '../components/progress/ProgressSection.vue'
 import QASection from '../components/progress/QASection.vue'
 
@@ -148,7 +212,7 @@ const selectedStaff = ref([])
 const filteredTasks = computed(() => {
   if (selectedStaff.value.length === 0) return tasks.value
   return tasks.value.filter(task =>
-    taskMembers(task.id).some(m => selectedStaff.value.includes(m.name))
+    getAllTaskMembers(task, staffList.value).some(m => selectedStaff.value.includes(m.name))
   )
 })
 function toggleStaff(name) {
@@ -195,8 +259,21 @@ async function onWeekChange() {
 // ── 헬퍼 ──
 function getObjectiveName(id) { return objectives.value.find(o => o.id === id)?.name ?? id }
 function taskMembers(taskId) { return getTaskMembers(taskId, staffList.value) }
+function subTaskMembers(subTaskId) { return getTaskMembers(subTaskId, staffList.value) }
+function allTaskMembers(task) { return getAllTaskMembers(task, staffList.value) }
 function getQuestionsForTask(taskId) { return qnaList.value.filter(q => q.task_id === taskId) }
 function getTaskLink(taskId) { return linkMap.value[taskId] || null }
+
+async function toggleSubTaskDone(taskId, subTaskId, done) {
+  try {
+    await axios.put(`/api/tasks/${taskId}/sub-tasks/${subTaskId}`, { done })
+    tasks.value = tasks.value.map(t => {
+      if (t.id !== taskId) return t
+      return { ...t, sub_tasks: t.sub_tasks.map(st => st.id === subTaskId ? { ...st, done } : st) }
+    })
+    showToast(done ? '소과제가 완료 처리되었습니다' : '진행중으로 변경되었습니다')
+  } catch (e) { toastError(e, '소과제 상태 변경 실패') }
+}
 
 // ── Q&A 업데이트 핸들러 ──
 function onQuestionsUpdate(taskId, newQuestions) {
@@ -391,6 +468,71 @@ onMounted(fetchAll)
   border-bottom: 1px solid var(--outline);
 }
 .link-text { flex: 1; font-size: 14px; word-break: break-all; }
+
+.sub-task-section {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--outline);
+  border-left: 3px solid var(--color-primary, #4f8ef7);
+  border-radius: 8px;
+  background: var(--gray-50, #fafafa);
+  transition: opacity 0.2s;
+}
+.sub-task-section.sub-task-done {
+  border-left-color: var(--color-success, #22c55e);
+  opacity: 0.75;
+}
+.sub-task-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.sub-task-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.sub-task-id-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: monospace;
+  background: color-mix(in srgb, var(--color-primary, #4f8ef7) 12%, transparent);
+  color: var(--color-primary, #4f8ef7);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sub-task-done .sub-task-id-badge {
+  background: color-mix(in srgb, var(--color-success, #22c55e) 12%, transparent);
+  color: var(--color-success, #22c55e);
+}
+.sub-task-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+.sub-task-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.sub-task-done-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
 </style>
 
 <style>

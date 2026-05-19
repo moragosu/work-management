@@ -291,7 +291,11 @@ const assignedTaskIds = computed(() => {
 })
 
 const unassignedTasks = computed(() =>
-  tasks.value.filter(t => !assignedTaskIds.value.has(t.id))
+  tasks.value.filter(t => {
+    if (assignedTaskIds.value.has(t.id)) return false
+    if (t.sub_tasks && t.sub_tasks.some(st => assignedTaskIds.value.has(st.id))) return false
+    return true
+  })
 )
 
 // ── 팀원별 활동 통계 ──
@@ -345,17 +349,30 @@ function truncate(text, len) {
 
 // ── 헬퍼 ──
 function getTaskName(taskId) {
-  return tasks.value.find(t => t.id === taskId)?.name || taskId
+  const direct = tasks.value.find(t => t.id === taskId)
+  if (direct) return direct.name
+  for (const t of tasks.value) {
+    const st = (t.sub_tasks || []).find(s => s.id === taskId)
+    if (st) return `${t.name} › ${st.name || taskId}`
+  }
+  return taskId
 }
 function getObjectiveName(objectiveId) {
   return objectives.value.find(o => o.id === objectiveId)?.name || objectiveId
+}
+function resolveParentTaskId(taskId) {
+  if (tasks.value.find(t => t.id === taskId)) return taskId
+  for (const t of tasks.value) {
+    if ((t.sub_tasks || []).some(st => st.id === taskId)) return t.id
+  }
+  return taskId
 }
 // ── 바로가기 네비게이션 ──
 function goToQuestion(q) {
   router.push({ path: '/progress', query: { week: currentWeek, focusQuestion: q.id } })
 }
 function goToIssue(p) {
-  router.push({ path: '/progress', query: { week: currentWeek, focusIssue: p.task_id } })
+  router.push({ path: '/progress', query: { week: currentWeek, focusIssue: resolveParentTaskId(p.task_id) } })
 }
 function goToTask(t) {
   router.push({ path: '/admin', query: { tab: 'task', focusTask: t.id } })

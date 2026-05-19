@@ -207,6 +207,25 @@
           </div>
         </div>
 
+        <!-- 소과제 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">account_tree</span>
+            소과제가 있는 과제
+          </div>
+          <ul class="feature-list">
+            <li>소과제가 있는 과제 카드는 상단에 <strong>"소과제 N개"</strong> 배지가 표시됩니다</li>
+            <li>각 소과제는 과제 카드 내부에 <strong>파란 왼쪽 테두리</strong>로 구분된 별도 섹션으로 표시됩니다</li>
+            <li>소과제 섹션에는 소과제 ID·이름·담당자 배지와 함께 <strong>완료 여부 토글 버튼</strong>이 있습니다</li>
+            <li>이슈 등록과 Q&A는 <strong>소과제별로 독립적으로</strong> 관리됩니다 — 소과제가 있는 경우 모과제 단위 이슈·Q&A는 표시되지 않습니다</li>
+            <li>소과제가 완료 처리되면 해당 섹션은 <strong>녹색 테두리</strong>로 바뀌고 흐릿하게 표시됩니다</li>
+          </ul>
+          <div class="callout callout-tip">
+            <span class="material-symbols-outlined callout-icon">star</span>
+            <div>소과제 완료 버튼을 클릭하면 상태가 즉시 저장됩니다. 완료된 소과제도 섹션은 그대로 유지되므로 이슈·Q&A 기록을 계속 확인할 수 있습니다.</div>
+          </div>
+        </div>
+
         <!-- 컨플루언스 -->
         <div class="sub-section">
           <div class="sub-section-title">
@@ -289,6 +308,22 @@
           <div class="callout callout-tip">
             <span class="material-symbols-outlined callout-icon">star</span>
             <div>헤더의 체크박스를 클릭하면 현재 표시된 과제를 <strong>전체 선택/해제</strong>할 수 있습니다. 인력 필터와 함께 사용하면 특정 파트원의 과제만 선택해 일괄 적용할 수 있습니다.</div>
+          </div>
+
+          <div class="sub-section-title" style="margin-top:18px">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">account_tree</span>
+            소과제(Sub-task) 관리
+          </div>
+          <ul class="feature-list">
+            <li>과제 수정 모달에서 <strong>"소과제 추가"</strong> 버튼으로 소과제를 등록합니다. 소과제 ID는 <code class="md-syntax">T1-1</code>, <code class="md-syntax">T1-2</code> 형식으로 자동 부여됩니다</li>
+            <li>각 소과제에 <strong>이름</strong>을 입력할 수 있으며, 소과제별로 완료 여부를 체크할 수 있습니다</li>
+            <li>소과제가 있는 과제는 행에 <strong>소과제 수 배지</strong>가 표시됩니다</li>
+            <li>소과제 ID를 파트원의 <strong>담당 과제</strong>로 선택하면 소과제별 담당자를 지정할 수 있습니다</li>
+            <li>모과제를 삭제하면 소과제 ID도 파트원 담당 목록에서 자동 제거됩니다</li>
+          </ul>
+          <div class="callout callout-info">
+            <span class="material-symbols-outlined callout-icon">lightbulb</span>
+            <div>소과제가 있는 과제는 <strong>주간 진행 현황</strong>에서 모과제 카드 안에 소과제별 섹션이 펼쳐집니다. 이슈·Q&A는 소과제 단위로 독립 관리됩니다.</div>
           </div>
         </div>
 
@@ -435,6 +470,16 @@ const faqs = reactive([
   {
     q: '인력 탭에서 특정 파트원만 보고 싶을 때는?',
     a: '인력 탭 상단의 이름 칩을 클릭하면 해당 파트원만 필터링됩니다. 여러 명을 동시에 선택할 수 있으며, "전체 보기" 버튼으로 필터를 초기화할 수 있습니다.',
+    open: false,
+  },
+  {
+    q: '소과제란 무엇이고 어떻게 추가하나요?',
+    a: '소과제는 하나의 과제를 세부 작업 단위로 나눈 것입니다. 관리 도구 → 과제 탭에서 수정 모달을 열면 하단에 "소과제 추가" 버튼이 표시됩니다. 소과제 ID는 T1-1, T1-2 형식으로 자동 부여되며, 각 소과제를 파트원의 담당 과제로 지정할 수 있습니다. 주간 진행 현황에서는 소과제별 이슈와 Q&A를 독립적으로 관리할 수 있습니다.',
+    open: false,
+  },
+  {
+    q: '소과제를 삭제하면 어떻게 되나요?',
+    a: '소과제를 삭제하면 해당 소과제 ID가 파트원의 담당 과제 목록에서 자동으로 제거됩니다. 기존에 해당 소과제로 등록된 이슈 이력은 과제명이 텍스트로 보존됩니다. 모과제를 삭제하면 모든 소과제도 함께 삭제되며, 동일하게 연결된 데이터가 정리됩니다.',
     open: false,
   },
   {

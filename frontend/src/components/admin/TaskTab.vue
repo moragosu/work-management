@@ -65,7 +65,10 @@
           <tbody>
             <tr v-for="t in sortedTasks" :key="t.id" :id="'task-row-' + t.id" :class="{ 'row-selected': selectedTaskIds.includes(t.id) }">
               <td><input type="checkbox" :checked="selectedTaskIds.includes(t.id)" @change="toggleTask(t.id)" /></td>
-              <td><span class="badge badge-blue">{{ t.id }}</span></td>
+              <td>
+                <span class="badge badge-blue">{{ t.id }}</span>
+                <span v-if="t.sub_tasks && t.sub_tasks.length > 0" class="sub-count-badge" :title="`소과제 ${t.sub_tasks.length}개`">{{ t.sub_tasks.length }}</span>
+              </td>
               <td><span v-if="t.target" :class="targetBadgeClass(t.target)">{{ t.target }}</span><span v-else class="text-muted text-sm">-</span></td>
               <td style="font-weight:600">{{ t.name }}</td>
               <td><span class="text-sm">{{ getObjectiveName(t.objective_id) }}</span></td>
@@ -132,6 +135,21 @@
               <option value="">없음</option>
               <option v-for="o in objectives" :key="o.id" :value="o.id">{{ o.id }}: {{ o.name }}</option>
             </select>
+          </div>
+          <div v-if="editingId" class="form-group">
+            <label class="form-label">소과제</label>
+            <div class="sub-task-list">
+              <div v-for="(st, idx) in form.sub_tasks" :key="idx" class="sub-task-edit-row">
+                <span class="badge badge-gray sub-task-id">{{ st.id }}</span>
+                <input v-model="st.name" class="form-control sub-task-input" placeholder="소과제명" />
+                <label class="done-toggle" :title="st.done ? '완료 취소' : '완료로 표시'">
+                  <input type="checkbox" v-model="st.done" />
+                  <span>완료</span>
+                </label>
+                <button type="button" class="btn btn-danger btn-xs" @click="removeSubTask(idx)">✕</button>
+              </div>
+              <button type="button" class="btn btn-ghost btn-sm" @click="addSubTask">+ 소과제 추가</button>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -276,7 +294,7 @@ async function applyBulkTarget() {
 // ── Task Form Modal ──
 const showModal = ref(false)
 const editingId = ref(null)
-const defaultForm = () => ({ id: '', name: '', objective_id: '', target: '' })
+const defaultForm = () => ({ id: '', name: '', objective_id: '', target: '', sub_tasks: [] })
 const form = ref(defaultForm())
 
 const idConflict = computed(() =>
@@ -285,13 +303,24 @@ const idConflict = computed(() =>
 
 function openModal(t = null) {
   if (t) {
-    form.value = { ...t }
+    form.value = { ...t, sub_tasks: (t.sub_tasks || []).map(st => ({ ...st })) }
     editingId.value = t.id
   } else {
     form.value = { ...defaultForm(), id: props.nextId }
     editingId.value = null
   }
   showModal.value = true
+}
+
+function addSubTask() {
+  const existing = form.value.sub_tasks || []
+  const nums = existing.map(st => parseInt(st.id.split('-').at(-1)) || 0)
+  const next = Math.max(0, ...nums) + 1
+  form.value.sub_tasks = [...existing, { id: `${form.value.id}-${next}`, name: '', done: false }]
+}
+
+function removeSubTask(idx) {
+  form.value.sub_tasks = form.value.sub_tasks.filter((_, i) => i !== idx)
 }
 
 async function submitTask() {
@@ -392,6 +421,26 @@ onMounted(async () => {
   margin-bottom: 8px;
 }
 .member-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.sub-count-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  background: var(--primary); color: #fff;
+  font-size: 10px; font-weight: 700; padding: 0 4px;
+  margin-left: 4px; vertical-align: middle;
+}
+
+.sub-task-list { display: flex; flex-direction: column; gap: 8px; }
+.sub-task-edit-row {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--gray-50); border-radius: 6px; padding: 6px 10px;
+}
+.sub-task-id { flex-shrink: 0; }
+.sub-task-input { flex: 1; }
+.done-toggle {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; color: var(--text-muted); cursor: pointer; white-space: nowrap; flex-shrink: 0;
+}
 
 .bulk-toolbar {
   display: flex; align-items: center; gap: 8px;

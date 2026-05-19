@@ -113,7 +113,12 @@
                           <span class="objective-label">{{ getObjectiveName(objId) }}</span>
                         </div>
                         <div class="task-list">
-                          <div v-for="task in getSelectedTasksForObjective(member, objId)" :key="task.id" class="task-item">
+                          <div
+                            v-for="task in getSelectedTasksForObjective(member, objId)"
+                            :key="task.id"
+                            class="task-item"
+                            :class="{ 'sub-task-item': task.isSub }"
+                          >
                             <span class="badge badge-gray">{{ task.id }}</span>
                             <span class="task-name">{{ task.name }}</span>
                           </div>
@@ -193,15 +198,33 @@
                   </span>
                 </label>
                 <div class="task-checkboxes">
-                  <label v-for="task in getObjectiveTasks(objective.id)" :key="task.id" class="task-checkbox-label">
-                    <input
-                      type="checkbox"
-                      :value="task.id"
-                      :checked="form.taskIds.includes(task.id)"
-                      @change="updateTaskSelection(task.id, $event.target.checked)"
-                    />
-                    {{ task.id }}: {{ task.name }}
-                  </label>
+                  <template v-for="task in getObjectiveTasks(objective.id)" :key="task.id">
+                    <label class="task-checkbox-label">
+                      <input
+                        type="checkbox"
+                        :value="task.id"
+                        :checked="form.taskIds.includes(task.id)"
+                        @change="updateTaskSelection(task.id, $event.target.checked)"
+                      />
+                      <span class="badge badge-gray" style="font-size:11px">{{ task.id }}</span>
+                      {{ task.name }}
+                    </label>
+                    <label
+                      v-for="st in (task.sub_tasks || [])"
+                      :key="st.id"
+                      class="task-checkbox-label sub-task-checkbox-label"
+                    >
+                      <input
+                        type="checkbox"
+                        :value="st.id"
+                        :checked="form.taskIds.includes(st.id)"
+                        @change="updateTaskSelection(st.id, $event.target.checked)"
+                      />
+                      <span class="badge badge-gray" style="font-size:11px">{{ st.id }}</span>
+                      {{ st.name }}
+                      <span v-if="st.done" class="text-muted text-sm">(완료)</span>
+                    </label>
+                  </template>
                 </div>
               </div>
               <!-- 목표 미연결 과제 -->
@@ -220,15 +243,32 @@
                   </span>
                 </label>
                 <div class="task-checkboxes">
-                  <label v-for="task in unlinkedTasks" :key="task.id" class="task-checkbox-label">
-                    <input
-                      type="checkbox"
-                      :value="task.id"
-                      :checked="form.taskIds.includes(task.id)"
-                      @change="updateTaskSelection(task.id, $event.target.checked)"
-                    />
-                    {{ task.id }}: {{ task.name }}
-                  </label>
+                  <template v-for="task in unlinkedTasks" :key="task.id">
+                    <label class="task-checkbox-label">
+                      <input
+                        type="checkbox"
+                        :value="task.id"
+                        :checked="form.taskIds.includes(task.id)"
+                        @change="updateTaskSelection(task.id, $event.target.checked)"
+                      />
+                      <span class="badge badge-gray" style="font-size:11px">{{ task.id }}</span>
+                      {{ task.name }}
+                    </label>
+                    <label
+                      v-for="st in (task.sub_tasks || [])"
+                      :key="st.id"
+                      class="task-checkbox-label sub-task-checkbox-label"
+                    >
+                      <input
+                        type="checkbox"
+                        :value="st.id"
+                        :checked="form.taskIds.includes(st.id)"
+                        @change="updateTaskSelection(st.id, $event.target.checked)"
+                      />
+                      <span class="badge badge-gray" style="font-size:11px">{{ st.id }}</span>
+                      {{ st.name }}
+                    </label>
+                  </template>
                 </div>
               </div>
             </div>
@@ -443,18 +483,16 @@ async function submitForm() {
   }
 }
 
+function deriveObjectiveIds(taskIds) {
+  return [...new Set(taskIds.map(resolveTaskObjectiveId).filter(Boolean))]
+}
+
 async function submitAdd() {
   try {
-    // 과제 ID들을 통해 연결된 Objective들을 추출
-    const objectiveIds = [...new Set(form.value.taskIds.map(taskId => {
-      const task = tasks.value.find(t => t.id === taskId)
-      return task ? task.objective_id : null
-    }).filter(Boolean))]
-    
     const payload = {
       ...form.value,
-      okrs: objectiveIds.join(', '),  // 과제에서 추출한 Objective ID들 저장
-      selected_tasks: form.value.taskIds.join(', ')  // 실제 선택된 과제 ID들 저장
+      okrs: deriveObjectiveIds(form.value.taskIds).join(', '),
+      selected_tasks: form.value.taskIds.join(', '),
     }
     const { data } = await axios.post('/api/staff', payload)
     staff.value.push(data)
@@ -466,18 +504,12 @@ async function submitAdd() {
 
 async function submitEdit() {
   if (!selectedMember.value) return
-  
+
   try {
-    // 과제 ID들을 통해 연결된 Objective들을 추출
-    const objectiveIds = [...new Set(form.value.taskIds.map(taskId => {
-      const task = tasks.value.find(t => t.id === taskId)
-      return task ? task.objective_id : null
-    }).filter(Boolean))]
-    
     const payload = {
       ...form.value,
-      okrs: objectiveIds.join(', '),  // 과제에서 추출한 Objective ID들 저장
-      selected_tasks: form.value.taskIds.join(', ')  // 실제 선택된 과제 ID들 저장
+      okrs: deriveObjectiveIds(form.value.taskIds).join(', '),
+      selected_tasks: form.value.taskIds.join(', '),
     }
     const { data } = await axios.put(`/api/staff/${selectedMember.value.id}`, payload)
     
@@ -585,25 +617,38 @@ function getTaskIdsFromObjectives(objectivesStr) {
   return taskIds
 }
 
-// selected_tasks의 Objective ID들 반환 (Objective별 그룹핑 표시에 사용)
-function getSelectedTaskObjectiveIds(member) {
-  const taskIds = getTaskIds(member.selected_tasks)
-  const seen = new Set()
-  const objIds = []
-  taskIds.forEach(taskId => {
-    const task = tasks.value.find(t => t.id === taskId)
-    if (task && !seen.has(task.objective_id)) {
-      seen.add(task.objective_id)
-      objIds.push(task.objective_id)
-    }
-  })
-  return objIds
+// 과제 ID(소과제 포함)에서 부모 과제를 찾아 Objective ID 반환
+function resolveTaskObjectiveId(id) {
+  let task = tasks.value.find(t => t.id === id)
+  if (!task) {
+    const parentId = id.split('-').slice(0, -1).join('-')
+    task = tasks.value.find(t => t.id === parentId)
+  }
+  return task ? task.objective_id : null
 }
 
-// selected_tasks 중 특정 Objective에 속하는 Task 반환
+// selected_tasks의 Objective ID들 반환
+function getSelectedTaskObjectiveIds(member) {
+  const seen = new Set()
+  const objIds = []
+  getTaskIds(member.selected_tasks).forEach(id => {
+    const objId = resolveTaskObjectiveId(id)
+    if (objId && !seen.has(objId)) { seen.add(objId); objIds.push(objId) }
+  })
+  return objIds.filter(Boolean)
+}
+
+// selected_tasks 중 특정 Objective에 속하는 과제/소과제 반환
 function getSelectedTasksForObjective(member, objId) {
-  const taskIds = getTaskIds(member.selected_tasks)
-  return tasks.value.filter(t => taskIds.includes(t.id) && t.objective_id === objId)
+  const selectedIds = new Set(getTaskIds(member.selected_tasks))
+  const result = []
+  tasks.value.filter(t => t.objective_id === objId).forEach(t => {
+    if (selectedIds.has(t.id)) result.push({ id: t.id, name: t.name, isSub: false })
+    ;(t.sub_tasks || []).forEach(st => {
+      if (selectedIds.has(st.id)) result.push({ id: st.id, name: st.name, isSub: true })
+    })
+  })
+  return result
 }
 
 function editMember(member) {
@@ -802,5 +847,22 @@ defineExpose({ openAddModal })
 
 .task-checkbox-label input {
   margin-top: 4px;
+}
+
+.sub-task-checkbox-label {
+  margin-left: 20px;
+  background: transparent;
+  border-left: 2px solid var(--outline);
+  border-radius: 0 4px 4px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.sub-task-item {
+  margin-left: 20px;
+  border-left: 2px solid var(--outline);
+  padding-left: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 </style>

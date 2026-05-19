@@ -13,12 +13,24 @@ class TaskMember(BaseModel):
     role: str = ""
 
 
+class SubTask(BaseModel):
+    id: str
+    name: str
+    done: bool = False
+
+
+class SubTaskUpdate(BaseModel):
+    name: Optional[str] = None
+    done: Optional[bool] = None
+
+
 class Task(BaseModel):
     id: str
     name: str
     objective_id: str = ""
     target: str = ""
     members: List[TaskMember] = []
+    sub_tasks: List[SubTask] = []
 
 
 class TaskUpdate(BaseModel):
@@ -26,6 +38,7 @@ class TaskUpdate(BaseModel):
     objective_id: Optional[str] = None
     target: Optional[str] = None
     members: Optional[List[TaskMember]] = None
+    sub_tasks: Optional[List[SubTask]] = None
 
 
 def _load() -> list:
@@ -35,6 +48,30 @@ def _load() -> list:
 
 def _save(tasks: list) -> None:
     data_store.save("tasks.json", {"tasks": tasks})
+
+
+def _cascade_delete_ids(ids_to_remove: set, task_name: str = "") -> None:
+    """staff.selected_tasks 및 progress에서 해당 ID들 제거."""
+    staff_data = data_store.load("staff.json")
+    changed = False
+    for staff in staff_data.get("staff", []):
+        parts = [x.strip() for x in staff.get("selected_tasks", "").split(",") if x.strip()]
+        new_parts = [x for x in parts if x not in ids_to_remove]
+        if len(new_parts) != len(parts):
+            staff["selected_tasks"] = ",".join(new_parts)
+            changed = True
+    if changed:
+        data_store.save("staff.json", staff_data)
+
+    progress_data = data_store.load("progress.json")
+    changed = False
+    for item in progress_data.get("progress_items", []):
+        if item.get("task_id") in ids_to_remove:
+            item["task_id"] = ""
+            item["task_name"] = task_name
+            changed = True
+    if changed:
+        data_store.save("progress.json", progress_data)
 
 
 # ── Task endpoints ─────────────────────────────────────────────────────────────
@@ -100,6 +137,39 @@ def bulk_update_target(update: BulkTargetUpdate):
     return {"updated": count}
 
 
+@router.put("/{task_id}/sub-tasks/{sub_task_id}")
+def update_sub_task(task_id: str, sub_task_id: str, update: SubTaskUpdate):
+    tasks = _load()
+    for i, t in enumerate(tasks):
+        if t["id"] == task_id:
+            sub_tasks = t.get("sub_tasks", [])
+            for j, st in enumerate(sub_tasks):
+                if st["id"] == sub_task_id:
+                    patch = update.model_dump(exclude_none=True)
+                    sub_tasks[j] = {**st, **patch}
+                    tasks[i]["sub_tasks"] = sub_tasks
+                    _save(tasks)
+                    return sub_tasks[j]
+            raise HTTPException(status_code=404, detail="Sub-task not found")
+    raise HTTPException(status_code=404, detail="Task not found")
+
+
+@router.delete("/{task_id}/sub-tasks/{sub_task_id}")
+def delete_sub_task(task_id: str, sub_task_id: str):
+    tasks = _load()
+    for i, t in enumerate(tasks):
+        if t["id"] == task_id:
+            sub_tasks = t.get("sub_tasks", [])
+            st = next((s for s in sub_tasks if s["id"] == sub_task_id), None)
+            if not st:
+                raise HTTPException(status_code=404, detail="Sub-task not found")
+            tasks[i]["sub_tasks"] = [s for s in sub_tasks if s["id"] != sub_task_id]
+            _save(tasks)
+            _cascade_delete_ids({sub_task_id}, t["name"])
+            return {"deleted": sub_task_id}
+    raise HTTPException(status_code=404, detail="Task not found")
+
+
 @router.put("/{task_id}", response_model=Task)
 def update_task(task_id: str, update: TaskUpdate):
     tasks = _load()
@@ -150,31 +220,10 @@ def delete_task(task_id: str):
         raise HTTPException(status_code=404, detail="Task not found")
 
     task_name = task["name"]
+    sub_task_ids = {st["id"] for st in task.get("sub_tasks", [])}
+    all_ids = {task_id} | sub_task_ids
 
-    # Cascade: staff.selected_tasks에서 제거
-    staff_data = data_store.load("staff.json")
-    staff_changed = False
-    for staff in staff_data.get("staff", []):
-        tasks_str = staff.get("selected_tasks", "")
-        if tasks_str:
-            ids = [x.strip() for x in tasks_str.split(",") if x.strip()]
-            new_ids = [x for x in ids if x != task_id]
-            if len(new_ids) != len(ids):
-                staff["selected_tasks"] = ",".join(new_ids)
-                staff_changed = True
-    if staff_changed:
-        data_store.save("staff.json", staff_data)
-
-    # Cascade: progress의 task_id를 초기화하고 task_name에 이름 텍스트 보존 (이력 보존)
-    progress_data = data_store.load("progress.json")
-    progress_changed = False
-    for item in progress_data.get("progress_items", []):
-        if item.get("task_id") == task_id:
-            item["task_id"] = ""
-            item["task_name"] = task_name
-            progress_changed = True
-    if progress_changed:
-        data_store.save("progress.json", progress_data)
+    _cascade_delete_ids(all_ids, task_name)
 
     new_tasks = [t for t in tasks if t["id"] != task_id]
     _save(new_tasks)
