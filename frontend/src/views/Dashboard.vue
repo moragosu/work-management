@@ -286,7 +286,7 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import axios from 'axios'
 import { parseIds } from '../utils/parseIds.js'
-import { getCurrentWeekNumber } from '../utils/week.js'
+import { getCurrentWeek } from '../utils/week.js'
 import { statusBadgeClass } from '../utils/status.js'
 
 const router = useRouter()
@@ -307,7 +307,7 @@ const activityOpen = ref(true)
 
 const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
 
-const currentWeek = `W${getCurrentWeekNumber()}`
+const currentWeek = getCurrentWeek()
 
 // ── 목표 통계 ──
 const inProgressCount = computed(() => objectives.value.filter(o => o.status === '진행중').length)

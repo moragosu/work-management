@@ -11,23 +11,23 @@
       <!-- 주차 선택 + 인력 필터 -->
       <div class="filter-bar" style="flex-direction:column;align-items:flex-start;gap:10px">
         <div style="display:flex;align-items:center;gap:8px">
-          <div class="week-nav" :class="{ 'week-nav-current': selectedWeek === `W${getCurrentWeekNumber()}` }">
+          <div class="week-nav" :class="{ 'week-nav-current': selectedWeek === getCurrentWeek() }">
             <button class="week-nav-btn" @click="prevWeek" :disabled="getCurrentWeekIndex() <= 0" data-tooltip="이전 주">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <div class="week-nav-info">
               <div style="display:flex;align-items:center;gap:6px">
                 <span class="week-nav-label">{{ getWeekDateRange(selectedWeek) }}</span>
-                <span v-if="selectedWeek === `W${getCurrentWeekNumber()}`" class="week-current-badge">이번 주</span>
+                <span v-if="selectedWeek === getCurrentWeek()" class="week-current-badge">이번 주</span>
               </div>
-              <span class="week-nav-range">{{ selectedWeek }}</span>
+              <span class="week-nav-range">{{ formatWeekLabel(selectedWeek) }}</span>
             </div>
             <button class="week-nav-btn" @click="nextWeek" :disabled="getCurrentWeekIndex() >= availableWeeks.length - 1" data-tooltip="다음 주">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
           </div>
           <button
-            v-if="selectedWeek !== `W${getCurrentWeekNumber()}`"
+            v-if="selectedWeek !== getCurrentWeek()"
             class="btn btn-ghost btn-sm week-today-btn"
             @click="goToCurrentWeek"
             data-tooltip="현재 주차로 이동"
@@ -257,7 +257,7 @@ import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { useToast } from '../composables/useToast.js'
 import { parseIds } from '../utils/parseIds.js'
-import { getCurrentWeekNumber, getWeekDateRange } from '../utils/week.js'
+import { getCurrentWeek, getWeekDateRange, formatWeekLabel, addWeeks } from '../utils/week.js'
 import { getTaskMembers, getAllTaskMembers } from '../utils/staff.js'
 import ProgressSection from '../components/progress/ProgressSection.vue'
 import QASection from '../components/progress/QASection.vue'
@@ -317,25 +317,23 @@ function toggleAllSubTasks(task) {
   expandedSubTaskIds.value = next
 }
 
-// ── 주차 ──
+// ── 주차 (연도 경계 자동 처리) ──
 const availableWeeks = computed(() => {
-  const n = getCurrentWeekNumber()
-  const weeks = []
-  for (let i = Math.max(1, n - 4); i <= n + 4; i++) weeks.push(`W${i}`)
-  return weeks
+  const center = selectedWeek.value || getCurrentWeek()
+  return [-4, -3, -2, -1, 0, 1, 2, 3, 4].map(d => addWeeks(center, d))
 })
 
 function getCurrentWeekIndex() { return availableWeeks.value.indexOf(selectedWeek.value) }
 function prevWeek() {
-  const i = getCurrentWeekIndex()
-  if (i > 0) { selectedWeek.value = availableWeeks.value[i - 1]; onWeekChange() }
+  selectedWeek.value = addWeeks(selectedWeek.value, -1)
+  onWeekChange()
 }
 function nextWeek() {
-  const i = getCurrentWeekIndex()
-  if (i < availableWeeks.value.length - 1) { selectedWeek.value = availableWeeks.value[i + 1]; onWeekChange() }
+  selectedWeek.value = addWeeks(selectedWeek.value, 1)
+  onWeekChange()
 }
 function goToCurrentWeek() {
-  selectedWeek.value = `W${getCurrentWeekNumber()}`
+  selectedWeek.value = getCurrentWeek()
   onWeekChange()
 }
 function initLinkInputs() {
@@ -465,7 +463,7 @@ async function fetchAll() {
     objectives.value = oRes.data
     staffList.value = sRes.data
     initLinkInputs()
-    selectedWeek.value = route.query.week || `W${getCurrentWeekNumber()}`
+    selectedWeek.value = route.query.week || getCurrentWeek()
     await onWeekChange()
   } finally { loading.value = false }
   await handleFocusQuery()
