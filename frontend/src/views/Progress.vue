@@ -60,6 +60,15 @@
               <h3 style="margin:0">{{ task.name }}</h3>
               <span class="badge badge-blue">{{ task.objective_id }}: {{ getObjectiveName(task.objective_id) }}</span>
               <span v-if="task.sub_tasks && task.sub_tasks.length > 0" class="badge badge-outline" style="font-size:11px">소과제 {{ task.sub_tasks.length }}개</span>
+              <button
+                v-if="task.sub_tasks && task.sub_tasks.length > 0"
+                class="btn btn-ghost btn-xs subtask-toggle-all"
+                @click="toggleAllSubTasks(task)"
+                :data-tooltip="isAllSubTasksCollapsed(task) ? '소과제 전체 펼치기' : '소과제 전체 접기'"
+              >
+                <span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">{{ isAllSubTasksCollapsed(task) ? 'unfold_more' : 'unfold_less' }}</span>
+                {{ isAllSubTasksCollapsed(task) ? '전체 펼치기' : '전체 접기' }}
+              </button>
             </div>
             <div class="member-badges">
               <template v-if="task.sub_tasks && task.sub_tasks.length > 0">
@@ -94,6 +103,13 @@
               >
                 <div class="sub-task-header">
                   <div class="sub-task-title">
+                    <button
+                      class="sub-collapse-btn"
+                      @click="toggleSubTaskCollapse(st.id)"
+                      :data-tooltip="collapsedSubTaskIds.has(st.id) ? '소과제 펼치기' : '소과제 접기'"
+                    >
+                      <span class="material-symbols-outlined sub-collapse-icon" :class="{ collapsed: collapsedSubTaskIds.has(st.id) }">expand_more</span>
+                    </button>
                     <span class="sub-task-id-badge">{{ st.id }}</span>
                     <span class="sub-task-name">{{ st.name || '(이름 없음)' }}</span>
                   </div>
@@ -114,48 +130,50 @@
                   </div>
                 </div>
 
-                <!-- 소과제 컨플루언스 링크 -->
-                <div class="sub-task-link-row">
-                  <button class="link-help-btn" :class="{ active: showLinkHelp }" @click="showLinkHelp = !showLinkHelp" data-tooltip="링크 가져오는 방법">?</button>
-                  <span class="material-symbols-outlined sub-task-link-icon">link</span>
-                  <template v-if="getTaskLink(st.id) && !editingLinkId[st.id]">
-                    <a :href="getTaskLink(st.id).url" target="_blank" class="text-primary sub-task-link-text">{{ getTaskLink(st.id).url }}</a>
-                    <button class="btn btn-ghost btn-xs" @click="startEditLink(st.id)" data-tooltip="링크 수정">수정</button>
-                    <button class="btn btn-danger btn-xs" @click="deleteLink(st.id)" data-tooltip="링크 삭제">삭제</button>
-                  </template>
-                  <template v-else>
-                    <input
-                      v-model="linkInputs[st.id]"
-                      class="form-control sub-task-link-input"
-                      placeholder="컨플루언스 링크"
-                      @keyup.enter="saveLink(st.id)"
-                    />
-                    <button class="btn btn-primary btn-xs" @click="saveLink(st.id)" :disabled="!linkInputs[st.id]" data-tooltip="링크 저장">저장</button>
-                    <button v-if="getTaskLink(st.id)" class="btn btn-ghost btn-xs" @click="cancelEditLink(st.id)" data-tooltip="수정 취소">취소</button>
-                  </template>
-                </div>
-                <div v-if="showLinkHelp" class="link-help-panel">
-                  <div class="link-help-step"><span class="link-help-num">1</span><span>컨플루언스 페이지 우 상단 <strong>Share</strong> 버튼 클릭</span></div>
-                  <div class="link-help-step"><span class="link-help-num">2</span><span>드롭다운에서 <strong>Share Link</strong> 생성 확인</span></div>
-                  <div class="link-help-step"><span class="link-help-num">3</span><span><strong>Copy</strong> 버튼 클릭 → 아래 입력란에 붙여넣기</span></div>
-                </div>
+                <template v-if="!collapsedSubTaskIds.has(st.id)">
+                  <!-- 소과제 컨플루언스 링크 -->
+                  <div class="sub-task-link-row">
+                    <button class="link-help-btn" :class="{ active: linkHelpOpen.has(st.id) }" @click="toggleLinkHelp(st.id)" data-tooltip="링크 가져오는 방법">?</button>
+                    <span class="material-symbols-outlined sub-task-link-icon">link</span>
+                    <template v-if="getTaskLink(st.id) && !editingLinkId[st.id]">
+                      <a :href="getTaskLink(st.id).url" target="_blank" class="text-primary sub-task-link-text">{{ getTaskLink(st.id).url }}</a>
+                      <button class="btn btn-ghost btn-xs" @click="startEditLink(st.id)" data-tooltip="링크 수정">수정</button>
+                      <button class="btn btn-danger btn-xs" @click="deleteLink(st.id)" data-tooltip="링크 삭제">삭제</button>
+                    </template>
+                    <template v-else>
+                      <input
+                        v-model="linkInputs[st.id]"
+                        class="form-control sub-task-link-input"
+                        placeholder="컨플루언스 링크"
+                        @keyup.enter="saveLink(st.id)"
+                      />
+                      <button class="btn btn-primary btn-xs" @click="saveLink(st.id)" :disabled="!linkInputs[st.id]" data-tooltip="링크 저장">저장</button>
+                      <button v-if="getTaskLink(st.id)" class="btn btn-ghost btn-xs" @click="cancelEditLink(st.id)" data-tooltip="수정 취소">취소</button>
+                    </template>
+                  </div>
+                  <div v-if="linkHelpOpen.has(st.id)" class="link-help-panel">
+                    <div class="link-help-step"><span class="link-help-num">1</span><span>컨플루언스 페이지 우 상단 <strong>Share</strong> 버튼 클릭</span></div>
+                    <div class="link-help-step"><span class="link-help-num">2</span><span>드롭다운에서 <strong>Share Link</strong> 생성 확인</span></div>
+                    <div class="link-help-step"><span class="link-help-num">3</span><span><strong>Copy</strong> 버튼 클릭 → 아래 입력란에 붙여넣기</span></div>
+                  </div>
 
-                <ProgressSection
-                  :progress="progressMap[st.id] || null"
-                  :staff-list="staffList"
-                  :task-id="st.id"
-                  :week="selectedWeek"
-                  :objective-id="task.objective_id || ''"
-                  @update:progress="p => onProgressUpdate(st.id, p)"
-                />
+                  <ProgressSection
+                    :progress="progressMap[st.id] || null"
+                    :staff-list="staffList"
+                    :task-id="st.id"
+                    :week="selectedWeek"
+                    :objective-id="task.objective_id || ''"
+                    @update:progress="p => onProgressUpdate(st.id, p)"
+                  />
 
-                <QASection
-                  :questions="getQuestionsForTask(st.id)"
-                  :staff-list="staffList"
-                  :task-id="st.id"
-                  :week="selectedWeek"
-                  @update:questions="qs => onQuestionsUpdate(st.id, qs)"
-                />
+                  <QASection
+                    :questions="getQuestionsForTask(st.id)"
+                    :staff-list="staffList"
+                    :task-id="st.id"
+                    :week="selectedWeek"
+                    @update:questions="qs => onQuestionsUpdate(st.id, qs)"
+                  />
+                </template>
               </div>
             </template>
 
@@ -164,11 +182,11 @@
               <!-- ① 컨플루언스 링크 -->
               <div class="section-block">
                 <div class="section-label">
-                  <button class="link-help-btn" :class="{ active: showLinkHelp }" @click="showLinkHelp = !showLinkHelp" data-tooltip="링크 가져오는 방법">?</button>
+                  <button class="link-help-btn" :class="{ active: linkHelpOpen.has(task.id) }" @click="toggleLinkHelp(task.id)" data-tooltip="링크 가져오는 방법">?</button>
                   <span class="material-symbols-outlined section-icon">link</span>
                   컨플루언스
                 </div>
-                <div v-if="showLinkHelp" class="link-help-panel">
+                <div v-if="linkHelpOpen.has(task.id)" class="link-help-panel">
                   <div class="link-help-step"><span class="link-help-num">1</span><span>컨플루언스 페이지 우 상단 <strong>Share</strong> 버튼 클릭</span></div>
                   <div class="link-help-step"><span class="link-help-num">2</span><span>드롭다운에서 <strong>Share Link</strong> 생성 확인</span></div>
                   <div class="link-help-step"><span class="link-help-num">3</span><span><strong>Copy</strong> 버튼 클릭 → 아래 입력란에 붙여넣기</span></div>
@@ -259,7 +277,34 @@ const linkMap = ref({})
 const progressMap = ref({})
 const linkInputs = ref({})
 const editingLinkId = ref({})
-const showLinkHelp = ref(false)
+const linkHelpOpen = ref(new Set())
+const collapsedSubTaskIds = ref(new Set())
+
+function toggleLinkHelp(id) {
+  const next = new Set(linkHelpOpen.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  linkHelpOpen.value = next
+}
+function toggleSubTaskCollapse(stId) {
+  const next = new Set(collapsedSubTaskIds.value)
+  if (next.has(stId)) next.delete(stId)
+  else next.add(stId)
+  collapsedSubTaskIds.value = next
+}
+function isAllSubTasksCollapsed(task) {
+  return (task.sub_tasks || []).length > 0 &&
+    (task.sub_tasks || []).every(st => collapsedSubTaskIds.value.has(st.id))
+}
+function toggleAllSubTasks(task) {
+  const next = new Set(collapsedSubTaskIds.value)
+  if (isAllSubTasksCollapsed(task)) {
+    task.sub_tasks.forEach(st => next.delete(st.id))
+  } else {
+    task.sub_tasks.forEach(st => next.add(st.id))
+  }
+  collapsedSubTaskIds.value = next
+}
 
 // ── 주차 ──
 const availableWeeks = computed(() => {
@@ -574,6 +619,35 @@ onMounted(fetchAll)
   gap: 4px;
   font-size: 12px;
   white-space: nowrap;
+}
+
+.sub-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--text-muted);
+  padding: 0;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.sub-collapse-btn:hover { background: color-mix(in srgb, var(--color-primary, #4f8ef7) 10%, transparent); color: var(--color-primary, #4f8ef7); }
+.sub-collapse-icon {
+  font-size: 18px;
+  transition: transform 0.2s;
+}
+.sub-collapse-icon.collapsed { transform: rotate(-90deg); }
+
+.subtask-toggle-all {
+  font-size: 11px;
+  padding: 2px 8px;
+  color: var(--text-muted);
+  border-color: var(--outline);
 }
 
 .link-help-btn {
