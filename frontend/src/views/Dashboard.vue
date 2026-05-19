@@ -70,14 +70,14 @@
             </div>
             <ul v-else class="panel-list">
               <li v-for="q in unansweredQuestions" :key="q.id" class="panel-item panel-item-link" @click="goToQuestion(q)">
+                <div v-if="q.targets && q.targets.length" class="q-targets-row">
+                  <span class="material-symbols-outlined q-targets-icon">person</span>
+                  <span v-for="t in q.targets" :key="t" class="q-target-badge">{{ t }}</span>
+                </div>
                 <div class="panel-item-main">{{ q.question }}</div>
                 <div class="panel-item-sub">
                   <span class="badge badge-blue">{{ getTaskName(q.task_id) }}</span>
                   <span class="badge badge-gray">{{ formatWeekLabel(q.week) }}</span>
-                  <template v-if="q.targets && q.targets.length">
-                    <span class="material-symbols-outlined" style="font-size:12px;color:var(--text-muted)">arrow_forward</span>
-                    <span v-for="t in q.targets" :key="t" class="badge badge-outline" style="font-size:11px">{{ t }}</span>
-                  </template>
                   <span class="panel-goto">바로가기 →</span>
                 </div>
               </li>
@@ -660,6 +660,29 @@ onMounted(refresh)
   transition: color 0.15s;
 }
 .panel-item-link:hover .panel-goto { color: var(--primary); }
+
+.q-targets-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+.q-targets-icon {
+  font-size: 13px;
+  color: #ea580c;
+  flex-shrink: 0;
+}
+.q-target-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #fed7aa;
+  font-size: 11px;
+  font-weight: 600;
+}
 
 /* ── 사이드 바이 사이드 패널 ── */
 .side-panel-grid {
