@@ -143,109 +143,104 @@
         </div>
       </div>
 
-      <!-- ③ 파트원별 활동 현황 -->
-      <div class="section-header section-header-toggle" @click="activityOpen = !activityOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
-        <span class="section-header-title">파트원별 활동 현황</span>
-        <span class="material-symbols-outlined section-chevron" :class="{ open: activityOpen }">expand_more</span>
-      </div>
-      <div v-if="staffList.length === 0 && activityOpen" class="card" style="margin-top:12px">
-        <div class="card-body text-muted text-sm">파트원 정보가 없습니다.</div>
-      </div>
-      <div v-else-if="activityOpen" class="card" style="margin-top:12px">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:160px">파트원</th>
-              <th>최근 이슈</th>
-              <th style="width:130px" data-tooltip="배정된 과제 수 (누적)">담당 과제</th>
-              <th style="width:130px" data-tooltip="등록한 이슈 수 (누적)">이슈 등록</th>
-              <th style="width:130px" data-tooltip="Q&A에 달린 답변 수 (누적)">Q&A 답변</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="s in staffList" :key="s.id" style="cursor:default">
-              <td style="vertical-align:middle">
-                <div class="member-cell">
-                  <span class="member-avatar">{{ s.name[0] }}</span>
-                  <div>
-                    <div class="member-name">{{ s.name }}</div>
-                    <div class="member-role">{{ s.role }}</div>
-                  </div>
-                </div>
-              </td>
-              <td style="vertical-align:middle">
-                <div v-if="latestIssueMap[s.name]" class="latest-issue">
-                  <span class="badge badge-gray" style="flex-shrink:0">{{ latestIssueMap[s.name].week }}</span>
-                  <span class="latest-issue-text">{{ truncate(latestIssueMap[s.name].issue, 60) }}</span>
-                </div>
-                <span v-else class="text-muted text-sm">—</span>
-              </td>
-              <td style="vertical-align:middle">
-                <div class="stat-bar-row">
-                  <span class="stat-num">{{ memberStatsMap[s.name]?.tasks ?? 0 }}</span>
-                  <div class="stat-bar">
-                    <div class="stat-fill stat-fill-blue" :style="{ width: barWidth(memberStatsMap[s.name]?.tasks, maxStats.tasks) }"></div>
-                  </div>
-                </div>
-              </td>
-              <td style="vertical-align:middle">
-                <div class="stat-bar-row">
-                  <span class="stat-num">{{ memberStatsMap[s.name]?.issues ?? 0 }}</span>
-                  <div class="stat-bar">
-                    <div class="stat-fill stat-fill-orange" :style="{ width: barWidth(memberStatsMap[s.name]?.issues, maxStats.issues) }"></div>
-                  </div>
-                </div>
-              </td>
-              <td style="vertical-align:middle">
-                <div class="stat-bar-row">
-                  <span class="stat-num">{{ memberStatsMap[s.name]?.answers ?? 0 }}</span>
-                  <div class="stat-bar">
-                    <div class="stat-fill stat-fill-green" :style="{ width: barWidth(memberStatsMap[s.name]?.answers, maxStats.answers) }"></div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <!-- ③④ 파트원별 활동 현황 + 주간 등록 현황 -->
+      <div class="side-panel-grid">
 
-      <!-- ④ 주간 등록 현황 (통합 매트릭스) -->
-      <div class="section-header section-header-toggle" style="margin-top:32px" @click="matrixOpen = !matrixOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
-        <span class="section-header-title">주간 등록 현황</span>
-        <div class="matrix-legend-inline">
-          <span class="material-symbols-outlined matrix-legend-icon matrix-icon-link">link</span><span>컨플루언스</span>
-          <span class="material-symbols-outlined matrix-legend-icon matrix-icon-issue">warning</span><span>이슈</span>
-          <span class="matrix-count matrix-count-legend">N</span><span>Q&A</span>
+        <!-- 파트원별 활동 현황 -->
+        <div class="side-panel-col">
+          <div class="section-header section-header-toggle" @click="activityOpen = !activityOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
+            <span class="section-header-title">파트원별 활동 현황</span>
+            <span class="material-symbols-outlined section-chevron" :class="{ open: activityOpen }">expand_more</span>
+          </div>
+          <div v-if="activityOpen" class="card panel-card">
+            <div v-if="staffList.length === 0" class="panel-empty" style="padding:24px">파트원 정보가 없습니다.</div>
+            <div v-else class="activity-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>파트원</th>
+                    <th data-tooltip="배정된 과제 수 (누적)">담당 과제</th>
+                    <th data-tooltip="등록한 이슈 수 (누적)">이슈 등록</th>
+                    <th data-tooltip="Q&A에 달린 답변 수 (누적)">Q&A 답변</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="s in staffList" :key="s.id" style="cursor:default">
+                    <td style="vertical-align:middle">
+                      <div class="member-cell">
+                        <span class="member-avatar">{{ s.name[0] }}</span>
+                        <div>
+                          <div class="member-name">{{ s.name }}</div>
+                          <div class="member-role">{{ s.role }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style="vertical-align:middle">
+                      <div class="stat-bar-row">
+                        <span class="stat-num">{{ memberStatsMap[s.name]?.tasks ?? 0 }}</span>
+                        <div class="stat-bar"><div class="stat-fill stat-fill-blue" :style="{ width: barWidth(memberStatsMap[s.name]?.tasks, maxStats.tasks) }"></div></div>
+                      </div>
+                    </td>
+                    <td style="vertical-align:middle">
+                      <div class="stat-bar-row">
+                        <span class="stat-num">{{ memberStatsMap[s.name]?.issues ?? 0 }}</span>
+                        <div class="stat-bar"><div class="stat-fill stat-fill-orange" :style="{ width: barWidth(memberStatsMap[s.name]?.issues, maxStats.issues) }"></div></div>
+                      </div>
+                    </td>
+                    <td style="vertical-align:middle">
+                      <div class="stat-bar-row">
+                        <span class="stat-num">{{ memberStatsMap[s.name]?.answers ?? 0 }}</span>
+                        <div class="stat-bar"><div class="stat-fill stat-fill-green" :style="{ width: barWidth(memberStatsMap[s.name]?.answers, maxStats.answers) }"></div></div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-        <span class="material-symbols-outlined section-chevron" :class="{ open: matrixOpen }">expand_more</span>
-      </div>
-      <div v-if="matrixOpen" class="card" style="margin-top:12px;overflow:hidden">
-        <div v-if="flatTaskRows.length === 0" class="panel-empty" style="padding:24px">등록된 과제가 없습니다</div>
-        <div v-else class="matrix-wrap">
-          <table class="matrix-table">
-            <thead>
-              <tr>
-                <th class="matrix-task-th">과제</th>
-                <th v-for="w in allWeeks" :key="w" class="matrix-week-th" :class="{ 'matrix-col-current': w === currentWeek }">{{ w }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in flatTaskRows" :key="row.id">
-                <td class="matrix-task-td">
-                  <span v-if="row.parentName" class="matrix-parent">{{ row.parentName }} › </span>{{ row.selfName }}
-                </td>
-                <td v-for="w in allWeeks" :key="w" class="matrix-cell" :class="{ 'matrix-col-current': w === currentWeek }">
-                  <div class="matrix-cell-icons">
-                    <span v-if="confluenceMap[row.id]?.has(w)" class="material-symbols-outlined matrix-icon matrix-icon-link" title="컨플루언스 등록">link</span>
-                    <span v-if="issueMap[row.id]?.has(w)" class="material-symbols-outlined matrix-icon matrix-icon-issue" title="이슈 등록">warning</span>
-                    <span v-if="qnaMap[row.id]?.[w]" class="matrix-count matrix-count-sm" :title="`Q&A ${qnaMap[row.id][w]}건`">{{ qnaMap[row.id][w] }}</span>
-                    <span v-if="!confluenceMap[row.id]?.has(w) && !issueMap[row.id]?.has(w) && !qnaMap[row.id]?.[w]" class="matrix-dot-no">–</span>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+
+        <!-- 주간 등록 현황 -->
+        <div class="side-panel-col">
+          <div class="section-header section-header-toggle" @click="matrixOpen = !matrixOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
+            <span class="section-header-title">주간 등록 현황</span>
+            <div class="matrix-legend-inline">
+              <span class="material-symbols-outlined matrix-legend-icon matrix-icon-link">link</span><span>컨플루언스</span>
+              <span class="material-symbols-outlined matrix-legend-icon matrix-icon-issue">warning</span><span>이슈</span>
+              <span class="matrix-count matrix-count-legend">N</span><span>Q&A</span>
+            </div>
+            <span class="material-symbols-outlined section-chevron" :class="{ open: matrixOpen }">expand_more</span>
+          </div>
+          <div v-if="matrixOpen" class="card panel-card" style="overflow:hidden">
+            <div v-if="flatTaskRows.length === 0" class="panel-empty" style="padding:24px">등록된 과제가 없습니다</div>
+            <div v-else class="matrix-wrap">
+              <table class="matrix-table">
+                <thead>
+                  <tr>
+                    <th class="matrix-task-th">과제</th>
+                    <th v-for="w in allWeeks" :key="w" class="matrix-week-th" :class="{ 'matrix-col-current': w === currentWeek }">{{ w }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in flatTaskRows" :key="row.id">
+                    <td class="matrix-task-td">
+                      <span v-if="row.parentName" class="matrix-parent">{{ row.parentName }} › </span>{{ row.selfName }}
+                    </td>
+                    <td v-for="w in allWeeks" :key="w" class="matrix-cell" :class="{ 'matrix-col-current': w === currentWeek }">
+                      <div class="matrix-cell-icons">
+                        <span v-if="confluenceMap[row.id]?.has(w)" class="material-symbols-outlined matrix-icon matrix-icon-link" title="컨플루언스 등록">link</span>
+                        <span v-if="issueMap[row.id]?.has(w)" class="material-symbols-outlined matrix-icon matrix-icon-issue" title="이슈 등록">warning</span>
+                        <span v-if="qnaMap[row.id]?.[w]" class="matrix-count matrix-count-sm" :title="`Q&A ${qnaMap[row.id][w]}건`">{{ qnaMap[row.id][w] }}</span>
+                        <span v-if="!confluenceMap[row.id]?.has(w) && !issueMap[row.id]?.has(w) && !qnaMap[row.id]?.[w]" class="matrix-dot-no">–</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
+
       </div>
 
       <!-- ⑤ 목표 카드 목록 -->
@@ -643,6 +638,18 @@ onMounted(refresh)
   transition: color 0.15s;
 }
 .panel-item-link:hover .panel-goto { color: var(--primary); }
+
+/* ── 사이드 바이 사이드 패널 ── */
+.side-panel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: flex-start;
+  margin-top: 24px;
+}
+.side-panel-col { display: flex; flex-direction: column; min-width: 0; }
+.panel-card { margin-top: 12px; }
+.activity-scroll { overflow-x: auto; overflow-y: auto; max-height: 420px; }
 
 /* ── 팀원별 활동 현황 ── */
 .member-cell { display: flex; align-items: center; gap: 10px; }
