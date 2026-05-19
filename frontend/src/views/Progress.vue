@@ -20,7 +20,7 @@
                 <span class="week-nav-label">{{ getWeekDateRange(selectedWeek) }}</span>
                 <span v-if="selectedWeek === getCurrentWeek()" class="week-current-badge">이번 주</span>
               </div>
-              <span class="week-nav-range">{{ formatWeekLabel(selectedWeek) }}</span>
+              <span class="week-nav-range">{{ weekDisplayLabel }}</span>
             </div>
             <button class="week-nav-btn" @click="nextWeek" :disabled="getCurrentWeekIndex() >= availableWeeks.length - 1" data-tooltip="다음 주">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -257,7 +257,7 @@ import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { useToast } from '../composables/useToast.js'
 import { parseIds } from '../utils/parseIds.js'
-import { getCurrentWeek, getWeekDateRange, formatWeekLabel, addWeeks } from '../utils/week.js'
+import { getCurrentWeek, getWeekDateRange, addWeeks } from '../utils/week.js'
 import { getTaskMembers, getAllTaskMembers } from '../utils/staff.js'
 import ProgressSection from '../components/progress/ProgressSection.vue'
 import QASection from '../components/progress/QASection.vue'
@@ -284,6 +284,10 @@ function toggleStaff(name) {
 }
 
 const selectedWeek = ref('')
+const weekDisplayLabel = computed(() => {
+  const m = selectedWeek.value?.match(/^(\d{4})-W(\d+)$/)
+  return m ? `${m[1]}년 W${parseInt(m[2])}` : selectedWeek.value
+})
 const qnaList = ref([])
 const linkMap = ref({})
 const progressMap = ref({})
