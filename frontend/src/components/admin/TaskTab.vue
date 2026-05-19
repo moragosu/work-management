@@ -36,6 +36,17 @@
       <button v-if="selectedStaffFilter.length > 0" class="btn btn-ghost btn-xs" @click="selectedStaffFilter = []" data-tooltip="인력 필터 초기화">전체 보기</button>
     </div>
 
+    <!-- 일괄 적용 툴바 -->
+    <div v-if="selectedTaskIds.length > 0" class="bulk-toolbar">
+      <span class="bulk-count">{{ selectedTaskIds.length }}개 선택됨</span>
+      <select v-model="bulkTarget" class="form-control bulk-select">
+        <option value="">적용 대상 선택</option>
+        <option v-for="t in props.taskTargets" :key="t" :value="t">{{ t }}</option>
+      </select>
+      <button class="btn btn-primary btn-sm" @click="applyBulkTarget" :disabled="!bulkTarget">일괄 적용</button>
+      <button class="btn btn-ghost btn-sm" @click="selectedTaskIds = []">선택 해제</button>
+    </div>
+
     <div class="card">
       <div v-if="loading" class="loading-center"><div class="spinner"></div></div>
       <div v-else-if="tasks.length === 0" class="empty-state">
@@ -45,14 +56,18 @@
         <table>
           <thead>
             <tr>
-              <th>ID</th><th>과제명</th><th>적용 대상</th><th>목표</th><th>참여 인력</th><th></th>
+              <th style="width:36px">
+                <input type="checkbox" :checked="isAllSelected" :indeterminate.prop="isPartialSelected" @change="toggleAll" />
+              </th>
+              <th>ID</th><th>적용 대상</th><th>과제명</th><th>목표</th><th>참여 인력</th><th></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="t in sortedTasks" :key="t.id" :id="'task-row-' + t.id">
+            <tr v-for="t in sortedTasks" :key="t.id" :id="'task-row-' + t.id" :class="{ 'row-selected': selectedTaskIds.includes(t.id) }">
+              <td><input type="checkbox" :checked="selectedTaskIds.includes(t.id)" @change="toggleTask(t.id)" /></td>
               <td><span class="badge badge-blue">{{ t.id }}</span></td>
-              <td style="font-weight:600">{{ t.name }}</td>
               <td><span v-if="t.target" :class="targetBadgeClass(t.target)">{{ t.target }}</span><span v-else class="text-muted text-sm">-</span></td>
+              <td style="font-weight:600">{{ t.name }}</td>
               <td><span class="text-sm">{{ getObjectiveName(t.objective_id) }}</span></td>
               <td>
                 <div v-if="taskMembers(t.id).length > 0" class="member-chips">
@@ -224,6 +239,38 @@ const sortedTasks = computed(() => {
   })
 })
 
+// ── 일괄 선택 ──
+const selectedTaskIds = ref([])
+const bulkTarget = ref('')
+
+const isAllSelected = computed(() =>
+  sortedTasks.value.length > 0 && sortedTasks.value.every(t => selectedTaskIds.value.includes(t.id))
+)
+const isPartialSelected = computed(() =>
+  selectedTaskIds.value.length > 0 && !isAllSelected.value
+)
+
+function toggleAll(e) {
+  if (e.target.checked) selectedTaskIds.value = sortedTasks.value.map(t => t.id)
+  else selectedTaskIds.value = []
+}
+function toggleTask(id) {
+  const idx = selectedTaskIds.value.indexOf(id)
+  if (idx === -1) selectedTaskIds.value.push(id)
+  else selectedTaskIds.value.splice(idx, 1)
+}
+
+async function applyBulkTarget() {
+  if (!bulkTarget.value || selectedTaskIds.value.length === 0) return
+  try {
+    await Promise.all(selectedTaskIds.value.map(id => axios.put(`/api/tasks/${id}`, { target: bulkTarget.value })))
+    showToast(`${selectedTaskIds.value.length}개 과제에 '${bulkTarget.value}' 적용 완료`)
+    selectedTaskIds.value = []
+    bulkTarget.value = ''
+    emit('refresh')
+  } catch (e) { toastError(e, '일괄 적용 실패') }
+}
+
 // ── Task Form Modal ──
 const showModal = ref(false)
 const editingId = ref(null)
@@ -343,4 +390,14 @@ onMounted(async () => {
   margin-bottom: 8px;
 }
 .member-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.bulk-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; margin-bottom: 8px;
+  background: var(--primary-light); border: 1px solid var(--primary);
+  border-radius: 8px;
+}
+.bulk-count { font-size: 13px; font-weight: 600; color: var(--primary); white-space: nowrap; }
+.bulk-select { max-width: 140px; padding: 4px 8px; font-size: 13px; height: auto; }
+.row-selected { background: var(--primary-light) !important; }
 </style>
