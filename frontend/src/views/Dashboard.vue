@@ -140,41 +140,8 @@
         </div>
       </div>
 
-      <!-- ③ 목표 카드 목록 -->
-      <div class="section-header" style="margin-bottom:12px">
-        <span class="section-header-title">목표 현황</span>
-      </div>
-      <div v-if="loading" class="loading-center"><div class="spinner"></div></div>
-      <div v-else-if="objectives.length === 0" class="empty-state">
-        <span class="material-symbols-outlined empty-icon">assignment</span>
-        <p>등록된 목표가 없습니다. 관리 도구에서 목표를 추가하세요.</p>
-      </div>
-      <div v-else class="grid-2" style="gap:16px">
-        <div v-for="obj in objectives" :key="obj.id" class="card obj-card">
-          <div class="card-header">
-            <div class="flex-center gap-8" style="min-width:0;flex:1">
-              <span class="obj-id-badge">{{ obj.id }}</span>
-              <span class="obj-name">{{ obj.name }}</span>
-            </div>
-            <span :class="statusBadgeClass(obj.status)" style="flex-shrink:0">{{ obj.status }}</span>
-          </div>
-          <div class="card-body" style="padding:12px 16px">
-            <div v-if="obj.key_results && obj.key_results.length > 0">
-              <div class="section-title">Key Results <span class="text-muted">({{ obj.key_results.length }})</span></div>
-              <div class="kr-list">
-                <div v-for="kr in obj.key_results" :key="kr.id" class="kr-item">
-                  <span class="badge badge-blue" style="width:36px;justify-content:center">{{ kr.id }}</span>
-                  <span class="text-sm">{{ kr.name }}</span>
-                </div>
-              </div>
-            </div>
-            <div v-else class="text-sm text-muted">Key Results 없음</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ④ 파트원별 활동 현황 -->
-      <div class="section-header section-header-toggle" style="margin-top:32px" @click="activityOpen = !activityOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
+      <!-- ③ 파트원별 활동 현황 -->
+      <div class="section-header section-header-toggle" @click="activityOpen = !activityOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
         <span class="section-header-title">파트원별 활동 현황</span>
         <span class="material-symbols-outlined section-chevron" :class="{ open: activityOpen }">expand_more</span>
       </div>
@@ -237,6 +204,39 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- ④ 목표 카드 목록 -->
+      <div class="section-header" style="margin-top:32px;margin-bottom:12px">
+        <span class="section-header-title">목표 현황</span>
+      </div>
+      <div v-if="loading" class="loading-center"><div class="spinner"></div></div>
+      <div v-else-if="objectives.length === 0" class="empty-state">
+        <span class="material-symbols-outlined empty-icon">assignment</span>
+        <p>등록된 목표가 없습니다. 관리 도구에서 목표를 추가하세요.</p>
+      </div>
+      <div v-else class="grid-2" style="gap:16px">
+        <div v-for="obj in objectives" :key="obj.id" class="card obj-card">
+          <div class="card-header">
+            <div class="flex-center gap-8" style="min-width:0;flex:1">
+              <span class="obj-id-badge">{{ obj.id }}</span>
+              <span class="obj-name">{{ obj.name }}</span>
+            </div>
+            <span :class="statusBadgeClass(obj.status)" style="flex-shrink:0">{{ obj.status }}</span>
+          </div>
+          <div class="card-body" style="padding:12px 16px">
+            <div v-if="obj.key_results && obj.key_results.length > 0">
+              <div class="section-title">Key Results <span class="text-muted">({{ obj.key_results.length }})</span></div>
+              <div class="kr-list">
+                <div v-for="kr in obj.key_results" :key="kr.id" class="kr-item">
+                  <span class="badge badge-blue" style="width:36px;justify-content:center">{{ kr.id }}</span>
+                  <span class="text-sm">{{ kr.name }}</span>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-sm text-muted">Key Results 없음</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
