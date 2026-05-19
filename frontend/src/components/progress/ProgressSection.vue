@@ -6,7 +6,7 @@
     </div>
 
     <!-- 등록된 이슈 목록 -->
-    <div v-for="iss in issues" :key="iss.id" class="issue-item">
+    <div v-for="iss in issues" :key="iss.id" :id="'issue-' + iss.id" class="issue-item">
       <template v-if="editingId === iss.id">
         <div class="form-group">
           <label class="form-label">등록자</label>

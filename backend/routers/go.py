@@ -12,7 +12,7 @@ def _resolve(link_id: str):
             return f"/progress?week={q['week']}&focusQuestion={link_id}"
     for iss in data_store.load("issues.json").get("issues", []):
         if iss["id"] == link_id:
-            return f"/progress?week={iss['week']}&focusIssue={iss['task_id']}"
+            return f"/progress?week={iss['week']}&focusIssueId={iss['id']}"
     return None
 
 

@@ -442,9 +442,10 @@ async function loadIssues() {
 
 // ── 포커스 이동 ──
 async function handleFocusQuery() {
-  const { focusQuestion, focusIssue } = route.query
-  if (!focusQuestion && !focusIssue) return
+  const { focusQuestion, focusIssue, focusIssueId } = route.query
+  if (!focusQuestion && !focusIssue && !focusIssueId) return
 
+  // 소과제 자동 전개
   if (focusQuestion) {
     const q = qnaList.value.find(q => q.id === focusQuestion)
     if (q && q.task_id.includes('-')) {
@@ -454,12 +455,23 @@ async function handleFocusQuery() {
   if (focusIssue && focusIssue.includes('-')) {
     expandedSubTaskIds.value = new Set([...expandedSubTaskIds.value, focusIssue])
   }
+  if (focusIssueId) {
+    const iss = Object.values(issueMap.value).flat().find(i => i.id === focusIssueId)
+    if (iss?.task_id.includes('-')) {
+      expandedSubTaskIds.value = new Set([...expandedSubTaskIds.value, iss.task_id])
+    }
+  }
 
   await nextTick()
   await new Promise(r => setTimeout(r, 80))
-  const el = focusQuestion
-    ? document.getElementById(`qa-${focusQuestion}`)
-    : document.getElementById(`task-${focusIssue}`)
+
+  const targetId = focusQuestion
+    ? `qa-${focusQuestion}`
+    : focusIssueId
+      ? `issue-${focusIssueId}`
+      : `task-${focusIssue}`
+
+  const el = document.getElementById(targetId)
   if (!el) return
   el.scrollIntoView({ behavior: 'smooth', block: 'center' })
   el.classList.add('highlight-focus')
