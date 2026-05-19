@@ -11,13 +11,32 @@
         <span class="badge badge-orange">Q</span>
         <div class="qa-content">
           <template v-if="editingQuestionId === qa.id">
+            <!-- 대상자 수정 -->
+            <div class="target-row">
+              <span class="target-label">질문 대상</span>
+              <div class="target-chips">
+                <button
+                  v-for="s in staffList" :key="s.id"
+                  class="target-chip"
+                  :class="{ active: editingTargets.includes(s.name) }"
+                  @click="toggleTarget(editingTargets, s.name)"
+                >{{ s.name }}</button>
+              </div>
+            </div>
             <MarkdownEditor v-model="editingQuestionText" height="140px" />
             <div class="flex gap-4 mt-8" style="justify-content:flex-end">
               <button class="btn btn-ghost btn-xs" @click="cancelEditQuestion">취소</button>
               <button class="btn btn-primary btn-xs" @click="updateQuestion(qa.id)" :disabled="!hasContent(editingQuestionText)">저장</button>
             </div>
           </template>
-          <MdPreview v-else language="en-US" :modelValue="qa.question" class="md-preview-inline" />
+          <template v-else>
+            <!-- 대상자 표시 -->
+            <div v-if="qa.targets && qa.targets.length > 0" class="question-targets">
+              <span class="material-symbols-outlined" style="font-size:13px;color:var(--text-muted)">arrow_forward</span>
+              <span v-for="t in qa.targets" :key="t" class="badge badge-blue" style="font-size:11px">{{ t }}</span>
+            </div>
+            <MdPreview language="en-US" :modelValue="qa.question" class="md-preview-inline" />
+          </template>
         </div>
         <div v-if="editingQuestionId !== qa.id" class="qa-actions">
           <button class="btn btn-ghost btn-xs" @click="startEditQuestion(qa)" data-tooltip="질문 수정">수정</button>
@@ -92,6 +111,18 @@
 
     <!-- 질문 추가 -->
     <div v-if="addingQuestion" class="mt-16">
+      <!-- 대상자 선택 -->
+      <div class="target-row">
+        <span class="target-label">질문 대상</span>
+        <div class="target-chips">
+          <button
+            v-for="s in staffList" :key="s.id"
+            class="target-chip"
+            :class="{ active: newTargets.includes(s.name) }"
+            @click="toggleTarget(newTargets, s.name)"
+          >{{ s.name }}</button>
+        </div>
+      </div>
       <MarkdownEditor v-model="newQuestionText" height="160px" />
       <div class="flex gap-8 mt-8" style="justify-content:flex-end">
         <button class="btn btn-ghost btn-sm" @click="cancelAddQuestion">취소</button>
@@ -138,6 +169,7 @@ import { MdPreview } from 'md-editor-v3'
 import MarkdownEditor from '../MarkdownEditor.vue'
 import { useToast } from '../../composables/useToast.js'
 import { hasContent } from '../../utils/content.js'
+import { ADMIN_PASSWORD } from '../../config.js'
 
 const props = defineProps({
   questions: { type: Array, default: () => [] },
@@ -148,21 +180,27 @@ const props = defineProps({
 const emit = defineEmits(['update:questions'])
 const { toastMsg, showToast, toastError } = useToast()
 
-// ── 질문 ──
+// ── 대상자 토글 ──
+function toggleTarget(arr, name) {
+  const idx = arr.indexOf(name)
+  if (idx === -1) arr.push(name)
+  else arr.splice(idx, 1)
+}
+
+// ── 질문 추가 ──
 const addingQuestion = ref(false)
 const newQuestionText = ref('')
-const editingQuestionId = ref('')
-const editingQuestionText = ref('')
+const newTargets = ref([])
 
-function startEditQuestion(qa) { editingQuestionId.value = qa.id; editingQuestionText.value = qa.question }
-function cancelEditQuestion() { editingQuestionId.value = ''; editingQuestionText.value = '' }
-function cancelAddQuestion() { addingQuestion.value = false; newQuestionText.value = '' }
+function cancelAddQuestion() { addingQuestion.value = false; newQuestionText.value = ''; newTargets.value = [] }
 
 async function addQuestion() {
   if (!hasContent(newQuestionText.value)) return
   try {
     const { data } = await axios.post('/api/qna/questions', {
-      task_id: props.taskId, week: props.week, question: newQuestionText.value.trim(),
+      task_id: props.taskId, week: props.week,
+      question: newQuestionText.value.trim(),
+      targets: [...newTargets.value],
     })
     emit('update:questions', [...props.questions, data])
     cancelAddQuestion()
@@ -170,11 +208,26 @@ async function addQuestion() {
   } catch (e) { toastError(e, '질문 추가 실패') }
 }
 
+// ── 질문 수정 ──
+const editingQuestionId = ref('')
+const editingQuestionText = ref('')
+const editingTargets = ref([])
+
+function startEditQuestion(qa) {
+  editingQuestionId.value = qa.id
+  editingQuestionText.value = qa.question
+  editingTargets.value = [...(qa.targets || [])]
+}
+function cancelEditQuestion() { editingQuestionId.value = ''; editingQuestionText.value = ''; editingTargets.value = [] }
+
 async function updateQuestion(questionId) {
   if (!hasContent(editingQuestionText.value)) return
   try {
-    const { data } = await axios.put(`/api/qna/questions/${questionId}`, { question: editingQuestionText.value.trim() })
-    emit('update:questions', props.questions.map(q => q.id === questionId ? { ...q, question: data.question } : q))
+    const { data } = await axios.put(`/api/qna/questions/${questionId}`, {
+      question: editingQuestionText.value.trim(),
+      targets: [...editingTargets.value],
+    })
+    emit('update:questions', props.questions.map(q => q.id === questionId ? { ...q, ...data } : q))
     cancelEditQuestion()
     showToast('수정되었습니다')
   } catch (e) { toastError(e, '질문 수정 실패') }
@@ -195,22 +248,20 @@ function closePwModal() {
 
 async function confirmDelete() {
   if (!pwModal.value.value) return
+  if (pwModal.value.value !== ADMIN_PASSWORD) {
+    pwModal.value.error = '암호가 올바르지 않습니다'
+    pwModal.value.value = ''
+    nextTick(() => pwInputRef.value?.focus())
+    return
+  }
   try {
     await axios.delete(`/api/qna/questions/${pwModal.value.questionId}`, {
-      headers: { 'X-Admin-Password': pwModal.value.value },
+      headers: { 'X-Admin-Password': ADMIN_PASSWORD },
     })
     emit('update:questions', props.questions.filter(q => q.id !== pwModal.value.questionId))
     closePwModal()
     showToast('삭제되었습니다')
-  } catch (e) {
-    if (e.response?.status === 401) {
-      pwModal.value.error = '암호가 올바르지 않습니다'
-      pwModal.value.value = ''
-      nextTick(() => pwInputRef.value?.focus())
-    } else {
-      toastError(e, '질문 삭제 실패')
-    }
-  }
+  } catch (e) { toastError(e, '질문 삭제 실패') }
 }
 
 // ── 답변 ──
@@ -304,6 +355,45 @@ async function deleteAnswer(answerId, questionId) {
 .answer-date { color: var(--text-muted); }
 .answer-edited { font-size: 11px; opacity: 0.7; }
 
+/* 질문 대상자 */
+.target-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.target-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.target-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.target-chip {
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--outline);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.target-chip.active {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
+  font-weight: 600;
+}
+.question-targets {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+/* 비밀번호 모달 */
 .pw-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.45);
   display: flex; align-items: center; justify-content: center; z-index: 9999;

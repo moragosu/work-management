@@ -211,6 +211,8 @@
           </div>
           <ul class="feature-list">
             <li>과제 카드 하단 <strong>Q&A 섹션</strong>에서 <strong>"+ 질문 추가"</strong>를 클릭해 질문을 등록합니다</li>
+            <li>질문 작성 전 <strong>질문 대상자를 선택</strong>할 수 있습니다 — 복수 선택 가능하며, 선택하지 않으면 대상자 없이 등록됩니다</li>
+            <li>등록된 질문에는 선택한 대상자가 <strong>→ 이름</strong> 형태로 표시됩니다</li>
             <li>답변이 없는 질문에는 <span class="inline-badge badge-green">A</span> 옆에 <strong>"답변 달기"</strong> 버튼이 표시됩니다</li>
             <li>답변 작성 시 <strong>작성자(본인 이름)를 반드시 선택</strong>해야 저장됩니다</li>
             <li>하나의 질문에 여러 명이 <strong>"+ 답변 추가"</strong>로 추가 답변을 달 수 있습니다</li>
@@ -218,7 +220,7 @@
           </ul>
           <div class="callout callout-tip">
             <span class="material-symbols-outlined callout-icon">star</span>
-            <div>대시보드의 <strong>미답변 질문 패널</strong>에서 항목을 클릭하면 해당 주차로 이동하며 Q&A 위치로 자동 스크롤됩니다. 소과제 질문이면 해당 소과제 카드가 자동으로 펼쳐집니다.</div>
+            <div>대시보드의 <strong>미답변 질문 패널</strong>에서 항목을 클릭하면 해당 주차로 이동하며 Q&A 위치로 자동 스크롤됩니다. 소과제 질문이면 해당 소과제 카드가 자동으로 펼쳐집니다. 대상자가 지정된 질문은 패널에서 대상자 이름도 함께 표시됩니다.</div>
           </div>
         </div>
 
@@ -490,7 +492,7 @@ const faqs = reactive([
   },
   {
     q: '이슈나 질문을 삭제하면 복구되나요?',
-    a: '삭제된 항목은 복구되지 않습니다. 질문 삭제는 관리자 암호를 입력해야 진행할 수 있으며, 삭제 시 해당 질문의 모든 답변도 함께 삭제됩니다. 이슈 삭제는 별도 암호 없이 가능합니다.',
+    a: '삭제된 항목은 복구되지 않습니다. 질문 삭제는 관리자 암호(관리 도구 잠금과 동일한 암호)를 입력해야 진행할 수 있으며, 삭제 시 해당 질문의 모든 답변도 함께 삭제됩니다. 이슈 삭제는 별도 암호 없이 가능합니다.',
     open: false,
   },
   {

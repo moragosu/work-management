@@ -21,10 +21,12 @@ class QuestionCreate(BaseModel):
     task_id: str
     week: str
     question: str
+    targets: list = []
 
 
 class QuestionUpdate(BaseModel):
     question: str
+    targets: Optional[list] = None
 
 
 class AnswerCreate(BaseModel):
@@ -62,6 +64,7 @@ def create_question(body: QuestionCreate):
         "task_id": body.task_id,
         "week": body.week,
         "question": body.question,
+        "targets": body.targets,
         "created_at": date.today().isoformat(),
     }
     questions.append(new_q)
@@ -75,6 +78,8 @@ def update_question(question_id: str, body: QuestionUpdate):
     for q in questions:
         if q["id"] == question_id:
             q["question"] = body.question
+            if body.targets is not None:
+                q["targets"] = body.targets
             _save(questions, answers)
             q_answers = [a for a in answers if a["question_id"] == question_id]
             return {**q, "answers": q_answers}
@@ -84,7 +89,7 @@ def update_question(question_id: str, body: QuestionUpdate):
 @router.delete("/questions/{question_id}")
 def delete_question(question_id: str, x_admin_password: str = Header(None)):
     settings = data_store.load("settings.json")
-    admin_password = settings.get("admin_password", "1234")
+    admin_password = settings.get("admin_password", "admin123")
     if x_admin_password != admin_password:
         raise HTTPException(status_code=401, detail="암호가 올바르지 않습니다")
     questions, answers = _load()

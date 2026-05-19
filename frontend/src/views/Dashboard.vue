@@ -74,6 +74,10 @@
                 <div class="panel-item-sub">
                   <span class="badge badge-blue">{{ getTaskName(q.task_id) }}</span>
                   <span class="badge badge-gray">{{ formatWeekLabel(q.week) }}</span>
+                  <template v-if="q.targets && q.targets.length">
+                    <span class="material-symbols-outlined" style="font-size:12px;color:var(--text-muted)">arrow_forward</span>
+                    <span v-for="t in q.targets" :key="t" class="badge badge-outline" style="font-size:11px">{{ t }}</span>
+                  </template>
                   <span class="panel-goto">바로가기 →</span>
                 </div>
               </li>
