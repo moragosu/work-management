@@ -234,10 +234,38 @@
             컨플루언스 링크
           </div>
           <ul class="feature-list">
-            <li>과제 카드 상단 컨플루언스 섹션에서 관련 문서 URL을 등록할 수 있습니다</li>
-            <li>등록된 링크는 클릭 시 새 탭으로 열립니다</li>
-            <li>수정·삭제 버튼으로 언제든 변경 가능합니다</li>
+            <li>과제(또는 소과제) 카드의 컨플루언스 섹션에서 관련 문서 URL을 등록합니다</li>
+            <li>등록된 링크는 클릭 시 새 탭으로 열리며, 수정·삭제 버튼으로 언제든 변경 가능합니다</li>
+            <li>링크 입력란 옆 <strong>?</strong> 버튼을 클릭하면 링크 가져오는 방법이 표시됩니다</li>
           </ul>
+
+          <div class="sub-section-title" style="margin-top:16px">
+            <span class="material-symbols-outlined" style="font-size:15px">share</span>
+            컨플루언스 Share Link 가져오는 방법
+          </div>
+          <div class="steps">
+            <div class="step">
+              <div class="step-number">1</div>
+              <div class="step-body">
+                <strong>Share 버튼 클릭</strong>
+                <p>컨플루언스 페이지 <strong>우 상단</strong>의 <strong>Share</strong> 버튼을 클릭합니다.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-number">2</div>
+              <div class="step-body">
+                <strong>Share Link 확인</strong>
+                <p>드롭다운이 펼쳐지면 <strong>Share Link</strong>가 생성된 것을 확인합니다.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-number">3</div>
+              <div class="step-body">
+                <strong>Copy 후 붙여넣기</strong>
+                <p><strong>Copy</strong> 버튼을 눌러 링크를 복사한 뒤, 시스템의 컨플루언스 링크 입력란에 붙여넣고 저장합니다.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
