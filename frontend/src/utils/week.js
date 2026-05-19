@@ -32,6 +32,15 @@ export function formatWeekLabel(weekStr) {
   return year === new Date().getFullYear() ? `W${weekNum}` : `${year}-W${weekNum}`
 }
 
+// "W21" → "2026-W21" (연도 없는 구형 형식 → 현재 연도 보정)
+export function normalizeWeek(weekStr) {
+  if (!weekStr) return weekStr
+  if (/^\d{4}-W\d+$/.test(weekStr)) return weekStr
+  const m = weekStr.match(/^W(\d+)$/)
+  if (m) return `${new Date().getFullYear()}-W${parseInt(m[1])}`
+  return weekStr
+}
+
 // weekStr 기준 delta주 이동한 주차 반환 (연도 경계 자동 처리)
 export function addWeeks(weekStr, delta) {
   if (!weekStr) return weekStr

@@ -289,7 +289,7 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import axios from 'axios'
 import { parseIds } from '../utils/parseIds.js'
-import { getCurrentWeek, formatWeekLabel } from '../utils/week.js'
+import { getCurrentWeek, formatWeekLabel, normalizeWeek } from '../utils/week.js'
 import { statusBadgeClass } from '../utils/status.js'
 
 const router = useRouter()
@@ -388,10 +388,14 @@ const latestIssueMap = computed(() => {
 // ── 매트릭스 공통 ──
 const allWeeks = computed(() => {
   const s = new Set([currentWeek])
-  allProgressItems.value.forEach(p => { if (p.week) s.add(p.week) })
-  allQuestions.value.forEach(q => { if (q.week) s.add(q.week) })
-  allConfluenceLinks.value.forEach(l => { if (l.week) s.add(l.week) })
-  return [...s].sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)))
+  allProgressItems.value.forEach(p => { if (p.week) s.add(normalizeWeek(p.week)) })
+  allQuestions.value.forEach(q => { if (q.week) s.add(normalizeWeek(q.week)) })
+  allConfluenceLinks.value.forEach(l => { if (l.week) s.add(normalizeWeek(l.week)) })
+  return [...s].sort((a, b) => {
+    const [ay, aw] = a.split('-W').map(Number)
+    const [by, bw] = b.split('-W').map(Number)
+    return ay !== by ? ay - by : aw - bw
+  })
 })
 
 const flatTaskRows = computed(() => {
@@ -413,7 +417,7 @@ const confluenceMap = computed(() => {
   allConfluenceLinks.value.forEach(l => {
     if (!l.task_id) return
     if (!m[l.task_id]) m[l.task_id] = new Set()
-    m[l.task_id].add(l.week)
+    m[l.task_id].add(normalizeWeek(l.week))
   })
   return m
 })
@@ -423,7 +427,7 @@ const confluenceUrlMap = computed(() => {
   allConfluenceLinks.value.forEach(l => {
     if (!l.task_id || !l.url) return
     if (!m[l.task_id]) m[l.task_id] = {}
-    m[l.task_id][l.week] = l.url
+    m[l.task_id][normalizeWeek(l.week)] = l.url
   })
   return m
 })
@@ -433,7 +437,7 @@ const issueMap = computed(() => {
   allProgressItems.value.filter(p => p.issue?.trim()).forEach(p => {
     if (!p.task_id) return
     if (!m[p.task_id]) m[p.task_id] = new Set()
-    m[p.task_id].add(p.week)
+    m[p.task_id].add(normalizeWeek(p.week))
   })
   return m
 })
@@ -443,7 +447,8 @@ const qnaMap = computed(() => {
   allQuestions.value.forEach(q => {
     if (!q.task_id) return
     if (!m[q.task_id]) m[q.task_id] = {}
-    m[q.task_id][q.week] = (m[q.task_id][q.week] || 0) + 1
+    const w = normalizeWeek(q.week)
+    m[q.task_id][w] = (m[q.task_id][w] || 0) + 1
   })
   return m
 })
