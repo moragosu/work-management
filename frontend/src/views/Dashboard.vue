@@ -14,7 +14,7 @@
     <div class="page-body">
       <!-- ① 이번 주 실용 지표 -->
       <div class="grid-4" style="margin-bottom:24px">
-        <div class="card stat-accent" :class="unansweredQuestions.length ? 'stat-accent-orange' : 'stat-accent-green'" data-tooltip="이번 주 아직 답변이 달리지 않은 질문 수" data-tooltip-pos="bottom">
+        <div class="card stat-accent" :class="unansweredQuestions.length ? 'stat-accent-orange' : 'stat-accent-green'" data-tooltip="전체 기간 중 아직 답변이 달리지 않은 질문 수" data-tooltip-pos="bottom">
           <div class="card-body stat-card">
             <span class="material-symbols-outlined stat-icon" :class="unansweredQuestions.length ? 'stat-icon-orange' : 'stat-icon-green'">quiz</span>
             <div class="stat-value" :style="unansweredQuestions.length ? 'color:var(--orange,#f97316)' : 'color:var(--success)'">{{ unansweredQuestions.length }}</div>
@@ -66,13 +66,14 @@
           <div class="card-body panel-body">
             <div v-if="actionLoading" class="loading-center" style="padding:24px"><div class="spinner"></div></div>
             <div v-else-if="unansweredQuestions.length === 0" class="panel-empty">
-              이번 주 미답변 질문이 없습니다 👍
+              미답변 질문이 없습니다 👍
             </div>
             <ul v-else class="panel-list">
               <li v-for="q in unansweredQuestions" :key="q.id" class="panel-item panel-item-link" @click="goToQuestion(q)">
                 <div class="panel-item-main">{{ q.question }}</div>
                 <div class="panel-item-sub">
                   <span class="badge badge-blue">{{ getTaskName(q.task_id) }}</span>
+                  <span class="badge badge-gray">{{ formatWeekLabel(q.week) }}</span>
                   <span class="panel-goto">바로가기 →</span>
                 </div>
               </li>
@@ -286,7 +287,7 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import axios from 'axios'
 import { parseIds } from '../utils/parseIds.js'
-import { getCurrentWeek } from '../utils/week.js'
+import { getCurrentWeek, formatWeekLabel } from '../utils/week.js'
 import { statusBadgeClass } from '../utils/status.js'
 
 const router = useRouter()
@@ -316,7 +317,7 @@ const dangerCount     = computed(() => objectives.value.filter(o => o.status ===
 
 // ── 액션 패널 데이터 ──
 const unansweredQuestions = computed(() =>
-  questions.value.filter(q => !q.answers || q.answers.length === 0)
+  allQuestions.value.filter(q => !q.answers || q.answers.length === 0)
 )
 
 const weekIssues = computed(() =>
@@ -473,7 +474,7 @@ function resolveParentTaskId(taskId) {
 }
 // ── 바로가기 네비게이션 ──
 function goToQuestion(q) {
-  router.push({ path: '/progress', query: { week: currentWeek, focusQuestion: q.id } })
+  router.push({ path: '/progress', query: { week: q.week, focusQuestion: q.id } })
 }
 function goToIssue(p) {
   router.push({ path: '/progress', query: { week: currentWeek, focusIssue: resolveParentTaskId(p.task_id) } })
