@@ -197,9 +197,9 @@
             </div>
           </div>
 
-          <div class="callout callout-warning">
-            <span class="material-symbols-outlined callout-icon">info</span>
-            <div>과제당 <strong>이슈는 1건</strong>만 등록됩니다. 기존 이슈가 있으면 수정 버튼으로 내용을 업데이트하세요.</div>
+          <div class="callout callout-tip">
+            <span class="material-symbols-outlined callout-icon">star</span>
+            <div>과제당 이슈는 <strong>여러 건</strong> 등록할 수 있습니다. 등록된 이슈 목록 아래 <strong>"+ 이슈 등록"</strong> 버튼을 클릭해 이슈를 추가하세요.</div>
           </div>
         </div>
 
@@ -232,7 +232,7 @@
             <li>소과제가 있는 과제 카드는 상단에 <strong>"소과제 N개"</strong> 배지와 <strong>"전체 펼치기 / 전체 접기"</strong> 버튼이 표시됩니다</li>
             <li>각 소과제는 과제 카드 내부에 <strong>파란 왼쪽 테두리</strong>로 구분된 별도 섹션으로 표시되며, <strong>기본적으로 접힌 상태</strong>로 시작합니다</li>
             <li>소과제 헤더(상단 줄)를 <strong>클릭</strong>하면 내용이 펼쳐지거나 접힙니다. 헤더 우측의 완료 버튼·담당자 배지는 클릭해도 접히지 않습니다</li>
-            <li>접힌 상태에서 이슈나 Q&A 내용이 있으면 헤더에 <strong>요약 배지</strong>가 표시됩니다 — <em>이슈 1건</em>, <em>Q&A N건</em></li>
+            <li>접힌 상태에서 이슈나 Q&A 내용이 있으면 헤더에 <strong>요약 배지</strong>가 표시됩니다 — <em>이슈 N건</em>, <em>Q&A N건</em></li>
             <li><strong>컨플루언스 링크</strong>는 소과제별로 독립 등록됩니다 — 소과제가 있으면 모과제 단위 링크 대신 각 소과제 섹션 내부에 링크 입력란이 표시됩니다</li>
             <li>이슈 등록과 Q&A도 <strong>소과제별로 독립적으로</strong> 관리됩니다</li>
             <li>소과제가 완료 처리되면 해당 섹션은 <strong>녹색 테두리</strong>로 바뀌고 흐릿하게 표시됩니다</li>

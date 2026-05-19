@@ -111,7 +111,7 @@
                     <span class="sub-task-id-badge">{{ st.id }}</span>
                     <span class="sub-task-name">{{ st.name || '(이름 없음)' }}</span>
                     <template v-if="!expandedSubTaskIds.has(st.id)">
-                      <span v-if="progressMap[st.id]?.issue?.trim()" class="subtask-sum-badge subtask-sum-issue">이슈 1건</span>
+                      <span v-if="(issueMap[st.id] || []).length > 0" class="subtask-sum-badge subtask-sum-issue">이슈 {{ (issueMap[st.id] || []).length }}건</span>
                       <span v-if="getQuestionsForTask(st.id).length > 0" class="subtask-sum-badge subtask-sum-qa">Q&A {{ getQuestionsForTask(st.id).length }}건</span>
                     </template>
                   </div>
@@ -170,12 +170,11 @@
                   </div>
 
                   <ProgressSection
-                    :progress="progressMap[st.id] || null"
+                    :issues="issueMap[st.id] || []"
                     :staff-list="staffList"
                     :task-id="st.id"
                     :week="selectedWeek"
-                    :objective-id="task.objective_id || ''"
-                    @update:progress="p => onProgressUpdate(st.id, p)"
+                    @update:issues="iss => onIssuesUpdate(st.id, iss)"
                   />
 
                   <QASection
@@ -223,14 +222,13 @@
                 </div>
               </div>
 
-              <!-- ② 진행 내용 -->
+              <!-- ② 이슈 -->
               <ProgressSection
-                :progress="progressMap[task.id] || null"
+                :issues="issueMap[task.id] || []"
                 :staff-list="staffList"
                 :task-id="task.id"
                 :week="selectedWeek"
-                :objective-id="task.objective_id || ''"
-                @update:progress="p => onProgressUpdate(task.id, p)"
+                @update:issues="iss => onIssuesUpdate(task.id, iss)"
               />
 
               <!-- ③ Q&A -->
@@ -290,7 +288,7 @@ const weekDisplayLabel = computed(() => {
 })
 const qnaList = ref([])
 const linkMap = ref({})
-const progressMap = ref({})
+const issueMap = ref({})
 const linkInputs = ref({})
 const editingLinkId = ref({})
 const linkHelpOpen = ref(new Set())
@@ -353,7 +351,7 @@ async function onWeekChange() {
   if (!selectedWeek.value) return
   initLinkInputs()
   editingLinkId.value = {}
-  await Promise.all([loadQnA(), loadLinks(), loadProgress()])
+  await Promise.all([loadQnA(), loadLinks(), loadIssues()])
 }
 
 // ── 헬퍼 ──
@@ -381,15 +379,9 @@ function onQuestionsUpdate(taskId, newQuestions) {
   qnaList.value = [...others, ...newQuestions]
 }
 
-// ── 진행 내용 업데이트 핸들러 ──
-function onProgressUpdate(taskId, saved) {
-  if (saved) {
-    progressMap.value = { ...progressMap.value, [taskId]: saved }
-  } else {
-    const map = { ...progressMap.value }
-    delete map[taskId]
-    progressMap.value = map
-  }
+// ── 이슈 업데이트 핸들러 ──
+function onIssuesUpdate(taskId, newIssues) {
+  issueMap.value = { ...issueMap.value, [taskId]: newIssues }
 }
 
 // ── 컨플루언스 링크 ──
@@ -436,12 +428,15 @@ async function loadQnA() {
   qnaList.value = data
 }
 
-// ── 진행 내용 로드 ──
-async function loadProgress() {
-  const { data } = await axios.get('/api/progress', { params: { week: selectedWeek.value } })
+// ── 이슈 로드 ──
+async function loadIssues() {
+  const { data } = await axios.get('/api/issues', { params: { week: selectedWeek.value } })
   const map = {}
-  data.forEach(p => { map[p.task_id] = p })
-  progressMap.value = map
+  data.forEach(iss => {
+    if (!map[iss.task_id]) map[iss.task_id] = []
+    map[iss.task_id].push(iss)
+  })
+  issueMap.value = map
 }
 
 // ── 포커스 이동 ──

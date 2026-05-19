@@ -298,10 +298,10 @@ const objectives = ref([])
 const tasks      = ref([])
 const staffList  = ref([])
 const questions  = ref([])
-const progressList = ref([])
-const allProgressItems = ref([])
 const allQuestions     = ref([])
 const allConfluenceLinks = ref([])
+const weekIssuesList   = ref([])
+const allIssuesList    = ref([])
 const matrixOpen = ref(true)
 
 const loading = ref(false)
@@ -322,9 +322,7 @@ const unansweredQuestions = computed(() =>
   allQuestions.value.filter(q => !q.answers || q.answers.length === 0)
 )
 
-const weekIssues = computed(() =>
-  progressList.value.filter(p => p.issue && p.issue.trim())
-)
+const weekIssues = computed(() => weekIssuesList.value)
 
 const assignedTaskIds = computed(() => {
   const ids = new Set()
@@ -348,7 +346,7 @@ const memberStatsMap = computed(() => {
   staffList.value.forEach(s => {
     map[s.name] = {
       tasks:   parseIds(s.selected_tasks || '').length,
-      issues:  allProgressItems.value.filter(p => p.assignee === s.name && p.issue?.trim()).length,
+      issues:  allIssuesList.value.filter(i => i.assignee === s.name).length,
       answers: allQuestions.value.flatMap(q => q.answers || []).filter(a => a.answer_by === s.name).length,
     }
   })
@@ -373,12 +371,12 @@ function barWidth(val, max) {
 const latestIssueMap = computed(() => {
   const map = {}
   staffList.value.forEach(s => {
-    const items = allProgressItems.value
-      .filter(p => p.assignee === s.name && p.issue?.trim())
+    const items = allIssuesList.value
+      .filter(i => i.assignee === s.name)
       .sort((a, b) => {
-        const wa = parseInt((a.week || 'W0').slice(1))
-        const wb = parseInt((b.week || 'W0').slice(1))
-        return wb - wa
+        const [ay, aw] = (a.week || '0-W0').split('-W').map(Number)
+        const [by, bw] = (b.week || '0-W0').split('-W').map(Number)
+        return ay !== by ? by - ay : bw - aw
       })
     map[s.name] = items[0] ? { week: items[0].week, issue: items[0].issue } : null
   })
@@ -388,7 +386,7 @@ const latestIssueMap = computed(() => {
 // ── 매트릭스 공통 ──
 const allWeeks = computed(() => {
   const s = new Set([currentWeek])
-  allProgressItems.value.forEach(p => { if (p.week) s.add(normalizeWeek(p.week)) })
+  allIssuesList.value.forEach(i => { if (i.week) s.add(normalizeWeek(i.week)) })
   allQuestions.value.forEach(q => { if (q.week) s.add(normalizeWeek(q.week)) })
   allConfluenceLinks.value.forEach(l => { if (l.week) s.add(normalizeWeek(l.week)) })
   return [...s].sort((a, b) => {
@@ -434,10 +432,10 @@ const confluenceUrlMap = computed(() => {
 
 const issueMap = computed(() => {
   const m = {}
-  allProgressItems.value.filter(p => p.issue?.trim()).forEach(p => {
-    if (!p.task_id) return
-    if (!m[p.task_id]) m[p.task_id] = new Set()
-    m[p.task_id].add(normalizeWeek(p.week))
+  allIssuesList.value.forEach(iss => {
+    if (!iss.task_id) return
+    if (!m[iss.task_id]) m[iss.task_id] = new Set()
+    m[iss.task_id].add(normalizeWeek(iss.week))
   })
   return m
 })
@@ -494,7 +492,7 @@ function goToQuestion(q) {
   router.push({ path: '/progress', query: { week: q.week, focusQuestion: q.id } })
 }
 function goToIssue(p) {
-  router.push({ path: '/progress', query: { week: currentWeek, focusIssue: resolveParentTaskId(p.task_id) } })
+  router.push({ path: '/progress', query: { week: p.week, focusIssue: resolveParentTaskId(p.task_id) } })
 }
 function goToTask(t) {
   router.push({ path: '/admin', query: { tab: 'task', focusTask: t.id } })
@@ -514,18 +512,18 @@ async function refresh() {
     tasks.value      = tRes.data
     staffList.value  = sRes.data
 
-    const [qRes, pRes, allPRes, allQRes, clRes] = await Promise.all([
+    const [qRes, allQRes, clRes, issWeekRes, issAllRes] = await Promise.all([
       axios.get('/api/qna/questions', { params: { week: currentWeek } }),
-      axios.get('/api/progress',      { params: { week: currentWeek } }),
-      axios.get('/api/progress'),
       axios.get('/api/qna/questions'),
       axios.get('/api/confluence'),
+      axios.get('/api/issues', { params: { week: currentWeek } }),
+      axios.get('/api/issues'),
     ])
     questions.value          = qRes.data
-    progressList.value       = pRes.data
-    allProgressItems.value   = allPRes.data
     allQuestions.value       = allQRes.data
     allConfluenceLinks.value = clRes.data
+    weekIssuesList.value     = issWeekRes.data
+    allIssuesList.value      = issAllRes.data
   } finally {
     loading.value = false
     actionLoading.value = false
