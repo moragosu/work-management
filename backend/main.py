@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload
+from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload, settings
 import uvicorn
 import os
 
@@ -26,6 +26,7 @@ app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(qna.router, prefix="/api/qna", tags=["Q&A"])
 app.include_router(confluence.router, prefix="/api/confluence", tags=["Confluence"])
 app.include_router(upload.router, prefix="/api/upload", tags=["Upload"])
+app.include_router(settings.router, prefix="/api/settings", tags=["Settings"])
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 

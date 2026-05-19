@@ -37,6 +37,7 @@
         :loading="taskLoading"
         :next-id="nextTaskId"
         :reusable-ids="reusableTaskIds"
+        :task-targets="taskTargets"
         @refresh="fetchAll"
       />
 
@@ -105,6 +106,20 @@
             </div>
           </div>
 
+          <div v-if="adminMode" class="settings-group">
+            <label class="form-label">과제 적용 대상 관리</label>
+            <div class="target-chips mt-16">
+              <span v-for="t in taskTargets" :key="t" class="target-chip">
+                {{ t }}
+                <button class="target-chip-del" @click="removeTarget(t)" :data-tooltip="`'${t}' 삭제`">✕</button>
+              </span>
+            </div>
+            <div class="target-add-form mt-16">
+              <input v-model="newTarget" class="form-control" placeholder="새 항목 입력 (예: HA)" @keyup.enter="addTarget" />
+              <button class="btn btn-primary btn-sm" @click="addTarget" :disabled="!newTarget.trim() || taskTargets.includes(newTarget.trim())">추가</button>
+            </div>
+          </div>
+
           <div class="form-group">
             <label class="form-label">정보</label>
             <div class="info-list text-sm text-muted">
@@ -157,6 +172,8 @@ const nextTaskId = ref('T1')
 const reusableObjectiveIds = ref([])
 const reusableTaskIds = ref([])
 const staffViewRef = ref(null)
+const taskTargets = ref(['MX', 'VD', 'DA', '공통'])
+const newTarget = ref('')
 
 const staffStats = computed(() => {
   const objCounts = {}
@@ -197,6 +214,34 @@ async function fetchTasks() {
 async function fetchStaff() {
   const { data } = await axios.get('/api/staff')
   staffList.value = data
+}
+
+async function fetchSettings() {
+  try {
+    const { data } = await axios.get('/api/settings')
+    if (Array.isArray(data.task_targets)) taskTargets.value = data.task_targets
+  } catch {
+    // 기본값 유지
+  }
+}
+
+async function saveTargets() {
+  await axios.put('/api/settings', { task_targets: taskTargets.value })
+}
+
+async function addTarget() {
+  const val = newTarget.value.trim()
+  if (!val || taskTargets.value.includes(val)) return
+  taskTargets.value.push(val)
+  newTarget.value = ''
+  await saveTargets()
+  showToast(`'${val}' 추가되었습니다`)
+}
+
+async function removeTarget(t) {
+  taskTargets.value = taskTargets.value.filter(x => x !== t)
+  await saveTargets()
+  showToast(`'${t}' 삭제되었습니다`)
 }
 
 async function fetchAll() {
@@ -246,7 +291,7 @@ async function resetData(target) {
 onMounted(async () => {
   adminMode.value = localStorage.getItem('adminMode') === 'true'
   if (route.query.tab) activeTab.value = route.query.tab
-  await fetchAll()
+  await Promise.all([fetchAll(), fetchSettings()])
 })
 </script>
 
@@ -263,4 +308,22 @@ onMounted(async () => {
 .admin-status-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .info-list { margin-top: 8px; }
 .info-item { margin-top: 4px; }
+
+.target-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.target-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px;
+  background: var(--primary-light); color: var(--primary);
+  border: 1px solid var(--primary); font-size: 13px; font-weight: 600;
+}
+.target-chip-del {
+  display: flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%;
+  border: none; background: transparent; color: var(--primary);
+  cursor: pointer; font-size: 11px; padding: 0;
+  transition: background 0.15s;
+}
+.target-chip-del:hover { background: var(--primary); color: #fff; }
+.target-add-form { display: flex; gap: 8px; align-items: center; }
+.target-add-form .form-control { max-width: 200px; }
 </style>

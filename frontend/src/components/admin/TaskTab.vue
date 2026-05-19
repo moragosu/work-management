@@ -108,10 +108,7 @@
             <label class="form-label">적용 대상</label>
             <select v-model="form.target" class="form-control">
               <option value="">선택 안함</option>
-              <option>MX</option>
-              <option>VD</option>
-              <option>DA</option>
-              <option>공통</option>
+              <option v-for="t in props.taskTargets" :key="t" :value="t">{{ t }}</option>
             </select>
           </div>
           <div class="form-group">
@@ -181,6 +178,7 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
   nextId: { type: String, default: 'T1' },
   reusableIds: { type: Array, default: () => [] },
+  taskTargets: { type: Array, default: () => ['MX', 'VD', 'DA', '공통'] },
 })
 const emit = defineEmits(['refresh'])
 const route = useRoute()
