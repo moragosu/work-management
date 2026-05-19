@@ -2,7 +2,7 @@
   <div class="page-container">
     <div class="page-header">
       <h2 class="page-title">도움말</h2>
-      <p class="page-subtitle">설비혁신파트 목표 관리 시스템 사용 가이드</p>
+      <p class="page-subtitle">설비혁신파트 협업 시스템 사용 가이드</p>
     </div>
 
     <!-- 목차 -->

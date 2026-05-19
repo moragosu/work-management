@@ -11,7 +11,7 @@
         </div>
         <div class="logo-text">
           <h1>설비혁신파트</h1>
-          <span>목표 관리 시스템</span>
+          <span>협업 시스템</span>
         </div>
       </RouterLink>
       <nav class="sidebar-nav">
