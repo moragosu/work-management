@@ -132,12 +132,11 @@
                     <button class="btn btn-primary btn-xs" @click="saveLink(st.id)" :disabled="!linkInputs[st.id]" data-tooltip="링크 저장">저장</button>
                     <button v-if="getTaskLink(st.id)" class="btn btn-ghost btn-xs" @click="cancelEditLink(st.id)" data-tooltip="수정 취소">취소</button>
                   </template>
-                  <button class="link-help-btn" :class="{ active: showLinkHelp }" @click="showLinkHelp = !showLinkHelp" data-tooltip="링크 가져오는 방법">?</button>
                 </div>
-                <div v-if="showLinkHelp" class="link-help-panel">
+                <div class="link-help-panel">
                   <div class="link-help-step"><span class="link-help-num">1</span><span>컨플루언스 페이지 우 상단 <strong>Share</strong> 버튼 클릭</span></div>
                   <div class="link-help-step"><span class="link-help-num">2</span><span>드롭다운에서 <strong>Share Link</strong> 생성 확인</span></div>
-                  <div class="link-help-step"><span class="link-help-num">3</span><span><strong>Copy</strong> 버튼 클릭 → 위 입력란에 붙여넣기</span></div>
+                  <div class="link-help-step"><span class="link-help-num">3</span><span><strong>Copy</strong> 버튼 클릭 → 아래 입력란에 붙여넣기</span></div>
                 </div>
 
                 <ProgressSection
@@ -166,12 +165,11 @@
                 <div class="section-label">
                   <span class="material-symbols-outlined section-icon">link</span>
                   컨플루언스
-                  <button class="link-help-btn" :class="{ active: showLinkHelp }" @click="showLinkHelp = !showLinkHelp" data-tooltip="링크 가져오는 방법">?</button>
                 </div>
-                <div v-if="showLinkHelp" class="link-help-panel">
+                <div class="link-help-panel">
                   <div class="link-help-step"><span class="link-help-num">1</span><span>컨플루언스 페이지 우 상단 <strong>Share</strong> 버튼 클릭</span></div>
                   <div class="link-help-step"><span class="link-help-num">2</span><span>드롭다운에서 <strong>Share Link</strong> 생성 확인</span></div>
-                  <div class="link-help-step"><span class="link-help-num">3</span><span><strong>Copy</strong> 버튼 클릭 → 위 입력란에 붙여넣기</span></div>
+                  <div class="link-help-step"><span class="link-help-num">3</span><span><strong>Copy</strong> 버튼 클릭 → 아래 입력란에 붙여넣기</span></div>
                 </div>
                 <div v-if="getTaskLink(task.id) && !editingLinkId[task.id]" class="flex gap-8" style="align-items:center">
                   <a :href="getTaskLink(task.id).url" target="_blank" class="text-primary link-text">
@@ -259,7 +257,6 @@ const linkMap = ref({})
 const progressMap = ref({})
 const linkInputs = ref({})
 const editingLinkId = ref({})
-const showLinkHelp = ref(false)
 
 // ── 주차 ──
 const availableWeeks = computed(() => {
@@ -574,32 +571,6 @@ onMounted(fetchAll)
   gap: 4px;
   font-size: 12px;
   white-space: nowrap;
-}
-
-.link-help-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 1px solid var(--outline);
-  background: var(--surface);
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-left: auto;
-  flex-shrink: 0;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  line-height: 1;
-  padding: 0;
-}
-.link-help-btn:hover,
-.link-help-btn.active {
-  background: var(--primary-light);
-  color: var(--primary);
-  border-color: var(--primary);
 }
 
 .link-help-panel {
