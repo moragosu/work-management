@@ -19,9 +19,21 @@
       </div></div>
     </div>
 
-    <div class="flex-between" style="margin-bottom:16px">
+    <div class="flex-between" style="margin-bottom:12px">
       <button class="btn btn-ghost btn-sm" @click="exportCsv" data-tooltip="목표 목록을 CSV 파일로 내보내기">⬇ CSV 다운로드</button>
       <button class="btn btn-primary btn-sm" @click="openModal()" data-tooltip="새 목표(Objective) 추가">+ 목표 추가</button>
+    </div>
+
+    <div v-if="props.staffList.length > 0" class="filter-bar staff-filter-bar">
+      <span class="filter-label-sm">인력</span>
+      <button
+        v-for="s in props.staffList"
+        :key="s.id"
+        class="staff-chip"
+        :class="{ 'staff-chip-active': selectedStaffFilter.includes(s.id) }"
+        @click="toggleStaffFilter(s.id)"
+      >{{ s.name }}</button>
+      <button v-if="selectedStaffFilter.length > 0" class="btn btn-ghost btn-xs" @click="selectedStaffFilter = []" data-tooltip="인력 필터 초기화">전체 보기</button>
     </div>
 
     <div class="card">
@@ -196,6 +208,14 @@ const stats = computed(() => ({
   danger: props.objectives.filter(o => o.status === '위험').length,
 }))
 
+// ── 인력 필터 ──
+const selectedStaffFilter = ref([])
+function toggleStaffFilter(staffId) {
+  const idx = selectedStaffFilter.value.indexOf(staffId)
+  if (idx === -1) selectedStaffFilter.value.push(staffId)
+  else selectedStaffFilter.value.splice(idx, 1)
+}
+
 // ── 정렬 ──
 const sortKey = ref('id')
 const sortOrder = ref('asc')
@@ -208,8 +228,12 @@ function sortBy(key) {
   }
 }
 const sortedObjectives = computed(() => {
-  if (!sortKey.value) return props.objectives
-  return [...props.objectives].sort((a, b) => {
+  let list = props.objectives
+  if (selectedStaffFilter.value.length > 0) {
+    list = list.filter(o => getObjectiveStaff(o.id).some(s => selectedStaffFilter.value.includes(s.id)))
+  }
+  if (!sortKey.value) return list
+  return [...list].sort((a, b) => {
     let aVal = sortKey.value === 'key_results.length' ? (a.key_results?.length || 0) : a[sortKey.value]
     let bVal = sortKey.value === 'key_results.length' ? (b.key_results?.length || 0) : b[sortKey.value]
     if (typeof aVal === 'string') { aVal = aVal.toLowerCase(); bVal = bVal.toLowerCase() }
@@ -321,6 +345,17 @@ async function deleteKr(krId) {
 </script>
 
 <style scoped>
+.staff-filter-bar { gap: 6px; margin-bottom: 12px; }
+.filter-label-sm { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+.staff-chip {
+  display: inline-flex; align-items: center; padding: 3px 10px;
+  border-radius: 999px; border: 1px solid var(--outline);
+  font-size: 12px; font-family: inherit; cursor: pointer;
+  background: var(--surface); color: var(--text-secondary); transition: all 0.15s;
+}
+.staff-chip:hover { border-color: var(--primary); color: var(--primary); }
+.staff-chip-active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); font-weight: 600; }
+
 .reusable-ids { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 .reusable-chip {
   padding: 2px 10px; border-radius: 12px; font-size: 12px; cursor: pointer;

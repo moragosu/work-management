@@ -263,6 +263,7 @@
             <li>목표(Objective)와 각 목표에 딸린 <strong>Key Result(핵심 결과)</strong>를 등록·수정·삭제합니다</li>
             <li>목표 카드에서 <strong>참여 인력</strong>을 확인할 수 있습니다 — 해당 목표의 과제를 담당하는 파트원이 자동으로 표시됩니다</li>
             <li>목록은 <strong>ID 오름차순</strong>으로 자동 정렬됩니다</li>
+            <li>상단의 <strong>이름 칩</strong>을 클릭하면 해당 파트원이 참여한 목표만 필터링됩니다</li>
           </ul>
           <div class="callout callout-warning">
             <span class="material-symbols-outlined callout-icon">info</span>
@@ -278,7 +279,9 @@
           </div>
           <ul class="feature-list">
             <li>과제를 등록하고 목표와 연결합니다</li>
+            <li>과제 등록 시 <strong>적용 대상</strong>을 지정할 수 있습니다 — <strong>MX / VD / DA / 공통</strong> 중 선택</li>
             <li>목록은 <strong>ID 오름차순</strong>으로 자동 정렬됩니다</li>
+            <li>상단의 <strong>이름 칩</strong>을 클릭하면 해당 파트원이 담당한 과제만 필터링됩니다</li>
             <li>과제를 삭제하면 파트원의 담당 과제 목록에서도 자동으로 제거됩니다</li>
             <li>삭제된 과제와 연결된 주간 진행 현황 이력은 과제명이 텍스트로 보존됩니다</li>
           </ul>
@@ -316,7 +319,7 @@
           </ul>
           <div class="callout callout-info">
             <span class="material-symbols-outlined callout-icon">lightbulb</span>
-            <div>인력 추가 시 과제를 목표별로 그룹핑해서 선택할 수 있습니다. 과제를 선택하면 연결된 목표가 자동으로 설정됩니다.</div>
+            <div>인력 추가 시 과제를 목표별로 그룹핑해서 선택할 수 있습니다. 목표에 연결되지 않은 과제는 <strong>"목표 없음"</strong> 그룹에 표시됩니다. 과제를 선택하면 연결된 목표가 자동으로 설정됩니다.</div>
           </div>
         </div>
 

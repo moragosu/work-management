@@ -17,12 +17,14 @@ class Task(BaseModel):
     id: str
     name: str
     objective_id: str = ""
+    target: str = ""
     members: List[TaskMember] = []
 
 
 class TaskUpdate(BaseModel):
     name: Optional[str] = None
     objective_id: Optional[str] = None
+    target: Optional[str] = None
     members: Optional[List[TaskMember]] = None
 
 

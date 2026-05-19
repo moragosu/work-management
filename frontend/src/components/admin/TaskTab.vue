@@ -19,9 +19,21 @@
       </div></div>
     </div>
 
-    <div class="flex-between" style="margin-bottom:16px">
+    <div class="flex-between" style="margin-bottom:12px">
       <button class="btn btn-ghost btn-sm" @click="exportCsv" data-tooltip="과제 목록을 CSV 파일로 내보내기">⬇ CSV 다운로드</button>
       <button class="btn btn-primary btn-sm" @click="openModal()" data-tooltip="새 과제 추가">+ 과제 추가</button>
+    </div>
+
+    <div v-if="props.staffList.length > 0" class="filter-bar staff-filter-bar">
+      <span class="filter-label-sm">인력</span>
+      <button
+        v-for="s in props.staffList"
+        :key="s.id"
+        class="staff-chip"
+        :class="{ 'staff-chip-active': selectedStaffFilter.includes(s.id) }"
+        @click="toggleStaffFilter(s.id)"
+      >{{ s.name }}</button>
+      <button v-if="selectedStaffFilter.length > 0" class="btn btn-ghost btn-xs" @click="selectedStaffFilter = []" data-tooltip="인력 필터 초기화">전체 보기</button>
     </div>
 
     <div class="card">
@@ -33,13 +45,14 @@
         <table>
           <thead>
             <tr>
-              <th>ID</th><th>과제명</th><th>목표</th><th>참여 인력</th><th></th>
+              <th>ID</th><th>과제명</th><th>적용 대상</th><th>목표</th><th>참여 인력</th><th></th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="t in sortedTasks" :key="t.id" :id="'task-row-' + t.id">
               <td><span class="badge badge-blue">{{ t.id }}</span></td>
               <td style="font-weight:600">{{ t.name }}</td>
+              <td><span v-if="t.target" :class="targetBadgeClass(t.target)">{{ t.target }}</span><span v-else class="text-muted text-sm">-</span></td>
               <td><span class="text-sm">{{ getObjectiveName(t.objective_id) }}</span></td>
               <td>
                 <div v-if="taskMembers(t.id).length > 0" class="member-chips">
@@ -90,6 +103,16 @@
           <div class="form-group">
             <label class="form-label">과제명 *</label>
             <input v-model="form.name" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">적용 대상</label>
+            <select v-model="form.target" class="form-control">
+              <option value="">선택 안함</option>
+              <option>MX</option>
+              <option>VD</option>
+              <option>DA</option>
+              <option>공통</option>
+            </select>
           </div>
           <div class="form-group">
             <label class="form-label">연결 목표</label>
@@ -180,18 +203,33 @@ function getObjectiveName(id) {
 }
 function exportCsv() { window.open('/api/admin/export/tasks', '_blank') }
 
-const sortedTasks = computed(() =>
-  [...props.tasks].sort((a, b) => {
+const TARGET_CLASSES = { MX: 'badge badge-blue', VD: 'badge badge-green', DA: 'badge badge-orange', '공통': 'badge badge-gray' }
+function targetBadgeClass(target) { return TARGET_CLASSES[target] || 'badge badge-gray' }
+
+// ── 인력 필터 ──
+const selectedStaffFilter = ref([])
+function toggleStaffFilter(staffId) {
+  const idx = selectedStaffFilter.value.indexOf(staffId)
+  if (idx === -1) selectedStaffFilter.value.push(staffId)
+  else selectedStaffFilter.value.splice(idx, 1)
+}
+
+const sortedTasks = computed(() => {
+  let list = props.tasks
+  if (selectedStaffFilter.value.length > 0) {
+    list = list.filter(t => taskMembers(t.id).some(m => selectedStaffFilter.value.includes(m.id)))
+  }
+  return [...list].sort((a, b) => {
     const aNum = parseInt(a.id.replace('T', '')) || 0
     const bNum = parseInt(b.id.replace('T', '')) || 0
     return aNum - bNum
   })
-)
+})
 
 // ── Task Form Modal ──
 const showModal = ref(false)
 const editingId = ref(null)
-const defaultForm = () => ({ id: '', name: '', objective_id: '' })
+const defaultForm = () => ({ id: '', name: '', objective_id: '', target: '' })
 const form = ref(defaultForm())
 
 const idConflict = computed(() =>
@@ -281,6 +319,17 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.staff-filter-bar { gap: 6px; margin-bottom: 12px; }
+.filter-label-sm { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+.staff-chip {
+  display: inline-flex; align-items: center; padding: 3px 10px;
+  border-radius: 999px; border: 1px solid var(--outline);
+  font-size: 12px; font-family: inherit; cursor: pointer;
+  background: var(--surface); color: var(--text-secondary); transition: all 0.15s;
+}
+.staff-chip:hover { border-color: var(--primary); color: var(--primary); }
+.staff-chip-active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); font-weight: 600; }
+
 .reusable-ids { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 .reusable-chip {
   padding: 2px 10px; border-radius: 12px; font-size: 12px; cursor: pointer;
