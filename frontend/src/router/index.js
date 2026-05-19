@@ -5,7 +5,7 @@ import Admin from '../views/Admin.vue'
 import Help from '../views/Help.vue'
 
 const routes = [
-  { path: '/', redirect: '/dashboard' },
+  { path: '/', redirect: '/progress' },
   { path: '/dashboard', component: Dashboard, meta: { title: '대시보드' } },
   { path: '/progress', component: Progress, meta: { title: '주간 진행 현황' } },
   { path: '/staff', redirect: '/admin' },
