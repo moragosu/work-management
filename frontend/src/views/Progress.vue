@@ -101,19 +101,21 @@
                 class="sub-task-section"
                 :class="{ 'sub-task-done': st.done }"
               >
-                <div class="sub-task-header">
+                <div
+                  class="sub-task-header"
+                  :class="{ 'sub-task-header-collapsed': !expandedSubTaskIds.has(st.id) }"
+                  @click="toggleSubTaskCollapse(st.id)"
+                >
                   <div class="sub-task-title">
-                    <button
-                      class="sub-collapse-btn"
-                      @click="toggleSubTaskCollapse(st.id)"
-                      :data-tooltip="collapsedSubTaskIds.has(st.id) ? '소과제 펼치기' : '소과제 접기'"
-                    >
-                      <span class="material-symbols-outlined sub-collapse-icon" :class="{ collapsed: collapsedSubTaskIds.has(st.id) }">expand_more</span>
-                    </button>
+                    <span class="material-symbols-outlined sub-collapse-icon" :class="{ collapsed: !expandedSubTaskIds.has(st.id) }">expand_more</span>
                     <span class="sub-task-id-badge">{{ st.id }}</span>
                     <span class="sub-task-name">{{ st.name || '(이름 없음)' }}</span>
+                    <template v-if="!expandedSubTaskIds.has(st.id)">
+                      <span v-if="progressMap[st.id]?.issue?.trim()" class="subtask-sum-badge subtask-sum-issue">이슈 1건</span>
+                      <span v-if="getQuestionsForTask(st.id).length > 0" class="subtask-sum-badge subtask-sum-qa">Q&A {{ getQuestionsForTask(st.id).length }}건</span>
+                    </template>
                   </div>
-                  <div class="sub-task-meta">
+                  <div class="sub-task-meta" @click.stop>
                     <div class="member-badges">
                       <span v-for="m in subTaskMembers(st.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
                       <span v-if="subTaskMembers(st.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
@@ -130,7 +132,7 @@
                   </div>
                 </div>
 
-                <template v-if="!collapsedSubTaskIds.has(st.id)">
+                <template v-if="expandedSubTaskIds.has(st.id)">
                   <!-- 소과제 컨플루언스 링크 -->
                   <div class="sub-task-link-row">
                     <button class="link-help-btn" :class="{ active: linkHelpOpen.has(st.id) }" @click="toggleLinkHelp(st.id)" data-tooltip="링크 가져오는 방법">?</button>
@@ -278,7 +280,7 @@ const progressMap = ref({})
 const linkInputs = ref({})
 const editingLinkId = ref({})
 const linkHelpOpen = ref(new Set())
-const collapsedSubTaskIds = ref(new Set())
+const expandedSubTaskIds = ref(new Set())
 
 function toggleLinkHelp(id) {
   const next = new Set(linkHelpOpen.value)
@@ -287,23 +289,22 @@ function toggleLinkHelp(id) {
   linkHelpOpen.value = next
 }
 function toggleSubTaskCollapse(stId) {
-  const next = new Set(collapsedSubTaskIds.value)
+  const next = new Set(expandedSubTaskIds.value)
   if (next.has(stId)) next.delete(stId)
   else next.add(stId)
-  collapsedSubTaskIds.value = next
+  expandedSubTaskIds.value = next
 }
 function isAllSubTasksCollapsed(task) {
-  return (task.sub_tasks || []).length > 0 &&
-    (task.sub_tasks || []).every(st => collapsedSubTaskIds.value.has(st.id))
+  return (task.sub_tasks || []).every(st => !expandedSubTaskIds.value.has(st.id))
 }
 function toggleAllSubTasks(task) {
-  const next = new Set(collapsedSubTaskIds.value)
+  const next = new Set(expandedSubTaskIds.value)
   if (isAllSubTasksCollapsed(task)) {
-    task.sub_tasks.forEach(st => next.delete(st.id))
-  } else {
     task.sub_tasks.forEach(st => next.add(st.id))
+  } else {
+    task.sub_tasks.forEach(st => next.delete(st.id))
   }
-  collapsedSubTaskIds.value = next
+  expandedSubTaskIds.value = next
 }
 
 // ── 주차 ──
@@ -576,7 +577,14 @@ onMounted(fetchAll)
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  margin: -4px -4px 12px;
+  padding: 4px;
+  transition: background 0.15s;
 }
+.sub-task-header:hover { background: color-mix(in srgb, var(--color-primary, #4f8ef7) 6%, transparent); }
+.sub-task-header-collapsed { margin-bottom: 0 !important; }
 .sub-task-title {
   display: flex;
   align-items: center;
@@ -621,27 +629,31 @@ onMounted(fetchAll)
   white-space: nowrap;
 }
 
-.sub-collapse-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  border-radius: 4px;
-  color: var(--text-muted);
-  padding: 0;
-  transition: background 0.15s, color 0.15s;
-  flex-shrink: 0;
-}
-.sub-collapse-btn:hover { background: color-mix(in srgb, var(--color-primary, #4f8ef7) 10%, transparent); color: var(--color-primary, #4f8ef7); }
 .sub-collapse-icon {
   font-size: 18px;
+  color: var(--text-muted);
+  flex-shrink: 0;
   transition: transform 0.2s;
 }
 .sub-collapse-icon.collapsed { transform: rotate(-90deg); }
+
+.subtask-sum-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.subtask-sum-issue {
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  color: #b45309;
+}
+.subtask-sum-qa {
+  background: color-mix(in srgb, var(--color-primary, #4f8ef7) 12%, transparent);
+  color: var(--color-primary, #4f8ef7);
+}
 
 .subtask-toggle-all {
   font-size: 11px;

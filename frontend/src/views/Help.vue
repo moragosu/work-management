@@ -214,16 +214,17 @@
             소과제가 있는 과제
           </div>
           <ul class="feature-list">
-            <li>소과제가 있는 과제 카드는 상단에 <strong>"소과제 N개"</strong> 배지가 표시됩니다</li>
-            <li>각 소과제는 과제 카드 내부에 <strong>파란 왼쪽 테두리</strong>로 구분된 별도 섹션으로 표시됩니다</li>
-            <li>소과제 섹션에는 소과제 ID·이름·담당자 배지와 함께 <strong>완료 여부 토글 버튼</strong>이 있습니다</li>
+            <li>소과제가 있는 과제 카드는 상단에 <strong>"소과제 N개"</strong> 배지와 <strong>"전체 펼치기 / 전체 접기"</strong> 버튼이 표시됩니다</li>
+            <li>각 소과제는 과제 카드 내부에 <strong>파란 왼쪽 테두리</strong>로 구분된 별도 섹션으로 표시되며, <strong>기본적으로 접힌 상태</strong>로 시작합니다</li>
+            <li>소과제 헤더(상단 줄)를 <strong>클릭</strong>하면 내용이 펼쳐지거나 접힙니다. 헤더 우측의 완료 버튼·담당자 배지는 클릭해도 접히지 않습니다</li>
+            <li>접힌 상태에서 이슈나 Q&A 내용이 있으면 헤더에 <strong>요약 배지</strong>가 표시됩니다 — <em>이슈 1건</em>, <em>Q&A N건</em></li>
             <li><strong>컨플루언스 링크</strong>는 소과제별로 독립 등록됩니다 — 소과제가 있으면 모과제 단위 링크 대신 각 소과제 섹션 내부에 링크 입력란이 표시됩니다</li>
-            <li>이슈 등록과 Q&A도 <strong>소과제별로 독립적으로</strong> 관리됩니다 — 소과제가 있는 경우 모과제 단위 이슈·Q&A는 표시되지 않습니다</li>
+            <li>이슈 등록과 Q&A도 <strong>소과제별로 독립적으로</strong> 관리됩니다</li>
             <li>소과제가 완료 처리되면 해당 섹션은 <strong>녹색 테두리</strong>로 바뀌고 흐릿하게 표시됩니다</li>
           </ul>
           <div class="callout callout-tip">
             <span class="material-symbols-outlined callout-icon">star</span>
-            <div>소과제 완료 버튼을 클릭하면 상태가 즉시 저장됩니다. 완료된 소과제도 섹션은 그대로 유지되므로 링크·이슈·Q&A 기록을 계속 확인할 수 있습니다.</div>
+            <div>모과제 헤더의 <strong>"전체 펼치기"</strong>를 누르면 해당 과제의 소과제를 한 번에 모두 펼칩니다. <strong>"전체 접기"</strong>로 다시 정리할 수 있습니다.</div>
           </div>
         </div>
 
