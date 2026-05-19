@@ -448,6 +448,14 @@ async function loadProgress() {
 async function handleFocusQuery() {
   const { focusQuestion, focusIssue } = route.query
   if (!focusQuestion && !focusIssue) return
+
+  if (focusQuestion) {
+    const q = qnaList.value.find(q => q.id === focusQuestion)
+    if (q && q.task_id.includes('-')) {
+      expandedSubTaskIds.value = new Set([...expandedSubTaskIds.value, q.task_id])
+    }
+  }
+
   await nextTick()
   await new Promise(r => setTimeout(r, 80))
   const el = focusQuestion
