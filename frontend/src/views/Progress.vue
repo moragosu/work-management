@@ -471,7 +471,13 @@ async function handleFocusQuery() {
       ? `issue-${focusIssueId}`
       : `task-${focusIssue}`
 
-  const el = document.getElementById(targetId)
+  let el = document.getElementById(targetId)
+  if (!el) {
+    // 소과제 확장 후 DOM 렌더링 대기 후 재시도
+    await nextTick()
+    await new Promise(r => setTimeout(r, 200))
+    el = document.getElementById(targetId)
+  }
   if (!el) return
   el.scrollIntoView({ behavior: 'smooth', block: 'center' })
   el.classList.add('highlight-focus')

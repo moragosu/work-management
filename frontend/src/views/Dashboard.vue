@@ -496,7 +496,7 @@ function goToQuestion(q) {
   router.push({ path: '/progress', query: { week: q.week, focusQuestion: q.id } })
 }
 function goToIssue(p) {
-  router.push({ path: '/progress', query: { week: p.week, focusIssue: resolveParentTaskId(p.task_id) } })
+  router.push({ path: '/progress', query: { week: p.week, focusIssueId: p.id } })
 }
 function goToTask(t) {
   router.push({ path: '/admin', query: { tab: 'task', focusTask: t.id } })
