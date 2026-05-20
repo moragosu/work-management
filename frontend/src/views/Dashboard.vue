@@ -71,9 +71,12 @@
             </div>
             <ul v-else class="panel-list" :class="{ 'panel-list-expanded': panelExpanded.questions }">
               <li v-for="q in unansweredQuestions" :key="q.id" class="panel-item panel-item-link" @click="openModal('question', q)">
-                <div v-if="q.targets && q.targets.length" class="q-targets-row">
-                  <span class="material-symbols-outlined q-targets-icon">person</span>
-                  <span v-for="t in q.targets" :key="t" class="q-target-badge">{{ t }}</span>
+                <div v-if="q.questioner || (q.targets && q.targets.length)" class="q-targets-row">
+                  <span v-if="q.questioner" class="badge badge-purple" style="font-size:11px">{{ q.questioner }}</span>
+                  <template v-if="q.targets && q.targets.length">
+                    <span class="material-symbols-outlined q-targets-icon">arrow_forward</span>
+                    <span v-for="t in q.targets" :key="t" class="q-target-badge">{{ t }}</span>
+                  </template>
                 </div>
                 <div class="panel-item-main">{{ stripMarkdown(q.question) }}</div>
                 <div class="panel-item-sub">
@@ -303,9 +306,11 @@
         <div class="dash-modal-meta">
           <span class="badge badge-blue">{{ getTaskName(modal.item.task_id) }}</span>
           <span v-if="modal.item.assignee" class="badge badge-gray">{{ modal.item.assignee }}</span>
-          <span v-if="modal.item.targets && modal.item.targets.length">
-            <span v-for="t in modal.item.targets" :key="t" class="badge badge-purple">{{ t }}</span>
-          </span>
+          <span v-if="modal.item.questioner" class="badge badge-purple">{{ modal.item.questioner }}</span>
+          <template v-if="modal.item.targets && modal.item.targets.length">
+            <span class="material-symbols-outlined" style="font-size:13px;color:var(--text-muted)">arrow_forward</span>
+            <span v-for="t in modal.item.targets" :key="t" class="badge badge-blue">{{ t }}</span>
+          </template>
           <span class="badge badge-gray">{{ formatWeekLabel(modal.item.week) }}</span>
         </div>
         <div class="dash-modal-body">
