@@ -52,7 +52,7 @@
 
         <!-- 미답변 질문 -->
         <div class="card action-panel">
-          <div class="card-header">
+          <div class="card-header panel-header-toggle" @click="panelExpanded.questions = !panelExpanded.questions" data-tooltip="클릭하여 펼치기 / 접기">
             <div class="panel-title">
               <span class="panel-icon" style="background:#fff7ed;color:var(--orange)">
                 <span class="material-symbols-outlined">forum</span>
@@ -62,13 +62,14 @@
             <span class="badge" :class="unansweredQuestions.length ? 'badge-orange' : 'badge-gray'">
               {{ unansweredQuestions.length }}건
             </span>
+            <span class="material-symbols-outlined section-chevron" :class="{ open: panelExpanded.questions }">expand_more</span>
           </div>
           <div class="card-body panel-body">
             <div v-if="actionLoading" class="loading-center" style="padding:24px"><div class="spinner"></div></div>
             <div v-else-if="unansweredQuestions.length === 0" class="panel-empty">
               미답변 질문이 없습니다 👍
             </div>
-            <ul v-else class="panel-list">
+            <ul v-else class="panel-list" :class="{ 'panel-list-expanded': panelExpanded.questions }">
               <li v-for="q in unansweredQuestions" :key="q.id" class="panel-item panel-item-link" @click="openModal('question', q)">
                 <div v-if="q.targets && q.targets.length" class="q-targets-row">
                   <span class="material-symbols-outlined q-targets-icon">person</span>
@@ -87,7 +88,7 @@
 
         <!-- 이슈 -->
         <div class="card action-panel">
-          <div class="card-header">
+          <div class="card-header panel-header-toggle" @click="panelExpanded.issues = !panelExpanded.issues" data-tooltip="클릭하여 펼치기 / 접기">
             <div class="panel-title">
               <span class="panel-icon" style="background:#fff7ed;color:var(--warning)">
                 <span class="material-symbols-outlined">construction</span>
@@ -97,13 +98,14 @@
             <span class="badge" :class="weekIssues.length ? 'badge-yellow' : 'badge-gray'">
               {{ weekIssues.length }}건
             </span>
+            <span class="material-symbols-outlined section-chevron" :class="{ open: panelExpanded.issues }">expand_more</span>
           </div>
           <div class="card-body panel-body">
             <div v-if="actionLoading" class="loading-center" style="padding:24px"><div class="spinner"></div></div>
             <div v-else-if="weekIssues.length === 0" class="panel-empty">
               이번 주 등록된 이슈가 없습니다 👍
             </div>
-            <ul v-else class="panel-list">
+            <ul v-else class="panel-list" :class="{ 'panel-list-expanded': panelExpanded.issues }">
               <li v-for="p in weekIssues" :key="p.id" class="panel-item panel-item-link" @click="openModal('issue', p)">
                 <div class="issue-text">{{ stripMarkdown(p.issue) }}</div>
                 <div class="panel-item-sub">
@@ -118,7 +120,7 @@
 
         <!-- 미배정 과제 -->
         <div class="card action-panel">
-          <div class="card-header">
+          <div class="card-header panel-header-toggle" @click="panelExpanded.tasks = !panelExpanded.tasks" data-tooltip="클릭하여 펼치기 / 접기">
             <div class="panel-title">
               <span class="panel-icon" style="background:#f0f4ff;color:var(--primary)">
                 <span class="material-symbols-outlined">person_off</span>
@@ -128,13 +130,14 @@
             <span class="badge" :class="unassignedTasks.length ? 'badge-red' : 'badge-gray'">
               {{ unassignedTasks.length }}건
             </span>
+            <span class="material-symbols-outlined section-chevron" :class="{ open: panelExpanded.tasks }">expand_more</span>
           </div>
           <div class="card-body panel-body">
             <div v-if="actionLoading" class="loading-center" style="padding:24px"><div class="spinner"></div></div>
             <div v-else-if="unassignedTasks.length === 0" class="panel-empty">
               모든 과제에 담당자가 배정되어 있습니다 👍
             </div>
-            <ul v-else class="panel-list">
+            <ul v-else class="panel-list" :class="{ 'panel-list-expanded': panelExpanded.tasks }">
               <li v-for="t in unassignedTasks" :key="t.id" class="panel-item panel-item-link" @click="goToTask(t)">
                 <div class="panel-item-main">{{ t.name }}</div>
                 <div class="panel-item-sub">
@@ -351,6 +354,7 @@ const matrixOpen = ref(true)
 const loading = ref(false)
 const actionLoading = ref(false)
 const activityOpen = ref(true)
+const panelExpanded = reactive({ questions: false, issues: false, tasks: false })
 
 const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
 
@@ -838,6 +842,17 @@ onMounted(refresh)
   margin-left: auto;
 }
 .section-chevron.open { transform: rotate(180deg); }
+
+.panel-header-toggle {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.panel-header-toggle:hover { background: var(--gray-50); }
+.panel-list-expanded {
+  max-height: none !important;
+  overflow-y: visible !important;
+}
 
 /* ── 목표 카드 ── */
 .obj-card { transition: box-shadow .2s, transform .15s; }
