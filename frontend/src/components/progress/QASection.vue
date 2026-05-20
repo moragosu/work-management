@@ -11,11 +11,10 @@
         <span class="badge badge-orange">Q</span>
         <div class="qa-content">
           <template v-if="editingQuestionId === qa.id">
-            <!-- 질문자 수정 -->
+            <!-- 질문자 수정 (필수) -->
             <div v-if="questioners.length > 0" class="target-row">
-              <span class="target-label">질문자</span>
+              <span class="target-label">질문자 <span style="color:var(--danger)">*</span></span>
               <select v-model="editingQuestioner" class="form-control" style="max-width:200px">
-                <option value="">선택 안 함</option>
                 <option v-for="q in questioners" :key="q" :value="q">{{ q }}</option>
               </select>
             </div>
@@ -125,11 +124,10 @@
 
     <!-- 질문 추가 -->
     <div v-if="addingQuestion" class="mt-16">
-      <!-- 질문자 선택 -->
+      <!-- 질문자 선택 (필수) -->
       <div v-if="questioners.length > 0" class="target-row">
-        <span class="target-label">질문자</span>
+        <span class="target-label">질문자 <span style="color:var(--danger)">*</span></span>
         <select v-model="newQuestioner" class="form-control" style="max-width:200px">
-          <option value="">선택 안 함</option>
           <option v-for="q in questioners" :key="q" :value="q">{{ q }}</option>
         </select>
       </div>
@@ -148,11 +146,11 @@
       <MarkdownEditor v-model="newQuestionText" height="160px" />
       <div class="flex gap-8 mt-8" style="justify-content:flex-end">
         <button class="btn btn-ghost btn-sm" @click="cancelAddQuestion">취소</button>
-        <button class="btn btn-primary btn-sm" @click="addQuestion" :disabled="!hasContent(newQuestionText)">질문 추가</button>
+        <button class="btn btn-primary btn-sm" @click="addQuestion" :disabled="!hasContent(newQuestionText) || (questioners.length > 0 && !newQuestioner)">질문 추가</button>
       </div>
     </div>
     <div v-else class="mt-8">
-      <button class="btn btn-ghost btn-sm" @click="addingQuestion = true" data-tooltip="이 과제에 질문 등록">+ 질문 추가</button>
+      <button class="btn btn-ghost btn-sm" @click="openAddQuestion" data-tooltip="이 과제에 질문 등록">+ 질문 추가</button>
     </div>
 
   </div>
@@ -224,6 +222,11 @@ const newQuestionText = ref('')
 const newTargets = ref([])
 const newQuestioner = ref('')
 
+function openAddQuestion() {
+  newQuestioner.value = props.questioners[0] || ''
+  addingQuestion.value = true
+}
+
 function cancelAddQuestion() {
   addingQuestion.value = false
   newQuestionText.value = ''
@@ -256,7 +259,7 @@ function startEditQuestion(qa) {
   editingQuestionId.value = qa.id
   editingQuestionText.value = qa.question
   editingTargets.value = [...(qa.targets || [])]
-  editingQuestioner.value = qa.questioner || ''
+  editingQuestioner.value = qa.questioner || props.questioners[0] || ''
 }
 function cancelEditQuestion() {
   editingQuestionId.value = ''

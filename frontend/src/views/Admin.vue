@@ -92,7 +92,7 @@
             <label class="form-label">관리자 모드</label>
             <div v-if="!adminMode" class="mt-16">
               <div class="password-form">
-                <input v-model="adminPassword" type="password" class="form-control password-input" placeholder="비밀번호를 입력하세요" />
+                <input v-model="adminPassword" type="password" class="form-control password-input" placeholder="비밀번호를 입력하세요" @keyup.enter="activateAdminMode" />
                 <button class="btn btn-primary" @click="activateAdminMode">관리자 모드 활성화</button>
               </div>
               <p class="text-sm text-muted">관리자 모드를 활성화하면 초기화 기능을 사용할 수 있습니다.</p>
