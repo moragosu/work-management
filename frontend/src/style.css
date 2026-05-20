@@ -344,6 +344,7 @@ body {
 .badge-yellow{ background: var(--warning-light);  color: var(--warning); }
 .badge-orange{ background: var(--orange-light);   color: var(--orange); }
 .badge-gray  { background: var(--gray-100); color: var(--gray-600); }
+.badge-purple{ background: #ede9fe; color: #6d28d9; }
 
 /* ── Progress bar ── */
 .progress-bar { height: 6px; background: var(--gray-200); border-radius: var(--radius-full); overflow: hidden; }

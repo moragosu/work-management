@@ -120,6 +120,22 @@
             </div>
           </div>
 
+          <div class="settings-group">
+            <label class="form-label">질문자 목록 관리 <span class="text-muted text-sm" style="font-weight:400">(파트장, 그룹장 등)</span></label>
+            <p class="text-sm text-muted" style="margin:4px 0 12px">Q&amp;A 질문 작성 시 드롭다운으로 선택할 수 있는 질문자 목록입니다.</p>
+            <div class="target-chips mt-16">
+              <span v-for="q in questioners" :key="q" class="target-chip">
+                {{ q }}
+                <button class="target-chip-del" @click="removeQuestioner(q)" :data-tooltip="`'${q}' 삭제`">✕</button>
+              </span>
+              <span v-if="questioners.length === 0" class="text-sm text-muted">등록된 질문자가 없습니다.</span>
+            </div>
+            <div class="target-add-form mt-16">
+              <input v-model="newQuestioner" class="form-control" placeholder="이름 입력 (예: 홍길동 파트장)" @keyup.enter="addQuestioner" />
+              <button class="btn btn-primary btn-sm" @click="addQuestioner" :disabled="!newQuestioner.trim() || questioners.includes(newQuestioner.trim())">추가</button>
+            </div>
+          </div>
+
           <div class="form-group">
             <label class="form-label">정보</label>
             <div class="info-list text-sm text-muted">
@@ -174,6 +190,8 @@ const reusableTaskIds = ref([])
 const staffViewRef = ref(null)
 const taskTargets = ref(['MX', 'VD', 'DA', '공통'])
 const newTarget = ref('')
+const questioners = ref([])
+const newQuestioner = ref('')
 
 const staffStats = computed(() => {
   const objCounts = {}
@@ -220,13 +238,17 @@ async function fetchSettings() {
   try {
     const { data } = await axios.get('/api/settings')
     if (Array.isArray(data.task_targets)) taskTargets.value = data.task_targets
+    if (Array.isArray(data.questioners)) questioners.value = data.questioners
   } catch {
     // 기본값 유지
   }
 }
 
-async function saveTargets() {
-  await axios.put('/api/settings', { task_targets: taskTargets.value })
+async function saveSettings() {
+  await axios.put('/api/settings', {
+    task_targets: taskTargets.value,
+    questioners: questioners.value,
+  })
 }
 
 async function addTarget() {
@@ -234,14 +256,29 @@ async function addTarget() {
   if (!val || taskTargets.value.includes(val)) return
   taskTargets.value.push(val)
   newTarget.value = ''
-  await saveTargets()
+  await saveSettings()
   showToast(`'${val}' 추가되었습니다`)
 }
 
 async function removeTarget(t) {
   taskTargets.value = taskTargets.value.filter(x => x !== t)
-  await saveTargets()
+  await saveSettings()
   showToast(`'${t}' 삭제되었습니다`)
+}
+
+async function addQuestioner() {
+  const val = newQuestioner.value.trim()
+  if (!val || questioners.value.includes(val)) return
+  questioners.value.push(val)
+  newQuestioner.value = ''
+  await saveSettings()
+  showToast(`'${val}' 추가되었습니다`)
+}
+
+async function removeQuestioner(q) {
+  questioners.value = questioners.value.filter(x => x !== q)
+  await saveSettings()
+  showToast(`'${q}' 삭제되었습니다`)
 }
 
 async function fetchAll() {

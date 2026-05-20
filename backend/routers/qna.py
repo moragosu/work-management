@@ -22,11 +22,13 @@ class QuestionCreate(BaseModel):
     week: str
     question: str
     targets: list = []
+    questioner: Optional[str] = None
 
 
 class QuestionUpdate(BaseModel):
     question: str
     targets: Optional[list] = None
+    questioner: Optional[str] = None
 
 
 class AnswerCreate(BaseModel):
@@ -65,6 +67,7 @@ def create_question(body: QuestionCreate):
         "week": body.week,
         "question": body.question,
         "targets": body.targets,
+        "questioner": body.questioner or "",
         "created_at": date.today().isoformat(),
     }
     questions.append(new_q)
@@ -80,6 +83,8 @@ def update_question(question_id: str, body: QuestionUpdate):
             q["question"] = body.question
             if body.targets is not None:
                 q["targets"] = body.targets
+            if body.questioner is not None:
+                q["questioner"] = body.questioner
             _save(questions, answers)
             q_answers = [a for a in answers if a["question_id"] == question_id]
             return {**q, "answers": q_answers}

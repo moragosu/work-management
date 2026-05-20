@@ -181,6 +181,7 @@
                   <QASection
                     :questions="getQuestionsForTask(st.id)"
                     :staff-list="staffList"
+                    :questioners="questioners"
                     :task-id="st.id"
                     :week="selectedWeek"
                     @update:questions="qs => onQuestionsUpdate(st.id, qs)"
@@ -236,6 +237,7 @@
               <QASection
                 :questions="getQuestionsForTask(task.id)"
                 :staff-list="staffList"
+                :questioners="questioners"
                 :task-id="task.id"
                 :week="selectedWeek"
                 @update:questions="qs => onQuestionsUpdate(task.id, qs)"
@@ -290,6 +292,7 @@ const weekDisplayLabel = computed(() => {
 const qnaList = ref([])
 const linkMap = ref({})
 const issueMap = ref({})
+const questioners = ref([])
 const linkInputs = ref({})
 const editingLinkId = ref({})
 const linkHelpOpen = ref(new Set())
@@ -487,10 +490,14 @@ async function handleFocusQuery() {
 async function fetchAll() {
   loading.value = true
   try {
-    const [tRes, oRes, sRes] = await Promise.all([axios.get('/api/tasks'), axios.get('/api/okrs'), axios.get('/api/staff')])
+    const [tRes, oRes, sRes, stRes] = await Promise.all([
+      axios.get('/api/tasks'), axios.get('/api/okrs'), axios.get('/api/staff'),
+      axios.get('/api/settings').catch(() => ({ data: {} })),
+    ])
     tasks.value = tRes.data
     objectives.value = oRes.data
     staffList.value = sRes.data
+    if (Array.isArray(stRes.data.questioners)) questioners.value = stRes.data.questioners
     initLinkInputs()
     selectedWeek.value = route.query.week || getCurrentWeek()
     await onWeekChange()

@@ -11,6 +11,14 @@
         <span class="badge badge-orange">Q</span>
         <div class="qa-content">
           <template v-if="editingQuestionId === qa.id">
+            <!-- 질문자 수정 -->
+            <div v-if="questioners.length > 0" class="target-row">
+              <span class="target-label">질문자</span>
+              <select v-model="editingQuestioner" class="form-control" style="max-width:200px">
+                <option value="">선택 안 함</option>
+                <option v-for="q in questioners" :key="q" :value="q">{{ q }}</option>
+              </select>
+            </div>
             <!-- 대상자 수정 -->
             <div class="target-row">
               <span class="target-label">질문 대상</span>
@@ -30,10 +38,13 @@
             </div>
           </template>
           <template v-else>
-            <!-- 대상자 표시 -->
-            <div v-if="qa.targets && qa.targets.length > 0" class="question-targets">
-              <span class="material-symbols-outlined" style="font-size:13px;color:var(--text-muted)">arrow_forward</span>
-              <span v-for="t in qa.targets" :key="t" class="badge badge-blue" style="font-size:11px">{{ t }}</span>
+            <!-- 질문자 / 대상자 표시 -->
+            <div v-if="qa.questioner || (qa.targets && qa.targets.length > 0)" class="question-targets">
+              <span v-if="qa.questioner" class="badge badge-purple" style="font-size:11px">{{ qa.questioner }}</span>
+              <template v-if="qa.targets && qa.targets.length > 0">
+                <span class="material-symbols-outlined" style="font-size:13px;color:var(--text-muted)">arrow_forward</span>
+                <span v-for="t in qa.targets" :key="t" class="badge badge-blue" style="font-size:11px">{{ t }}</span>
+              </template>
             </div>
             <MdPreview language="en-US" :modelValue="qa.question" class="md-preview-inline" />
           </template>
@@ -114,6 +125,14 @@
 
     <!-- 질문 추가 -->
     <div v-if="addingQuestion" class="mt-16">
+      <!-- 질문자 선택 -->
+      <div v-if="questioners.length > 0" class="target-row">
+        <span class="target-label">질문자</span>
+        <select v-model="newQuestioner" class="form-control" style="max-width:200px">
+          <option value="">선택 안 함</option>
+          <option v-for="q in questioners" :key="q" :value="q">{{ q }}</option>
+        </select>
+      </div>
       <!-- 대상자 선택 -->
       <div class="target-row">
         <span class="target-label">질문 대상</span>
@@ -176,10 +195,11 @@ import { ADMIN_PASSWORD } from '../../config.js'
 import { copyToClipboard } from '../../utils/clipboard.js'
 
 const props = defineProps({
-  questions: { type: Array, default: () => [] },
-  staffList: { type: Array, default: () => [] },
-  taskId: { type: String, required: true },
-  week: { type: String, required: true },
+  questions:   { type: Array, default: () => [] },
+  staffList:   { type: Array, default: () => [] },
+  questioners: { type: Array, default: () => [] },
+  taskId:      { type: String, required: true },
+  week:        { type: String, required: true },
 })
 const emit = defineEmits(['update:questions'])
 const { toastMsg, showToast, toastError } = useToast()
@@ -202,8 +222,14 @@ function toggleTarget(arr, name) {
 const addingQuestion = ref(false)
 const newQuestionText = ref('')
 const newTargets = ref([])
+const newQuestioner = ref('')
 
-function cancelAddQuestion() { addingQuestion.value = false; newQuestionText.value = ''; newTargets.value = [] }
+function cancelAddQuestion() {
+  addingQuestion.value = false
+  newQuestionText.value = ''
+  newTargets.value = []
+  newQuestioner.value = ''
+}
 
 async function addQuestion() {
   if (!hasContent(newQuestionText.value)) return
@@ -212,6 +238,7 @@ async function addQuestion() {
       task_id: props.taskId, week: props.week,
       question: newQuestionText.value.trim(),
       targets: [...newTargets.value],
+      questioner: newQuestioner.value || '',
     })
     emit('update:questions', [...props.questions, data])
     cancelAddQuestion()
@@ -223,13 +250,20 @@ async function addQuestion() {
 const editingQuestionId = ref('')
 const editingQuestionText = ref('')
 const editingTargets = ref([])
+const editingQuestioner = ref('')
 
 function startEditQuestion(qa) {
   editingQuestionId.value = qa.id
   editingQuestionText.value = qa.question
   editingTargets.value = [...(qa.targets || [])]
+  editingQuestioner.value = qa.questioner || ''
 }
-function cancelEditQuestion() { editingQuestionId.value = ''; editingQuestionText.value = ''; editingTargets.value = [] }
+function cancelEditQuestion() {
+  editingQuestionId.value = ''
+  editingQuestionText.value = ''
+  editingTargets.value = []
+  editingQuestioner.value = ''
+}
 
 async function updateQuestion(questionId) {
   if (!hasContent(editingQuestionText.value)) return
@@ -237,6 +271,7 @@ async function updateQuestion(questionId) {
     const { data } = await axios.put(`/api/qna/questions/${questionId}`, {
       question: editingQuestionText.value.trim(),
       targets: [...editingTargets.value],
+      questioner: editingQuestioner.value || '',
     })
     emit('update:questions', props.questions.map(q => q.id === questionId ? { ...q, ...data } : q))
     cancelEditQuestion()
