@@ -69,16 +69,16 @@
               미답변 질문이 없습니다 👍
             </div>
             <ul v-else class="panel-list">
-              <li v-for="q in unansweredQuestions" :key="q.id" class="panel-item panel-item-link" @click="goToQuestion(q)">
+              <li v-for="q in unansweredQuestions" :key="q.id" class="panel-item panel-item-link" @click="openModal('question', q)">
                 <div v-if="q.targets && q.targets.length" class="q-targets-row">
                   <span class="material-symbols-outlined q-targets-icon">person</span>
                   <span v-for="t in q.targets" :key="t" class="q-target-badge">{{ t }}</span>
                 </div>
-                <div class="panel-item-main">{{ q.question }}</div>
+                <div class="panel-item-main">{{ stripMarkdown(q.question) }}</div>
                 <div class="panel-item-sub">
                   <span class="badge badge-blue">{{ getTaskName(q.task_id) }}</span>
                   <span class="badge badge-gray">{{ formatWeekLabel(q.week) }}</span>
-                  <span class="panel-goto">바로가기 →</span>
+                  <span class="panel-goto">상세보기 →</span>
                 </div>
               </li>
             </ul>
@@ -104,12 +104,12 @@
               이번 주 등록된 이슈가 없습니다 👍
             </div>
             <ul v-else class="panel-list">
-              <li v-for="p in weekIssues" :key="p.id" class="panel-item panel-item-link" @click="goToIssue(p)">
-                <div class="issue-text">{{ p.issue }}</div>
+              <li v-for="p in weekIssues" :key="p.id" class="panel-item panel-item-link" @click="openModal('issue', p)">
+                <div class="issue-text">{{ stripMarkdown(p.issue) }}</div>
                 <div class="panel-item-sub">
                   <span class="badge badge-blue">{{ getTaskName(p.task_id) }}</span>
                   <span v-if="p.assignee" class="badge badge-gray">{{ p.assignee }}</span>
-                  <span class="panel-goto">바로가기 →</span>
+                  <span class="panel-goto">상세보기 →</span>
                 </div>
               </li>
             </ul>
@@ -286,12 +286,52 @@
       </div>
     </div>
   </div>
+
+  <!-- 이슈/질문 상세 모달 -->
+  <Teleport to="body">
+    <div v-if="modal.visible" class="dash-modal-overlay" @click.self="modal.visible = false">
+      <div class="dash-modal">
+        <div class="dash-modal-header">
+          <span>{{ modal.type === 'issue' ? '이슈 상세' : '질문 상세' }}</span>
+          <button class="dash-modal-close" @click="modal.visible = false">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="dash-modal-meta">
+          <span class="badge badge-blue">{{ getTaskName(modal.item.task_id) }}</span>
+          <span v-if="modal.item.assignee" class="badge badge-gray">{{ modal.item.assignee }}</span>
+          <span v-if="modal.item.targets && modal.item.targets.length">
+            <span v-for="t in modal.item.targets" :key="t" class="badge badge-purple">{{ t }}</span>
+          </span>
+          <span class="badge badge-gray">{{ formatWeekLabel(modal.item.week) }}</span>
+        </div>
+        <div class="dash-modal-body">
+          <template v-if="modal.type === 'issue'">
+            <MdPreview language="en-US" :modelValue="modal.item.issue" class="dash-modal-md" />
+          </template>
+          <template v-else>
+            <div class="dash-modal-q">{{ modal.item.question }}</div>
+            <template v-if="modal.item.answers && modal.item.answers.length > 0">
+              <div class="dash-modal-a-label">답변</div>
+              <MdPreview v-for="a in modal.item.answers" :key="a.id" language="en-US" :modelValue="a.answer" class="dash-modal-md" />
+            </template>
+            <div v-else class="dash-modal-no-answer">아직 답변이 없습니다.</div>
+          </template>
+        </div>
+        <div class="dash-modal-footer">
+          <button class="btn btn-ghost btn-sm" @click="modal.visible = false">닫기</button>
+          <button class="btn btn-primary btn-sm" @click="navigateFromModal">진행현황에서 보기 →</button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import axios from 'axios'
+import { MdPreview } from 'md-editor-v3'
 import { parseIds } from '../utils/parseIds.js'
 import { getCurrentWeek, formatWeekLabel, normalizeWeek } from '../utils/week.js'
 import { statusBadgeClass } from '../utils/status.js'
@@ -491,6 +531,37 @@ function resolveParentTaskId(taskId) {
   }
   return taskId
 }
+// ── 모달 ──
+const modal = reactive({ visible: false, type: '', item: null })
+
+function stripMarkdown(text) {
+  if (!text) return ''
+  return text
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/`{1,3}[^`\n]*`{1,3}/g, '')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/^>\s+/gm, '')
+    .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+    .replace(/\n+/g, ' ')
+    .trim()
+}
+
+function openModal(type, item) {
+  modal.type = type
+  modal.item = item
+  modal.visible = true
+}
+
+function navigateFromModal() {
+  const item = modal.item
+  const type = modal.type
+  modal.visible = false
+  if (type === 'issue') goToIssue(item)
+  else goToQuestion(item)
+}
+
 // ── 바로가기 네비게이션 ──
 function goToQuestion(q) {
   router.push({ path: '/progress', query: { week: q.week, focusQuestion: q.id } })
@@ -627,6 +698,10 @@ onMounted(refresh)
   color: var(--text-primary);
   line-height: 1.4;
   word-break: keep-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .issue-text {
@@ -634,7 +709,10 @@ onMounted(refresh)
   color: var(--text-primary);
   line-height: 1.4;
   word-break: keep-all;
-  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .panel-item-sub {
@@ -930,5 +1008,105 @@ onMounted(refresh)
   background: var(--gray-50);
   border-radius: var(--radius-sm);
   padding: 6px 10px;
+}
+
+/* ── 이슈/질문 상세 모달 ── */
+.dash-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dash-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 580px;
+  max-width: 92vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  animation: modal-in 0.15s ease;
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.dash-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--outline);
+  font-weight: 600;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.dash-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 4px;
+}
+.dash-modal-close:hover { color: var(--text-primary); background: var(--gray-50); }
+.dash-modal-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--outline);
+  flex-shrink: 0;
+}
+.dash-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+.dash-modal-md {
+  background: transparent !important;
+  padding: 0 !important;
+}
+.dash-modal-q {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.7;
+  margin-bottom: 16px;
+  white-space: pre-wrap;
+  word-break: keep-all;
+}
+.dash-modal-a-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--outline);
+}
+.dash-modal-no-answer {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.dash-modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--outline);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.badge-purple {
+  background: #ede9fe;
+  color: #6d28d9;
 }
 </style>
