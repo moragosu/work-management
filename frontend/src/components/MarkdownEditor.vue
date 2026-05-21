@@ -19,26 +19,6 @@
       </template>
     </MdEditor>
 
-    <!-- 이미지 사이즈 피커 -->
-    <div v-if="pending.visible" class="img-size-picker">
-      <img :src="pending.url" class="img-size-thumb" />
-      <div class="img-size-controls">
-        <span class="img-size-label">너비 (px)</span>
-        <input
-          v-model="pending.width"
-          ref="widthInputRef"
-          type="number"
-          min="50"
-          max="2000"
-          placeholder="원본"
-          class="img-size-input"
-          @keyup.enter="insertImage"
-        />
-        <button class="btn btn-primary btn-xs" @click="insertImage">삽입</button>
-        <button class="btn btn-ghost btn-xs" @click="cancelInsert">취소</button>
-      </div>
-    </div>
-
     <div v-if="uploadError" class="upload-error-msg">{{ uploadError }}</div>
 
     <div v-if="showHelp" class="help-panel">
@@ -54,7 +34,7 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, nextTick } from 'vue'
+import { ref, computed } from 'vue'
 import { MdEditor, NormalToolbar } from 'md-editor-v3'
 import axios from 'axios'
 
@@ -71,30 +51,14 @@ const content = computed({
 
 const editorHeight = computed(() => props.height)
 const showHelp = ref(false)
-const widthInputRef = ref(null)
 
-// ── 이미지 사이즈 피커 ──
-const pending = reactive({ visible: false, url: '', width: '' })
-
-function showPicker(url) {
-  pending.url = url
-  pending.width = ''
-  pending.visible = true
-  nextTick(() => widthInputRef.value?.focus())
-}
-
-function insertImage() {
-  const w = parseInt(pending.width)
-  const url = pending.url
+function insertImageWithPrompt(url) {
+  const input = window.prompt('이미지 너비 (px) — 비워두면 원본 크기:', '')
+  const w = parseInt(input)
   const markdown = w > 0
     ? `<img src="${url}" width="${w}" style="max-width:100%;height:auto">`
     : `![image](${url})`
   content.value = (content.value ? content.value + '\n' : '') + markdown
-  pending.visible = false
-}
-
-function cancelInsert() {
-  pending.visible = false
 }
 
 // ── 업로드 에러 피드백 ──
@@ -136,9 +100,8 @@ async function handleUpload(files, callback) {
         return data.url
       })
     )
-    // 라이브러리 auto-insert 막고 사이즈 피커로 대체
-    callback([])
-    if (urls.length > 0) showPicker(urls[0])
+    callback([]) // 라이브러리 자동 삽입 방지
+    if (urls.length > 0) insertImageWithPrompt(urls[0])
   } catch (e) {
     const msg = e?.response?.data?.detail || e?.message || '알 수 없는 오류'
     showUploadError(`이미지 업로드 실패: ${msg}`)
@@ -178,48 +141,6 @@ function sanitize(html) {
   overflow: hidden;
 }
 
-/* 이미지 사이즈 피커 */
-.img-size-picker {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background: #f0f4ff;
-  border: 1px solid var(--primary-light);
-  border-top: none;
-  flex-wrap: wrap;
-}
-.img-size-thumb {
-  height: 48px;
-  max-width: 80px;
-  object-fit: contain;
-  border-radius: 4px;
-  border: 1px solid var(--outline);
-  background: #fff;
-}
-.img-size-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.img-size-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-.img-size-input {
-  width: 80px;
-  padding: 4px 8px;
-  border: 1px solid var(--outline);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  background: #fff;
-}
-.img-size-input:focus {
-  outline: none;
-  border-color: var(--primary);
-}
 
 .help-trigger {
   display: inline-flex;

@@ -9,19 +9,28 @@ function extractUploadUrls(text) {
   return urls
 }
 
+async function deleteUrl(url) {
+  const filename = url.split('/').pop()
+  await axios.delete(`/api/upload/${filename}`)
+}
+
 // 이전/이후 텍스트를 비교해 제거된 업로드 이미지 삭제
 export async function deleteOrphanedImages(oldText, newText) {
-  const removed = [...extractUploadUrls(oldText)].filter(u => !extractUploadUrls(newText).has(u))
-  await Promise.allSettled(
-    removed.map(url => axios.delete(`/api/upload/${url.split('/').pop()}`))
-  )
+  const newUrls = extractUploadUrls(newText)
+  const removed = [...extractUploadUrls(oldText)].filter(u => !newUrls.has(u))
+  const results = await Promise.allSettled(removed.map(deleteUrl))
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') console.warn('[이미지 삭제 실패]', removed[i], r.reason?.response?.status, r.reason?.message)
+  })
 }
 
 // 텍스트 내 모든 업로드 이미지 삭제 (항목 삭제 시)
 export async function deleteAllImages(...texts) {
   const urls = new Set()
   texts.forEach(t => extractUploadUrls(t).forEach(u => urls.add(u)))
-  await Promise.allSettled(
-    [...urls].map(url => axios.delete(`/api/upload/${url.split('/').pop()}`))
-  )
+  const list = [...urls]
+  const results = await Promise.allSettled(list.map(deleteUrl))
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') console.warn('[이미지 삭제 실패]', list[i], r.reason?.response?.status, r.reason?.message)
+  })
 }
