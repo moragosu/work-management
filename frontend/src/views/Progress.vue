@@ -3,7 +3,7 @@
     <div class="page-header">
       <div>
         <h2>주간 진행 현황</h2>
-        <div class="subtitle">주차별 과제 진행 상황 및 Q&A</div>
+        <div class="subtitle">주차별 과제 진행 상황 및 의견/질문</div>
       </div>
     </div>
 
@@ -113,7 +113,7 @@
                     <span class="sub-task-name">{{ st.name || '(이름 없음)' }}</span>
                     <template v-if="!expandedSubTaskIds.has(st.id)">
                       <span v-if="(issueMap[st.id] || []).length > 0" class="subtask-sum-badge subtask-sum-issue">이슈 {{ (issueMap[st.id] || []).length }}건</span>
-                      <span v-if="getQuestionsForTask(st.id).length > 0" class="subtask-sum-badge subtask-sum-qa">Q&A {{ getQuestionsForTask(st.id).length }}건</span>
+                      <span v-if="getQuestionsForTask(st.id).length > 0" class="subtask-sum-badge subtask-sum-qa">의견/질문 {{ getQuestionsForTask(st.id).length }}건</span>
                     </template>
                   </div>
                   <div class="sub-task-meta" @click.stop>
@@ -233,7 +233,7 @@
                 @update:issues="iss => onIssuesUpdate(task.id, iss)"
               />
 
-              <!-- ③ Q&A -->
+              <!-- ③ 의견/질문 -->
               <QASection
                 :questions="getQuestionsForTask(task.id)"
                 :staff-list="staffList"
@@ -377,7 +377,7 @@ async function toggleSubTaskDone(taskId, subTaskId, done) {
   } catch (e) { toastError(e, '소과제 상태 변경 실패') }
 }
 
-// ── Q&A 업데이트 핸들러 ──
+// ── 의견/질문 업데이트 핸들러 ──
 function onQuestionsUpdate(taskId, newQuestions) {
   const others = qnaList.value.filter(q => q.task_id !== taskId)
   qnaList.value = [...others, ...newQuestions]
@@ -426,7 +426,7 @@ async function deleteLink(taskId) {
   } catch (e) { toastError(e, '링크 삭제 실패') }
 }
 
-// ── Q&A 로드 ──
+// ── 의견/질문 로드 ──
 async function loadQnA() {
   const { data } = await axios.get('/api/qna/questions', { params: { week: selectedWeek.value } })
   qnaList.value = data

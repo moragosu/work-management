@@ -2,7 +2,7 @@
   <div>
     <div class="section-label">
       <span class="material-symbols-outlined section-icon">forum</span>
-      Q&A
+      의견/질문
     </div>
 
     <div v-for="qa in questions" :key="qa.id" :id="'qa-' + qa.id" class="qa-block">
@@ -52,8 +52,8 @@
           <button class="btn btn-ghost btn-xs" @click="copyLink('question', qa.id)" data-tooltip="링크 복사 — 메신저 공유용">
             <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">link</span>
           </button>
-          <button class="btn btn-ghost btn-xs" @click="startEditQuestion(qa)" data-tooltip="질문 수정">수정</button>
-          <button class="btn btn-danger btn-xs" @click="deleteQuestion(qa.id)" data-tooltip="질문 및 모든 답변 삭제">삭제</button>
+          <button class="btn btn-ghost btn-xs" @click="startEditQuestion(qa)" data-tooltip="의견/질문 수정">수정</button>
+          <button class="btn btn-danger btn-xs" @click="deleteQuestion(qa.id)" data-tooltip="의견/질문 및 모든 답변 삭제">삭제</button>
         </div>
       </div>
 
@@ -146,11 +146,11 @@
       <MarkdownEditor v-model="newQuestionText" height="160px" />
       <div class="flex gap-8 mt-8" style="justify-content:flex-end">
         <button class="btn btn-ghost btn-sm" @click="cancelAddQuestion">취소</button>
-        <button class="btn btn-primary btn-sm" @click="addQuestion" :disabled="!hasContent(newQuestionText) || (questioners.length > 0 && !newQuestioner)">질문 추가</button>
+        <button class="btn btn-primary btn-sm" @click="addQuestion" :disabled="!hasContent(newQuestionText) || (questioners.length > 0 && !newQuestioner)">등록</button>
       </div>
     </div>
     <div v-else class="mt-8">
-      <button class="btn btn-ghost btn-sm" @click="openAddQuestion" data-tooltip="이 과제에 질문 등록">+ 질문 추가</button>
+      <button class="btn btn-ghost btn-sm" @click="openAddQuestion" data-tooltip="이 과제에 의견/질문 등록">+ 의견/질문 추가</button>
     </div>
 
   </div>
@@ -162,7 +162,7 @@
     <div v-if="pwModal.open" class="pw-overlay" @click.self="closePwModal">
       <div class="pw-dialog">
         <div class="pw-title">관리자 암호 확인</div>
-        <p class="pw-desc">질문과 모든 답변이 삭제됩니다.<br>관리자 암호를 입력해주세요.</p>
+        <p class="pw-desc">의견/질문과 모든 답변이 삭제됩니다.<br>관리자 암호를 입력해주세요.</p>
         <input
           ref="pwInputRef"
           v-model="pwModal.value"
@@ -245,8 +245,8 @@ async function addQuestion() {
     })
     emit('update:questions', [...props.questions, data])
     cancelAddQuestion()
-    showToast('질문이 추가되었습니다')
-  } catch (e) { toastError(e, '질문 추가 실패') }
+    showToast('의견/질문이 추가되었습니다')
+  } catch (e) { toastError(e, '의견/질문 추가 실패') }
 }
 
 // ── 질문 수정 ──
@@ -279,7 +279,7 @@ async function updateQuestion(questionId) {
     emit('update:questions', props.questions.map(q => q.id === questionId ? { ...q, ...data } : q))
     cancelEditQuestion()
     showToast('수정되었습니다')
-  } catch (e) { toastError(e, '질문 수정 실패') }
+  } catch (e) { toastError(e, '의견/질문 수정 실패') }
 }
 
 // ── 질문 삭제 (비밀번호 확인) ──
@@ -310,7 +310,7 @@ async function confirmDelete() {
     emit('update:questions', props.questions.filter(q => q.id !== pwModal.value.questionId))
     closePwModal()
     showToast('삭제되었습니다')
-  } catch (e) { toastError(e, '질문 삭제 실패') }
+  } catch (e) { toastError(e, '의견/질문 삭제 실패') }
 }
 
 // ── 답변 ──

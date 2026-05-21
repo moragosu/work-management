@@ -18,7 +18,7 @@
           <div class="card-body stat-card">
             <span class="material-symbols-outlined stat-icon" :class="unansweredQuestions.length ? 'stat-icon-orange' : 'stat-icon-green'">quiz</span>
             <div class="stat-value" :style="unansweredQuestions.length ? 'color:var(--orange,#f97316)' : 'color:var(--success)'">{{ unansweredQuestions.length }}</div>
-            <div class="stat-label">미답변 Q&A</div>
+            <div class="stat-label">미답변 의견/질문</div>
           </div>
         </div>
         <div class="card stat-accent" :class="weekIssues.length ? 'stat-accent-yellow' : 'stat-accent-green'" data-tooltip="이번 주 등록된 이슈 수" data-tooltip-pos="bottom">
@@ -50,14 +50,14 @@
       <!-- ② 액션 패널 3종 -->
       <div class="grid-3" style="margin-bottom:24px;align-items:start">
 
-        <!-- 미답변 질문 -->
+        <!-- 미답변 의견/질문 -->
         <div class="card action-panel">
           <div class="card-header panel-header-toggle" @click="panelExpanded.questions = !panelExpanded.questions" data-tooltip="클릭하여 펼치기 / 접기">
             <div class="panel-title">
               <span class="panel-icon" style="background:#fff7ed;color:var(--orange)">
                 <span class="material-symbols-outlined">forum</span>
               </span>
-              미답변 질문
+              미답변 의견/질문
             </div>
             <span class="badge" :class="unansweredQuestions.length ? 'badge-orange' : 'badge-gray'">
               {{ unansweredQuestions.length }}건
@@ -67,7 +67,7 @@
           <div class="card-body panel-body">
             <div v-if="actionLoading" class="loading-center" style="padding:24px"><div class="spinner"></div></div>
             <div v-else-if="unansweredQuestions.length === 0" class="panel-empty">
-              미답변 질문이 없습니다 👍
+              미답변 의견/질문이 없습니다 👍
             </div>
             <ul v-else class="panel-list" :class="{ 'panel-list-expanded': panelExpanded.questions }">
               <li v-for="q in unansweredQuestions" :key="q.id" class="panel-item panel-item-link" @click="openModal('question', q)">
@@ -173,7 +173,7 @@
                     <th>파트원</th>
                     <th data-tooltip="배정된 과제 수 (누적)">담당 과제</th>
                     <th data-tooltip="등록한 이슈 수 (누적)">이슈 등록</th>
-                    <th data-tooltip="Q&A에 달린 답변 수 (누적)">Q&A 답변</th>
+                    <th data-tooltip="의견/질문에 달린 답변 수 (누적)">의견/질문 답변</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -220,7 +220,7 @@
             <div class="matrix-legend-inline">
               <span class="material-symbols-outlined matrix-legend-icon matrix-icon-link">link</span><span>컨플루언스</span>
               <span class="material-symbols-outlined matrix-legend-icon matrix-icon-issue">warning</span><span>이슈</span>
-              <span class="matrix-count matrix-count-legend">N</span><span>Q&A</span>
+              <span class="matrix-count matrix-count-legend">N</span><span>의견/질문</span>
             </div>
             <span class="material-symbols-outlined section-chevron" :class="{ open: matrixOpen }">expand_more</span>
           </div>
@@ -245,7 +245,7 @@
                           <span class="material-symbols-outlined matrix-icon matrix-icon-link">link</span>
                         </a>
                         <span v-if="issueMap[row.id]?.has(w)" class="material-symbols-outlined matrix-icon matrix-icon-issue" title="이슈 등록">warning</span>
-                        <span v-if="qnaMap[row.id]?.[w]" class="matrix-count matrix-count-sm" :title="`Q&A ${qnaMap[row.id][w]}건`">{{ qnaMap[row.id][w] }}</span>
+                        <span v-if="qnaMap[row.id]?.[w]" class="matrix-count matrix-count-sm" :title="`의견/질문 ${qnaMap[row.id][w]}건`">{{ qnaMap[row.id][w] }}</span>
                         <span v-if="!confluenceMap[row.id]?.has(w) && !issueMap[row.id]?.has(w) && !qnaMap[row.id]?.[w]" class="matrix-dot-no">–</span>
                       </div>
                     </td>

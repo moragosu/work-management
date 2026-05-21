@@ -51,7 +51,7 @@
             <span class="material-symbols-outlined menu-card-icon icon-orange">assignment</span>
             <div>
               <div class="menu-card-title">주간 진행 현황</div>
-              <div class="menu-card-desc">주차별 이슈 등록 및 Q&A 관리 — 파트원들이 주로 사용하는 화면</div>
+              <div class="menu-card-desc">주차별 이슈 등록 및 의견/질문 관리 — 파트원들이 주로 사용하는 화면</div>
             </div>
           </div>
           <div class="menu-card">
@@ -80,7 +80,7 @@
             상단 통계 카드 (4개)
           </div>
           <ul class="feature-list">
-            <li><strong>미답변 Q&A</strong> — 전체 기간 중 아직 답변이 없는 질문 수. 주황색이면 확인 필요, 초록이면 양호</li>
+            <li><strong>미답변 의견/질문</strong> — 전체 기간 중 아직 답변이 없는 질문 수. 주황색이면 확인 필요, 초록이면 양호</li>
             <li><strong>이번 주 이슈</strong> — 이번 주 등록된 이슈 수</li>
             <li><strong>미배정 과제</strong> — 담당자가 지정되지 않은 과제 수</li>
             <li><strong>컨플루언스 등록률</strong> — 이번 주 컨플루언스 링크를 등록한 과제 비율. 진행 바로 확인 가능</li>
@@ -93,7 +93,7 @@
             액션 패널 (3가지)
           </div>
           <ul class="feature-list">
-            <li><strong>미답변 질문</strong> — 전체 기간 누적 미답변 목록. 항목에 <em>과제명 + 주차</em>가 표시되며, 클릭하면 해당 주차의 해당 Q&A 위치로 바로 이동합니다</li>
+            <li><strong>미답변 의견/질문</strong> — 전체 기간 누적 미답변 목록. 항목에 <em>과제명 + 주차</em>가 표시되며, 클릭하면 해당 주차의 해당 의견/질문 위치로 바로 이동합니다</li>
             <li><strong>이슈</strong> — 이번 주 등록된 이슈 목록. 클릭하면 해당 과제의 이슈 위치로 이동</li>
             <li><strong>미배정 과제</strong> — 담당자가 없는 과제 목록. 클릭하면 관리 도구 과제 탭으로 이동</li>
           </ul>
@@ -105,7 +105,7 @@
             파트원별 활동 현황
           </div>
           <ul class="feature-list">
-            <li>각 파트원의 <strong>담당 과제 수 / 이슈 등록 수 / Q&A 답변 수</strong>를 막대 그래프로 비교</li>
+            <li>각 파트원의 <strong>담당 과제 수 / 이슈 등록 수 / 의견/질문 답변 수</strong>를 막대 그래프로 비교</li>
             <li>가장 최근에 등록한 이슈도 함께 표시됩니다</li>
             <li>우측 상단에 <strong>파트원 N명</strong> 배지로 인원 수를 확인할 수 있습니다</li>
           </ul>
@@ -117,7 +117,7 @@
             주간 등록 현황 매트릭스
           </div>
           <ul class="feature-list">
-            <li>과제(행) × 주차(열) 기준으로 <strong>컨플루언스 · 이슈 · Q&A</strong> 등록 여부를 한눈에 확인합니다</li>
+            <li>과제(행) × 주차(열) 기준으로 <strong>컨플루언스 · 이슈 · 의견/질문</strong> 등록 여부를 한눈에 확인합니다</li>
             <li><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;color:var(--primary)">link</span> <strong>링크 아이콘</strong>을 클릭하면 해당 컨플루언스 페이지가 바로 열립니다</li>
             <li>섹션 제목을 클릭하면 매트릭스를 접거나 펼칠 수 있습니다</li>
             <li>현재 주차 열은 파란색 배경으로 강조됩니다</li>
@@ -133,7 +133,7 @@
           <span class="material-symbols-outlined section-icon-lg">assignment</span>
           <h3 class="section-title">주간 진행 현황</h3>
         </div>
-        <p class="section-desc">파트원들이 매주 이슈를 등록하고, 서로 Q&A를 통해 소통하는 화면입니다.</p>
+        <p class="section-desc">파트원들이 매주 이슈를 등록하고, 서로 의견/질문을 통해 소통하는 화면입니다.</p>
 
         <!-- 주차 선택 -->
         <div class="sub-section">
@@ -207,25 +207,25 @@
           </div>
         </div>
 
-        <!-- Q&A -->
+        <!-- 의견/질문 -->
         <div class="sub-section">
           <div class="sub-section-title">
             <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">forum</span>
-            Q&A 사용법
+            의견/질문 사용법
           </div>
           <ul class="feature-list">
-            <li>과제 카드 하단 <strong>Q&A 섹션</strong>에서 <strong>"+ 질문 추가"</strong>를 클릭해 질문을 등록합니다</li>
+            <li>과제 카드 하단 <strong>의견/질문 섹션</strong>에서 <strong>"+ 의견/질문 추가"</strong>를 클릭해 질문을 등록합니다</li>
             <li>질문 작성 전 <strong>질문 대상자를 선택</strong>할 수 있습니다 — 복수 선택 가능하며, 선택하지 않으면 대상자 없이 등록됩니다</li>
             <li>등록된 질문에는 선택한 대상자가 <strong>→ 이름</strong> 형태로 표시됩니다</li>
             <li>답변이 없는 질문에는 <span class="inline-badge badge-green">A</span> 옆에 <strong>"답변 달기"</strong> 버튼이 표시됩니다</li>
             <li>답변 작성 시 <strong>작성자(본인 이름)를 반드시 선택</strong>해야 저장됩니다</li>
             <li>하나의 질문에 여러 명이 <strong>"+ 답변 추가"</strong>로 추가 답변을 달 수 있습니다</li>
             <li>질문 우측의 <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">link</span> 버튼을 클릭하면 해당 질문으로 바로 이동하는 <strong>단축 링크</strong>가 복사됩니다 — 메신저로 공유하면 받는 사람이 바로 해당 위치로 이동합니다</li>
-            <li>질문 삭제 시 <span class="highlight-red">해당 질문의 모든 답변도 함께 삭제</span>됩니다 — 삭제 전 <strong>관리자 암호 입력</strong>이 필요합니다</li>
+            <li>의견/질문 삭제 시 <span class="highlight-red">해당 의견/질문의 모든 답변도 함께 삭제</span>됩니다 — 삭제 전 <strong>관리자 암호 입력</strong>이 필요합니다</li>
           </ul>
           <div class="callout callout-tip">
             <span class="material-symbols-outlined callout-icon">star</span>
-            <div>대시보드의 <strong>미답변 질문 패널</strong>에서 항목을 클릭하면 해당 주차로 이동하며 Q&A 위치로 자동 스크롤됩니다. 소과제 질문이면 해당 소과제 카드가 자동으로 펼쳐집니다. 대상자가 지정된 질문은 패널에서 대상자 이름도 함께 표시됩니다.</div>
+            <div>대시보드의 <strong>미답변 의견/질문 패널</strong>에서 항목을 클릭하면 해당 주차로 이동하며 의견/질문 위치로 자동 스크롤됩니다. 소과제 의견/질문이면 해당 소과제 카드가 자동으로 펼쳐집니다. 대상자가 지정된 의견/질문은 패널에서 대상자 이름도 함께 표시됩니다.</div>
           </div>
         </div>
 
@@ -239,9 +239,9 @@
             <li>소과제가 있는 과제 카드는 상단에 <strong>"소과제 N개"</strong> 배지와 <strong>"전체 펼치기 / 전체 접기"</strong> 버튼이 표시됩니다</li>
             <li>각 소과제는 과제 카드 내부에 <strong>파란 왼쪽 테두리</strong>로 구분된 별도 섹션으로 표시되며, <strong>기본적으로 접힌 상태</strong>로 시작합니다</li>
             <li>소과제 헤더(상단 줄)를 <strong>클릭</strong>하면 내용이 펼쳐지거나 접힙니다. 헤더 우측의 완료 버튼·담당자 배지는 클릭해도 접히지 않습니다</li>
-            <li>접힌 상태에서 이슈나 Q&A 내용이 있으면 헤더에 <strong>요약 배지</strong>가 표시됩니다 — <em>이슈 N건</em>, <em>Q&A N건</em></li>
+            <li>접힌 상태에서 이슈나 의견/질문 내용이 있으면 헤더에 <strong>요약 배지</strong>가 표시됩니다 — <em>이슈 N건</em>, <em>의견/질문 N건</em></li>
             <li><strong>컨플루언스 링크</strong>는 소과제별로 독립 등록됩니다 — 소과제가 있으면 모과제 단위 링크 대신 각 소과제 섹션 내부에 링크 입력란이 표시됩니다</li>
-            <li>이슈 등록과 Q&A도 <strong>소과제별로 독립적으로</strong> 관리됩니다</li>
+            <li>이슈 등록과 의견/질문도 <strong>소과제별로 독립적으로</strong> 관리됩니다</li>
             <li>소과제가 완료 처리되면 해당 섹션은 <strong>녹색 테두리</strong>로 바뀌고 흐릿하게 표시됩니다</li>
           </ul>
           <div class="callout callout-tip">
@@ -300,7 +300,7 @@
           <span class="material-symbols-outlined section-icon-lg">edit_note</span>
           <h3 class="section-title">마크다운 작성법</h3>
         </div>
-        <p class="section-desc">이슈 내용과 Q&A는 마크다운 형식을 지원합니다. 에디터 상단 툴바 버튼으로도 적용할 수 있습니다.</p>
+        <p class="section-desc">이슈 내용과 의견/질문는 마크다운 형식을 지원합니다. 에디터 상단 툴바 버튼으로도 적용할 수 있습니다.</p>
 
         <div class="md-table">
           <div class="md-row md-header">
@@ -376,7 +376,7 @@
           </ul>
           <div class="callout callout-info">
             <span class="material-symbols-outlined callout-icon">lightbulb</span>
-            <div>소과제가 있는 과제는 <strong>주간 진행 현황</strong>에서 모과제 카드 안에 소과제별 섹션이 펼쳐집니다. 이슈·Q&A·컨플루언스 링크가 소과제 단위로 독립 관리됩니다.</div>
+            <div>소과제가 있는 과제는 <strong>주간 진행 현황</strong>에서 모과제 카드 안에 소과제별 섹션이 펼쳐집니다. 이슈·의견/질문·컨플루언스 링크가 소과제 단위로 독립 관리됩니다.</div>
           </div>
         </div>
 
@@ -502,7 +502,7 @@ const faqs = reactive([
   },
   {
     q: '이슈나 질문을 삭제하면 복구되나요?',
-    a: '삭제된 항목은 복구되지 않습니다. 질문 삭제는 관리자 암호(관리 도구 잠금과 동일한 암호)를 입력해야 진행할 수 있으며, 삭제 시 해당 질문의 모든 답변도 함께 삭제됩니다. 이슈 삭제는 별도 암호 없이 가능합니다.',
+    a: '삭제된 항목은 복구되지 않습니다. 의견/질문 삭제는 관리자 암호(관리 도구 잠금과 동일한 암호)를 입력해야 진행할 수 있으며, 삭제 시 해당 의견/질문의 모든 답변도 함께 삭제됩니다. 이슈 삭제는 별도 암호 없이 가능합니다.',
     open: false,
   },
   {
@@ -532,7 +532,7 @@ const faqs = reactive([
   },
   {
     q: '소과제란 무엇이고 어떻게 추가하나요?',
-    a: '소과제는 하나의 과제를 세부 작업 단위로 나눈 것입니다. 관리 도구 → 과제 탭에서 수정 모달을 열면 하단에 "소과제 추가" 버튼이 표시됩니다. 소과제 ID는 T1-1, T1-2 형식으로 자동 부여되며, 각 소과제를 파트원의 담당 과제로 지정할 수 있습니다. 주간 진행 현황에서는 소과제별 이슈와 Q&A를 독립적으로 관리할 수 있습니다.',
+    a: '소과제는 하나의 과제를 세부 작업 단위로 나눈 것입니다. 관리 도구 → 과제 탭에서 수정 모달을 열면 하단에 "소과제 추가" 버튼이 표시됩니다. 소과제 ID는 T1-1, T1-2 형식으로 자동 부여되며, 각 소과제를 파트원의 담당 과제로 지정할 수 있습니다. 주간 진행 현황에서는 소과제별 이슈와 의견/질문을 독립적으로 관리할 수 있습니다.',
     open: false,
   },
   {
