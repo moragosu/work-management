@@ -1,11 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload, settings, issues, go, feedback
 import uvicorn
 import os
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'uploads')
+DIST_DIR = os.path.join(os.path.dirname(__file__), '..', 'dist')
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 app = FastAPI(title="OKR Management API", version="1.0.0")
@@ -34,10 +36,24 @@ app.include_router(go.api_router, prefix="/api/go", tags=["ShortLink"])
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
+# dist 폴더가 있으면 빌드된 프론트엔드 서빙 (SPA 라우팅 포함)
+if os.path.isdir(DIST_DIR):
+    app.mount("/assets", StaticFiles(directory=os.path.join(DIST_DIR, "assets")), name="assets")
 
-@app.get("/api/health")
-def health_check():
-    return {"status": "ok"}
+    @app.get("/api/health")
+    def health_check():
+        return {"status": "ok"}
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        file_path = os.path.join(DIST_DIR, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(DIST_DIR, "index.html"))
+else:
+    @app.get("/api/health")
+    def health_check():
+        return {"status": "ok"}
 
 
 if __name__ == "__main__":
