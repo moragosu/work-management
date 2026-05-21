@@ -445,8 +445,8 @@ async function loadIssues() {
 
 // ── 포커스 이동 ──
 async function handleFocusQuery() {
-  const { focusQuestion, focusIssue, focusIssueId } = route.query
-  if (!focusQuestion && !focusIssue && !focusIssueId) return
+  const { focusQuestion, focusIssue, focusIssueId, focusTask } = route.query
+  if (!focusQuestion && !focusIssue && !focusIssueId && !focusTask) return
 
   // 소과제 자동 전개
   if (focusQuestion) {
@@ -464,6 +464,13 @@ async function handleFocusQuery() {
       expandedSubTaskIds.value = new Set([...expandedSubTaskIds.value, iss.task_id])
     }
   }
+  if (focusTask) {
+    // 소과제 ID인 경우 해당 소과제 자동 전개
+    const isSubTask = tasks.value.some(t => (t.sub_tasks || []).some(st => st.id === focusTask))
+    if (isSubTask) {
+      expandedSubTaskIds.value = new Set([...expandedSubTaskIds.value, focusTask])
+    }
+  }
 
   await nextTick()
   await new Promise(r => setTimeout(r, 80))
@@ -472,11 +479,10 @@ async function handleFocusQuery() {
     ? `qa-${focusQuestion}`
     : focusIssueId
       ? `issue-${focusIssueId}`
-      : `task-${focusIssue}`
+      : `task-${focusIssue || focusTask}`
 
   let el = document.getElementById(targetId)
   if (!el) {
-    // 소과제 확장 후 DOM 렌더링 대기 후 재시도
     await nextTick()
     await new Promise(r => setTimeout(r, 200))
     el = document.getElementById(targetId)

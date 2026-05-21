@@ -242,7 +242,7 @@
                 </thead>
                 <tbody>
                   <tr v-for="row in flatTaskRows" :key="row.id">
-                    <td class="matrix-task-td">
+                    <td class="matrix-task-td matrix-task-link" @click="goToProgressTask(row)" data-tooltip="진행현황에서 보기">
                       <span v-if="row.parentName" class="matrix-parent">{{ row.parentName }} › </span>{{ row.selfName }}
                     </td>
                     <td v-for="w in allWeeks" :key="w" class="matrix-cell" :class="{ 'matrix-col-current': w === currentWeek }">
@@ -587,6 +587,9 @@ function goToIssue(p) {
 }
 function goToTask(t) {
   router.push({ path: '/admin', query: { tab: 'task', focusTask: t.id } })
+}
+function goToProgressTask(row) {
+  router.push({ path: '/progress', query: { week: currentWeek, focusTask: row.id } })
 }
 
 // ── 데이터 로드 ──
@@ -997,6 +1000,14 @@ onMounted(refresh)
   position: sticky;
   left: 0;
   z-index: 1;
+}
+.matrix-task-link {
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.matrix-task-link:hover {
+  background: var(--primary-light);
+  color: var(--primary);
 }
 .matrix-parent {
   color: var(--text-muted);
