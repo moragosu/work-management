@@ -191,6 +191,7 @@ import { useToast } from '../../composables/useToast.js'
 import { hasContent } from '../../utils/content.js'
 import { ADMIN_PASSWORD } from '../../config.js'
 import { copyToClipboard } from '../../utils/clipboard.js'
+import { deleteOrphanedImages, deleteAllImages } from '../../composables/useImageCleanup.js'
 
 const props = defineProps({
   questions:   { type: Array, default: () => [] },
@@ -271,11 +272,13 @@ function cancelEditQuestion() {
 async function updateQuestion(questionId) {
   if (!hasContent(editingQuestionText.value)) return
   try {
+    const oldQ = props.questions.find(q => q.id === questionId)
     const { data } = await axios.put(`/api/qna/questions/${questionId}`, {
       question: editingQuestionText.value.trim(),
       targets: [...editingTargets.value],
       questioner: editingQuestioner.value || '',
     })
+    await deleteOrphanedImages(oldQ?.question, editingQuestionText.value)
     emit('update:questions', props.questions.map(q => q.id === questionId ? { ...q, ...data } : q))
     cancelEditQuestion()
     showToast('수정되었습니다')
@@ -304,9 +307,14 @@ async function confirmDelete() {
     return
   }
   try {
+    const target = props.questions.find(q => q.id === pwModal.value.questionId)
     await axios.delete(`/api/qna/questions/${pwModal.value.questionId}`, {
       headers: { 'X-Admin-Password': ADMIN_PASSWORD },
     })
+    if (target) {
+      const allTexts = [target.question, ...(target.answers || []).map(a => a.answer)]
+      await deleteAllImages(...allTexts)
+    }
     emit('update:questions', props.questions.filter(q => q.id !== pwModal.value.questionId))
     closePwModal()
     showToast('삭제되었습니다')
@@ -343,9 +351,11 @@ async function addAnswer(questionId) {
 async function updateAnswer(answerId) {
   if (!hasContent(editingAnswerText.value) || !editingAnswerBy.value) return
   try {
+    const oldAnswer = props.questions.flatMap(q => q.answers || []).find(a => a.id === answerId)
     const { data } = await axios.put(`/api/qna/answers/${answerId}`, {
       answer: editingAnswerText.value.trim(), answer_by: editingAnswerBy.value,
     })
+    await deleteOrphanedImages(oldAnswer?.answer, editingAnswerText.value)
     emit('update:questions', props.questions.map(q => ({
       ...q,
       answers: q.answers?.map(a => a.id === answerId ? data : a) ?? [],
@@ -358,7 +368,9 @@ async function updateAnswer(answerId) {
 async function deleteAnswer(answerId, questionId) {
   if (!confirm('답변을 삭제하시겠습니까?')) return
   try {
+    const target = props.questions.flatMap(q => q.answers || []).find(a => a.id === answerId)
     await axios.delete(`/api/qna/answers/${answerId}`)
+    await deleteAllImages(target?.answer)
     emit('update:questions', props.questions.map(q =>
       q.id === questionId ? { ...q, answers: q.answers.filter(a => a.id !== answerId) } : q
     ))

@@ -111,6 +111,7 @@ import axios from 'axios'
 import { MdPreview } from 'md-editor-v3'
 import MarkdownEditor from '../components/MarkdownEditor.vue'
 import { useToast } from '../composables/useToast.js'
+import { deleteOrphanedImages, deleteAllImages } from '../composables/useImageCleanup.js'
 
 const { toastMsg, showToast, toastError } = useToast()
 
@@ -156,9 +157,11 @@ async function submitForm() {
   if (!form.category || !form.author || !form.title.trim()) return
   try {
     if (form.id) {
+      const oldContent = feedbacks.value.find(f => f.id === form.id)?.content
       const { data } = await axios.put(`/api/feedback/${form.id}`, {
         category: form.category, title: form.title, content: form.content, author: form.author,
       })
+      await deleteOrphanedImages(oldContent, form.content)
       feedbacks.value = feedbacks.value.map(f => f.id === form.id ? data : f)
       showToast('수정되었습니다')
     } else {
@@ -175,7 +178,9 @@ async function submitForm() {
 async function deleteFeedback(id) {
   if (!confirm('삭제하시겠습니까?')) return
   try {
+    const target = feedbacks.value.find(f => f.id === id)
     await axios.delete(`/api/feedback/${id}`)
+    await deleteAllImages(target?.content)
     feedbacks.value = feedbacks.value.filter(f => f.id !== id)
     showToast('삭제되었습니다')
   } catch (e) { toastError(e, '삭제 실패') }

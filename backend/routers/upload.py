@@ -27,3 +27,13 @@ async def upload_file(file: UploadFile = File(...)):
     img.save(filepath, format="PNG", optimize=True)
 
     return {"url": f"/uploads/{filename}"}
+
+
+@router.delete("/{filename}")
+async def delete_file(filename: str):
+    if not filename or '/' in filename or '\\' in filename or '..' in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    filepath = os.path.join(UPLOAD_DIR, filename)
+    if os.path.isfile(filepath):
+        os.remove(filepath)
+    return {"ok": True}

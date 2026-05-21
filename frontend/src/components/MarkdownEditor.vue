@@ -105,19 +105,23 @@ function showUploadError(msg) {
   uploadErrorTimer = setTimeout(() => { uploadError.value = '' }, 4000)
 }
 
-// ── paste 이벤트 fallback (items 기반) ──
+// ── paste 이벤트 — 모든 이미지 붙여넣기를 직접 처리 ──
 function onPaste(e) {
   const items = e.clipboardData?.items
   if (!items) return
-  if (e.clipboardData.files.length > 0) return // 라이브러리가 처리
-  const imageFiles = Array.from(items)
-    .filter(item => item.type.startsWith('image/'))
-    .map(item => item.getAsFile())
-    .filter(Boolean)
+  // files 우선, 없으면 items에서 추출
+  let imageFiles = Array.from(e.clipboardData.files || []).filter(f => f.type.startsWith('image/'))
+  if (imageFiles.length === 0) {
+    imageFiles = Array.from(items)
+      .filter(i => i.type.startsWith('image/'))
+      .map(i => i.getAsFile())
+      .filter(Boolean)
+  }
   if (imageFiles.length === 0) return
+  // 라이브러리가 paste를 가로채지 못하도록 차단
   e.stopPropagation()
   e.preventDefault()
-  handleUpload(imageFiles, () => {}) // callback은 사용 안 함(picker에서 직접 삽입)
+  handleUpload(imageFiles, () => {})
 }
 
 // ── 업로드 핸들러 ──
