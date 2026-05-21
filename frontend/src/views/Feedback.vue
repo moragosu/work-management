@@ -49,7 +49,7 @@
             </div>
           </div>
           <div class="feedback-card-body">
-            <MdPreview language="en-US" :modelValue="fb.content" class="md-preview-inline" />
+            <MdPreview language="en-US" :modelValue="fb.content" class="md-preview-inline" :noImgZoomIn="true" />
           </div>
         </div>
       </div>

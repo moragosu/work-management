@@ -8,6 +8,7 @@
       :style="{ height: editorHeight }"
       :showCodeRowNumber="false"
       :sanitize="sanitize"
+      :noImgZoomIn="true"
     >
       <template #defToolbars>
         <NormalToolbar title="마크다운 도움말" @onClick="showHelp = !showHelp">

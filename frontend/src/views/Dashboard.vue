@@ -321,13 +321,13 @@
         </div>
         <div class="dash-modal-body">
           <template v-if="modal.type === 'issue'">
-            <MdPreview language="en-US" :modelValue="modal.item.issue" class="dash-modal-md" />
+            <MdPreview language="en-US" :modelValue="modal.item.issue" class="dash-modal-md" :noImgZoomIn="true" />
           </template>
           <template v-else>
             <div class="dash-modal-q">{{ modal.item.question }}</div>
             <template v-if="modal.item.answers && modal.item.answers.length > 0">
               <div class="dash-modal-a-label">답변</div>
-              <MdPreview v-for="a in modal.item.answers" :key="a.id" language="en-US" :modelValue="a.answer" class="dash-modal-md" />
+              <MdPreview v-for="a in modal.item.answers" :key="a.id" language="en-US" :modelValue="a.answer" class="dash-modal-md" :noImgZoomIn="true" />
             </template>
             <div v-else class="dash-modal-no-answer">아직 답변이 없습니다.</div>
           </template>

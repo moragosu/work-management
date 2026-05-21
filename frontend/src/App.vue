@@ -69,7 +69,7 @@ const lightbox = reactive({ visible: false, src: '' })
 
 function handleImgClick(e) {
   if (e.target.tagName !== 'IMG') return
-  const inPreview = e.target.closest('.md-preview-inline, .md-editor-preview')
+  const inPreview = e.target.closest('.md-preview-inline, .dash-modal-md')
   if (!inPreview) return
   lightbox.src = e.target.src
   lightbox.visible = true

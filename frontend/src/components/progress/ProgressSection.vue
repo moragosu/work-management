@@ -23,7 +23,7 @@
       </template>
       <template v-else>
         <div class="issue-box">
-          <MdPreview language="en-US" :modelValue="iss.issue" class="md-preview-inline" />
+          <MdPreview language="en-US" :modelValue="iss.issue" class="md-preview-inline" :noImgZoomIn="true" />
         </div>
         <div class="flex gap-4 mt-8" style="align-items:center">
           <span v-if="iss.assignee" class="badge badge-gray">{{ iss.assignee }}</span>

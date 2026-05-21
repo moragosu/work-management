@@ -45,7 +45,7 @@
                 <span v-for="t in qa.targets" :key="t" class="badge badge-blue" style="font-size:11px">{{ t }}</span>
               </template>
             </div>
-            <MdPreview language="en-US" :modelValue="qa.question" class="md-preview-inline" />
+            <MdPreview language="en-US" :modelValue="qa.question" class="md-preview-inline" :noImgZoomIn="true" />
           </template>
         </div>
         <div v-if="editingQuestionId !== qa.id" class="qa-actions">
@@ -86,7 +86,7 @@
             </div>
           </template>
           <template v-else>
-            <MdPreview language="en-US" :modelValue="ans.answer" class="md-preview-inline" />
+            <MdPreview language="en-US" :modelValue="ans.answer" class="md-preview-inline" :noImgZoomIn="true" />
             <span class="answer-by">
               — {{ ans.answer_by }}
               <span class="answer-date">{{ ans.updated_at ?? ans.created_at }}</span>
