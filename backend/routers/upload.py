@@ -1,10 +1,13 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
+from PIL import Image
 import uuid
 import os
-import shutil
+import io
 
 router = APIRouter()
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), '..', 'uploads')
+MAX_WIDTH = 1200
+MAX_HEIGHT = 1200
 
 
 @router.post("")
@@ -12,9 +15,15 @@ async def upload_file(file: UploadFile = File(...)):
     if not file.content_type or not file.content_type.startswith('image/'):
         raise HTTPException(status_code=400, detail="이미지 파일만 업로드 가능합니다")
     os.makedirs(UPLOAD_DIR, exist_ok=True)
-    ext = file.filename.rsplit('.', 1)[-1] if file.filename and '.' in file.filename else 'png'
-    filename = f"{uuid.uuid4().hex}.{ext}"
+    filename = f"{uuid.uuid4().hex}.png"
     filepath = os.path.join(UPLOAD_DIR, filename)
-    with open(filepath, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+
+    data = await file.read()
+    img = Image.open(io.BytesIO(data))
+    if img.mode not in ("RGB", "RGBA"):
+        img = img.convert("RGBA")
+    if img.width > MAX_WIDTH or img.height > MAX_HEIGHT:
+        img.thumbnail((MAX_WIDTH, MAX_HEIGHT), Image.LANCZOS)
+    img.save(filepath, format="PNG", optimize=True)
+
     return {"url": f"/uploads/{filename}"}

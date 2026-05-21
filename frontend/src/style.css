@@ -649,3 +649,12 @@ tbody tr:last-child td { border-bottom: none; }
   outline-offset: 2px;
   border-radius: 8px;
 }
+
+
+/* 마크다운 프리뷰 이미지 최대 너비 제한 */
+.md-preview-inline img,
+.md-editor-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
