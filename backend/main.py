@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload, settings, issues, go
+from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload, settings, issues, go, feedback
 import uvicorn
 import os
 
@@ -28,6 +28,7 @@ app.include_router(confluence.router, prefix="/api/confluence", tags=["Confluenc
 app.include_router(upload.router, prefix="/api/upload", tags=["Upload"])
 app.include_router(settings.router, prefix="/api/settings", tags=["Settings"])
 app.include_router(issues.router, prefix="/api/issues", tags=["Issues"])
+app.include_router(feedback.router, prefix="/api/feedback", tags=["Feedback"])
 app.include_router(go.router, prefix="/go", tags=["ShortLink"])
 app.include_router(go.api_router, prefix="/api/go", tags=["ShortLink"])
 

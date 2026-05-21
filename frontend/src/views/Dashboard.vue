@@ -57,20 +57,26 @@
               <span class="panel-icon" style="background:#fff7ed;color:var(--orange)">
                 <span class="material-symbols-outlined">forum</span>
               </span>
-              미답변 의견/질문
+              {{ showAllQuestions ? '전체' : '미답변' }} 의견/질문
             </div>
-            <span class="badge" :class="unansweredQuestions.length ? 'badge-orange' : 'badge-gray'">
-              {{ unansweredQuestions.length }}건
+            <button
+              class="btn btn-ghost btn-xs q-toggle-btn"
+              :class="{ active: showAllQuestions }"
+              @click.stop="showAllQuestions = !showAllQuestions"
+              :data-tooltip="showAllQuestions ? '미답변만 보기' : '답변 완료 포함 전체 보기'"
+            >{{ showAllQuestions ? '전체' : '미답변' }}</button>
+            <span class="badge" :class="(showAllQuestions ? allQuestions : unansweredQuestions).length ? 'badge-orange' : 'badge-gray'">
+              {{ (showAllQuestions ? allQuestions : unansweredQuestions).length }}건
             </span>
             <span class="material-symbols-outlined section-chevron" :class="{ open: panelExpanded.questions }">expand_more</span>
           </div>
           <div class="card-body panel-body">
             <div v-if="actionLoading" class="loading-center" style="padding:24px"><div class="spinner"></div></div>
-            <div v-else-if="unansweredQuestions.length === 0" class="panel-empty">
-              미답변 의견/질문이 없습니다 👍
+            <div v-else-if="(showAllQuestions ? allQuestions : unansweredQuestions).length === 0" class="panel-empty">
+              {{ showAllQuestions ? '등록된 의견/질문이 없습니다' : '미답변 의견/질문이 없습니다 👍' }}
             </div>
             <ul v-else class="panel-list" :class="{ 'panel-list-expanded': panelExpanded.questions }">
-              <li v-for="q in unansweredQuestions" :key="q.id" class="panel-item panel-item-link" @click="openModal('question', q)">
+              <li v-for="q in (showAllQuestions ? allQuestions : unansweredQuestions)" :key="q.id" class="panel-item panel-item-link" @click="openModal('question', q)">
                 <div v-if="q.questioner || (q.targets && q.targets.length)" class="q-targets-row">
                   <span v-if="q.questioner" class="badge badge-purple" style="font-size:11px">{{ q.questioner }}</span>
                   <template v-if="q.targets && q.targets.length">
@@ -360,6 +366,7 @@ const loading = ref(false)
 const actionLoading = ref(false)
 const activityOpen = ref(true)
 const panelExpanded = reactive({ questions: false, issues: false, tasks: false })
+const showAllQuestions = ref(false)
 
 const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
 
@@ -854,6 +861,11 @@ onMounted(refresh)
   transition: background 0.15s;
 }
 .panel-header-toggle:hover { background: var(--gray-50); }
+.q-toggle-btn {
+  font-size: 11px; padding: 2px 8px; border-radius: 10px;
+  border: 1px solid var(--outline);
+}
+.q-toggle-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
 .panel-list-expanded {
   max-height: none !important;
   overflow-y: visible !important;
