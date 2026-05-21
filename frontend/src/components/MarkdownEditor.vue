@@ -1,5 +1,5 @@
 <template>
-  <div class="md-editor-wrap">
+  <div class="md-editor-wrap" @paste.capture="onPaste">
     <MdEditor
       v-model="content"
       language="en-US"
@@ -17,6 +17,8 @@
         </NormalToolbar>
       </template>
     </MdEditor>
+
+    <div v-if="uploadError" class="upload-error-msg">{{ uploadError }}</div>
 
     <div v-if="showHelp" class="help-panel">
       <div class="help-grid">
@@ -40,6 +42,14 @@ const props = defineProps({
   height: { type: String, default: '200px' },
 })
 const emit = defineEmits(['update:modelValue'])
+
+const uploadError = ref('')
+let uploadErrorTimer = null
+function showUploadError(msg) {
+  uploadError.value = msg
+  clearTimeout(uploadErrorTimer)
+  uploadErrorTimer = setTimeout(() => { uploadError.value = '' }, 4000)
+}
 
 const content = computed({
   get: () => props.modelValue,
@@ -74,6 +84,28 @@ function sanitize(html) {
   return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
 }
 
+function onPaste(e) {
+  const items = e.clipboardData?.items
+  if (!items) return
+  // md-editor-v3 handles paste when clipboardData.files is populated,
+  // but when copying images from webpages, files is empty while items has the image.
+  // This fallback covers that case.
+  if (e.clipboardData.files.length > 0) return // let the library handle it
+  const imageFiles = Array.from(items)
+    .filter(item => item.type.startsWith('image/'))
+    .map(item => item.getAsFile())
+    .filter(Boolean)
+  if (imageFiles.length === 0) return
+  e.stopPropagation()
+  e.preventDefault()
+  handleUpload(imageFiles, (urls) => {
+    if (urls.length > 0) {
+      const insertion = urls.map(url => `![image](${url})`).join('\n')
+      content.value = content.value ? content.value + '\n' + insertion : insertion
+    }
+  })
+}
+
 async function handleUpload(files, callback) {
   try {
     const urls = await Promise.all(
@@ -85,7 +117,9 @@ async function handleUpload(files, callback) {
       })
     )
     callback(urls)
-  } catch {
+  } catch (e) {
+    const msg = e?.response?.data?.detail || e?.message || '알 수 없는 오류'
+    showUploadError(`이미지 업로드 실패: ${msg}`)
     callback([])
   }
 }
@@ -155,6 +189,15 @@ async function handleUpload(files, callback) {
 .help-item span {
   color: var(--color-text-secondary, #666);
   font-size: 12px;
+}
+
+.upload-error-msg {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-top: none;
+  color: #b91c1c;
+  font-size: 12px;
+  padding: 6px 12px;
 }
 
 .help-tip {
