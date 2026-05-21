@@ -18,6 +18,26 @@
       </template>
     </MdEditor>
 
+    <!-- 이미지 사이즈 피커 -->
+    <div v-if="pending.visible" class="img-size-picker">
+      <img :src="pending.url" class="img-size-thumb" />
+      <div class="img-size-controls">
+        <span class="img-size-label">너비 (px)</span>
+        <input
+          v-model="pending.width"
+          ref="widthInputRef"
+          type="number"
+          min="50"
+          max="2000"
+          placeholder="원본"
+          class="img-size-input"
+          @keyup.enter="insertImage"
+        />
+        <button class="btn btn-primary btn-xs" @click="insertImage">삽입</button>
+        <button class="btn btn-ghost btn-xs" @click="cancelInsert">취소</button>
+      </div>
+    </div>
+
     <div v-if="uploadError" class="upload-error-msg">{{ uploadError }}</div>
 
     <div v-if="showHelp" class="help-panel">
@@ -33,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, reactive, nextTick } from 'vue'
 import { MdEditor, NormalToolbar } from 'md-editor-v3'
 import axios from 'axios'
 
@@ -43,6 +63,40 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue'])
 
+const content = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val),
+})
+
+const editorHeight = computed(() => props.height)
+const showHelp = ref(false)
+const widthInputRef = ref(null)
+
+// ── 이미지 사이즈 피커 ──
+const pending = reactive({ visible: false, url: '', width: '' })
+
+function showPicker(url) {
+  pending.url = url
+  pending.width = ''
+  pending.visible = true
+  nextTick(() => widthInputRef.value?.focus())
+}
+
+function insertImage() {
+  const w = parseInt(pending.width)
+  const url = pending.url
+  const markdown = w > 0
+    ? `<img src="${url}" width="${w}" style="max-width:100%;height:auto">`
+    : `![image](${url})`
+  content.value = (content.value ? content.value + '\n' : '') + markdown
+  pending.visible = false
+}
+
+function cancelInsert() {
+  pending.visible = false
+}
+
+// ── 업로드 에러 피드백 ──
 const uploadError = ref('')
 let uploadErrorTimer = null
 function showUploadError(msg) {
@@ -51,13 +105,41 @@ function showUploadError(msg) {
   uploadErrorTimer = setTimeout(() => { uploadError.value = '' }, 4000)
 }
 
-const content = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
-})
+// ── paste 이벤트 fallback (items 기반) ──
+function onPaste(e) {
+  const items = e.clipboardData?.items
+  if (!items) return
+  if (e.clipboardData.files.length > 0) return // 라이브러리가 처리
+  const imageFiles = Array.from(items)
+    .filter(item => item.type.startsWith('image/'))
+    .map(item => item.getAsFile())
+    .filter(Boolean)
+  if (imageFiles.length === 0) return
+  e.stopPropagation()
+  e.preventDefault()
+  handleUpload(imageFiles, () => {}) // callback은 사용 안 함(picker에서 직접 삽입)
+}
 
-const editorHeight = computed(() => props.height)
-const showHelp = ref(false)
+// ── 업로드 핸들러 ──
+async function handleUpload(files, callback) {
+  try {
+    const urls = await Promise.all(
+      files.map(async (file) => {
+        const form = new FormData()
+        form.append('file', file)
+        const { data } = await axios.post('/api/upload', form)
+        return data.url
+      })
+    )
+    // 라이브러리 auto-insert 막고 사이즈 피커로 대체
+    callback([])
+    if (urls.length > 0) showPicker(urls[0])
+  } catch (e) {
+    const msg = e?.response?.data?.detail || e?.message || '알 수 없는 오류'
+    showUploadError(`이미지 업로드 실패: ${msg}`)
+    callback([])
+  }
+}
 
 const toolbars = [
   'bold', 'italic', 'strikethrough', '-',
@@ -83,52 +165,55 @@ const helpItems = [
 function sanitize(html) {
   return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
 }
-
-function onPaste(e) {
-  const items = e.clipboardData?.items
-  if (!items) return
-  // md-editor-v3 handles paste when clipboardData.files is populated,
-  // but when copying images from webpages, files is empty while items has the image.
-  // This fallback covers that case.
-  if (e.clipboardData.files.length > 0) return // let the library handle it
-  const imageFiles = Array.from(items)
-    .filter(item => item.type.startsWith('image/'))
-    .map(item => item.getAsFile())
-    .filter(Boolean)
-  if (imageFiles.length === 0) return
-  e.stopPropagation()
-  e.preventDefault()
-  handleUpload(imageFiles, (urls) => {
-    if (urls.length > 0) {
-      const insertion = urls.map(url => `![image](${url})`).join('\n')
-      content.value = content.value ? content.value + '\n' + insertion : insertion
-    }
-  })
-}
-
-async function handleUpload(files, callback) {
-  try {
-    const urls = await Promise.all(
-      files.map(async (file) => {
-        const form = new FormData()
-        form.append('file', file)
-        const { data } = await axios.post('/api/upload', form)
-        return data.url
-      })
-    )
-    callback(urls)
-  } catch (e) {
-    const msg = e?.response?.data?.detail || e?.message || '알 수 없는 오류'
-    showUploadError(`이미지 업로드 실패: ${msg}`)
-    callback([])
-  }
-}
 </script>
 
 <style scoped>
 .md-editor-wrap {
   border-radius: var(--radius-sm);
   overflow: hidden;
+}
+
+/* 이미지 사이즈 피커 */
+.img-size-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #f0f4ff;
+  border: 1px solid var(--primary-light);
+  border-top: none;
+  flex-wrap: wrap;
+}
+.img-size-thumb {
+  height: 48px;
+  max-width: 80px;
+  object-fit: contain;
+  border-radius: 4px;
+  border: 1px solid var(--outline);
+  background: #fff;
+}
+.img-size-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.img-size-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.img-size-input {
+  width: 80px;
+  padding: 4px 8px;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: #fff;
+}
+.img-size-input:focus {
+  outline: none;
+  border-color: var(--primary);
 }
 
 .help-trigger {
@@ -146,7 +231,6 @@ async function handleUpload(files, callback) {
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 }
-
 .help-trigger.active,
 .help-trigger:hover {
   color: var(--color-primary, #4f8ef7);
@@ -160,21 +244,18 @@ async function handleUpload(files, callback) {
   border-radius: 0 0 var(--radius-sm) var(--radius-sm);
   padding: 12px 16px;
 }
-
 .help-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 6px 20px;
   margin-bottom: 10px;
 }
-
 .help-item {
   display: flex;
   align-items: baseline;
   gap: 8px;
   font-size: 13px;
 }
-
 .help-item code {
   font-family: monospace;
   font-size: 12px;
@@ -185,12 +266,10 @@ async function handleUpload(files, callback) {
   flex-shrink: 0;
   color: var(--color-text-primary, #333);
 }
-
 .help-item span {
   color: var(--color-text-secondary, #666);
   font-size: 12px;
 }
-
 .upload-error-msg {
   background: #fef2f2;
   border: 1px solid #fca5a5;
@@ -199,7 +278,6 @@ async function handleUpload(files, callback) {
   font-size: 12px;
   padding: 6px 12px;
 }
-
 .help-tip {
   font-size: 12px;
   color: var(--color-text-secondary, #888);

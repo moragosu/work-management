@@ -48,13 +48,35 @@
       {{ tooltip.text }}
     </div>
   </Teleport>
+
+  <!-- 전역 이미지 라이트박스 -->
+  <Teleport to="body">
+    <div v-if="lightbox.visible" class="lightbox-overlay" @click="lightbox.visible = false">
+      <button class="lightbox-close" @click="lightbox.visible = false">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      <img :src="lightbox.src" class="lightbox-img" @click.stop />
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
-import { reactive, computed } from 'vue'
+import { reactive, computed, onMounted, onUnmounted } from 'vue'
 
 const tooltip = reactive({ visible: false, text: '', x: 0, y: 0 })
+const lightbox = reactive({ visible: false, src: '' })
+
+function handleImgClick(e) {
+  if (e.target.tagName !== 'IMG') return
+  const inPreview = e.target.closest('.md-preview-inline, .md-editor-preview')
+  if (!inPreview) return
+  lightbox.src = e.target.src
+  lightbox.visible = true
+}
+
+onMounted(() => document.addEventListener('click', handleImgClick))
+onUnmounted(() => document.removeEventListener('click', handleImgClick))
 
 const tooltipStyle = computed(() => {
   const ox = 14
@@ -112,4 +134,41 @@ function onMouseOut(e) {
   from { opacity: 0; transform: translateY(2px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+  animation: tooltip-in 0.15s ease;
+}
+.lightbox-img {
+  max-width: 92vw;
+  max-height: 92vh;
+  object-fit: contain;
+  border-radius: 4px;
+  cursor: default;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+.lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: rgba(255,255,255,0.15);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  transition: background 0.15s;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.28); }
 </style>
