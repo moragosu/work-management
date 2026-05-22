@@ -3,15 +3,13 @@ __pycache__/
 *.py[cod]
 .venv/
 *.egg-info/
-dist/
 
 
 # Node
 node_modules/
 frontend/node_modules/
 
-# Build output
-dist/
+# Build output (dist/는 pre-built로 git에 포함)
 frontend/dist/
 
 # Logs
