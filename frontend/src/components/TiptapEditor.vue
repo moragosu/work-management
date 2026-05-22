@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onUnmounted } from 'vue'
+import { ref, watch, nextTick, onBeforeUnmount, onUnmounted } from 'vue'
 import { useEditor, EditorContent, VueNodeViewRenderer } from '@tiptap/vue-3'
 import ImageNodeView from './ImageNodeView.vue'
 import StarterKit from '@tiptap/starter-kit'
@@ -206,6 +206,11 @@ watch(() => props.modelValue, (val) => {
   if (current !== val) {
     editor.value.commands.setContent(val || '', false)
   }
+})
+
+onBeforeUnmount(() => {
+  // editor.destroy() 이후 브라우저 selection이 detached 노드를 가리키는 상태 방지
+  window.getSelection()?.removeAllRanges()
 })
 
 // ── 표 삽입 ──
