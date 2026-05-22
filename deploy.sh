@@ -67,6 +67,8 @@ chmod -R a+rX /usr/local/share/uv-python
 
 # 4. Frontend (pre-built dist 복사)
 echo "[4/7] 프론트엔드 배포 (pre-built)..."
+rm -rf "$APP_DIR/dist"
+mkdir -p "$APP_DIR/dist"
 cp -r "$REPO_DIR/dist/." "$APP_DIR/dist/"
 
 # 5. Systemd service
