@@ -57,26 +57,25 @@
               <span class="panel-icon" style="background:#fff7ed;color:var(--orange)">
                 <span class="material-symbols-outlined">forum</span>
               </span>
-              {{ showAllQuestions ? '전체' : '미답변' }} 의견/질문
+              {{ questionFilter === 'all' ? '전체' : questionFilter === 'answered' ? '답변완료' : '미답변' }} 의견/질문
             </div>
-            <button
-              class="btn btn-ghost btn-xs q-toggle-btn"
-              :class="{ active: showAllQuestions }"
-              @click.stop="showAllQuestions = !showAllQuestions"
-              :data-tooltip="showAllQuestions ? '미답변만 보기' : '답변 완료 포함 전체 보기'"
-            >{{ showAllQuestions ? '전체' : '미답변' }}</button>
-            <span class="badge" :class="(showAllQuestions ? allQuestions : unansweredQuestions).length ? 'badge-orange' : 'badge-gray'">
-              {{ (showAllQuestions ? allQuestions : unansweredQuestions).length }}건
+            <div class="q-filter-group" @click.stop>
+              <button class="q-filter-btn" :class="{ active: questionFilter === 'unanswered' }" @click="questionFilter = 'unanswered'" data-tooltip="미답변만 보기">미답변</button>
+              <button class="q-filter-btn" :class="{ active: questionFilter === 'answered' }" @click="questionFilter = 'answered'" data-tooltip="답변 완료된 것만 보기">답변완료</button>
+              <button class="q-filter-btn" :class="{ active: questionFilter === 'all' }" @click="questionFilter = 'all'" data-tooltip="전체 보기">전체</button>
+            </div>
+            <span class="badge" :class="filteredQuestions.length ? (questionFilter === 'answered' ? 'badge-green' : 'badge-orange') : 'badge-gray'">
+              {{ filteredQuestions.length }}건
             </span>
             <span class="material-symbols-outlined section-chevron" :class="{ open: panelExpanded.questions }">expand_more</span>
           </div>
           <div class="card-body panel-body">
             <div v-if="actionLoading" class="loading-center" style="padding:24px"><div class="spinner"></div></div>
-            <div v-else-if="(showAllQuestions ? allQuestions : unansweredQuestions).length === 0" class="panel-empty">
-              {{ showAllQuestions ? '등록된 의견/질문이 없습니다' : '미답변 의견/질문이 없습니다 👍' }}
+            <div v-else-if="filteredQuestions.length === 0" class="panel-empty">
+              {{ questionFilter === 'all' ? '등록된 의견/질문이 없습니다' : questionFilter === 'answered' ? '답변 완료된 의견/질문이 없습니다' : '미답변 의견/질문이 없습니다 👍' }}
             </div>
             <ul v-else class="panel-list" :class="{ 'panel-list-expanded': panelExpanded.questions }">
-              <li v-for="q in (showAllQuestions ? allQuestions : unansweredQuestions)" :key="q.id" class="panel-item panel-item-link" @click="openModal('question', q)">
+              <li v-for="q in filteredQuestions" :key="q.id" class="panel-item panel-item-link" @click="openModal('question', q)">
                 <div v-if="q.questioner || (q.targets && q.targets.length)" class="q-targets-row">
                   <span v-if="q.questioner" class="badge badge-purple" style="font-size:11px">{{ q.questioner }}</span>
                   <template v-if="q.targets && q.targets.length">
@@ -366,7 +365,7 @@ const loading = ref(false)
 const actionLoading = ref(false)
 const activityOpen = ref(true)
 const panelExpanded = reactive({ questions: false, issues: false, tasks: false })
-const showAllQuestions = ref(false)
+const questionFilter = ref('unanswered') // 'unanswered' | 'answered' | 'all'
 
 const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
 
@@ -381,6 +380,16 @@ const dangerCount     = computed(() => objectives.value.filter(o => o.status ===
 const unansweredQuestions = computed(() =>
   allQuestions.value.filter(q => !q.answers || q.answers.length === 0)
 )
+
+const answeredQuestions = computed(() =>
+  allQuestions.value.filter(q => q.answers && q.answers.length > 0)
+)
+
+const filteredQuestions = computed(() => {
+  if (questionFilter.value === 'answered') return answeredQuestions.value
+  if (questionFilter.value === 'all') return allQuestions.value
+  return unansweredQuestions.value
+})
 
 const weekIssues = computed(() => weekIssuesList.value)
 
@@ -864,11 +873,28 @@ onMounted(refresh)
   transition: background 0.15s;
 }
 .panel-header-toggle:hover { background: var(--gray-50); }
-.q-toggle-btn {
-  font-size: 11px; padding: 2px 8px; border-radius: 10px;
+.q-filter-group {
+  display: flex;
   border: 1px solid var(--outline);
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
-.q-toggle-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+.q-filter-btn {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: none;
+  border: none;
+  border-right: 1px solid var(--outline);
+  cursor: pointer;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+.q-filter-btn:last-child { border-right: none; }
+.q-filter-btn:hover { background: var(--gray-50); color: var(--text-primary); }
+.q-filter-btn.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
 .panel-list-expanded {
   max-height: none !important;
   overflow-y: visible !important;
