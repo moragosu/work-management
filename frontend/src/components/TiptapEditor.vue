@@ -70,6 +70,16 @@
     <!-- 업로드 에러 -->
     <div v-if="uploadError" class="tiptap-error">{{ uploadError }}</div>
 
+    <!-- 이미지 사이즈 피커 -->
+    <div v-if="pendingImage.url" class="img-picker">
+      <span class="img-picker-label">이미지 크기 선택</span>
+      <button type="button" class="size-btn" @click="insertImage(null)">원본</button>
+      <button type="button" class="size-btn" @click="insertImage(300)">S <span class="size-hint">300px</span></button>
+      <button type="button" class="size-btn" @click="insertImage(500)">M <span class="size-hint">500px</span></button>
+      <button type="button" class="size-btn" @click="insertImage(700)">L <span class="size-hint">700px</span></button>
+      <button type="button" class="size-btn size-btn-cancel" @click="cancelImage">취소</button>
+    </div>
+
     <!-- 표 컨텍스트 툴바 -->
     <div v-if="editor && editor.isActive('table')" class="table-toolbar">
       <button type="button" class="tb-sm" @click="editor.chain().focus().addColumnBefore().run()">← 열 추가</button>
@@ -105,6 +115,9 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue', 'image-uploaded'])
 
+// ── 대기 중인 이미지 (사이즈 피커용) ──
+const pendingImage = ref({ url: null })
+
 // ── 업로드된 URL 추적 (언마운트 시 미삽입 이미지 정리) ──
 const localUploads = ref([])
 let isUnmounted = false
@@ -139,7 +152,7 @@ async function uploadAndInsert(file) {
     }
     emit('image-uploaded', url)
     localUploads.value.push(url)
-    editor.value?.chain().focus().setImage({ src: url }).run()
+    pendingImage.value.url = url
   } catch (e) {
     if (!isUnmounted) {
       showUploadError(`이미지 업로드 실패: ${e?.response?.data?.detail || e?.message || '오류'}`)
@@ -200,6 +213,25 @@ watch(() => props.modelValue, (val) => {
 onBeforeUnmount(() => {
   editor.value?.destroy()
 })
+
+// ── 이미지 사이즈 삽입 ──
+function insertImage(widthPx) {
+  const url = pendingImage.value.url
+  if (!url) return
+  const alt = widthPx ? `${widthPx}px` : ''
+  editor.value?.chain().focus().setImage({ src: url, alt }).run()
+  localUploads.value = localUploads.value.filter(u => u !== url)
+  pendingImage.value.url = null
+}
+
+function cancelImage() {
+  const url = pendingImage.value.url
+  if (url) {
+    axios.delete(`/api/upload/${url.split('/').pop()}`).catch(() => {})
+    localUploads.value = localUploads.value.filter(u => u !== url)
+  }
+  pendingImage.value.url = null
+}
 
 // ── 표 삽입 ──
 function insertTable() {
@@ -358,6 +390,26 @@ function setLink() {
 .tb-danger { color: var(--danger, #ef4444); }
 .tb-danger:hover { background: var(--danger-light, #fef2f2); }
 .tb-div { color: var(--outline, #e5e7eb); font-size: 12px; padding: 0 2px; }
+
+/* 이미지 사이즈 피커 */
+.img-picker {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  background: #fffbeb;
+  border-top: 1px solid #fde68a;
+  flex-wrap: wrap;
+}
+.img-picker-label { font-size: 12px; color: var(--text-secondary, #555); margin-right: 2px; }
+.size-btn {
+  padding: 3px 10px; border: 1px solid var(--outline, #e5e7eb);
+  border-radius: 4px; background: #fff;
+  font-size: 12px; cursor: pointer; color: var(--text-primary, #111);
+  transition: all 0.1s;
+}
+.size-btn:hover { background: var(--primary-light, #dbeafe); border-color: var(--primary, #2563eb); color: var(--primary, #2563eb); }
+.size-btn-cancel { color: var(--text-muted, #9ca3af); }
+.size-btn-cancel:hover { background: var(--gray-100, #f3f4f6); border-color: var(--outline, #e5e7eb); color: var(--danger, #ef4444); }
+.size-hint { font-size: 10px; color: var(--text-muted, #9ca3af); margin-left: 2px; }
 
 /* 에러 */
 .tiptap-error {

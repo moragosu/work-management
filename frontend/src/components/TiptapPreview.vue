@@ -10,6 +10,20 @@ const props = defineProps({
   modelValue: { type: String, default: '' },
 })
 
+// alt 텍스트가 "300px" 형태면 width 스타일 적용
+marked.use({
+  renderer: {
+    image(href, title, text) {
+      const widthMatch = text?.match(/^(\d+)px$/)
+      const style = widthMatch
+        ? `width:${widthMatch[1]}px;max-width:100%;height:auto;`
+        : 'max-width:100%;height:auto;'
+      const titleAttr = title ? ` title="${title}"` : ''
+      const altAttr = widthMatch ? '' : ` alt="${text || ''}"`
+      return `<img src="${href}"${altAttr}${titleAttr} style="${style}" loading="lazy">`
+    },
+  },
+})
 marked.setOptions({ breaks: true, gfm: true })
 
 const renderedHtml = computed(() => {
