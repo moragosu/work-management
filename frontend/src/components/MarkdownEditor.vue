@@ -42,7 +42,7 @@ const props = defineProps({
   modelValue: { type: String, default: '' },
   height: { type: String, default: '200px' },
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'image-uploaded'])
 
 const content = computed({
   get: () => props.modelValue,
@@ -101,6 +101,7 @@ async function handleUpload(files, callback) {
       })
     )
     callback([]) // 라이브러리 자동 삽입 방지
+    urls.forEach(u => emit('image-uploaded', u))
     if (urls.length > 0) insertImageWithPrompt(urls[0])
   } catch (e) {
     const msg = e?.response?.data?.detail || e?.message || '알 수 없는 오류'

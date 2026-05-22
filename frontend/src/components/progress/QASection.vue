@@ -30,7 +30,7 @@
                 >{{ s.name }}</button>
               </div>
             </div>
-            <MarkdownEditor v-model="editingQuestionText" height="140px" />
+            <MarkdownEditor v-model="editingQuestionText" height="140px" @image-uploaded="url => editQuestionUploads.push(url)" />
             <div class="flex gap-4 mt-8" style="justify-content:flex-end">
               <button class="btn btn-ghost btn-xs" @click="cancelEditQuestion">취소</button>
               <button class="btn btn-primary btn-xs" @click="updateQuestion(qa.id)" :disabled="!hasContent(editingQuestionText)">저장</button>
@@ -74,7 +74,7 @@
         <div class="qa-content">
           <template v-if="editingAnswerId === ans.id">
             <div style="flex:1">
-              <MarkdownEditor v-model="editingAnswerText" height="160px" />
+              <MarkdownEditor v-model="editingAnswerText" height="160px" @image-uploaded="url => editAnswerUploads.push(url)" />
               <select v-model="editingAnswerBy" class="form-control mt-8">
                 <option value="">작성자 선택</option>
                 <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
@@ -104,7 +104,7 @@
       <div v-if="addingAnswerToId === qa.id" class="answer-row">
         <span class="badge badge-green">A</span>
         <div style="flex:1">
-          <MarkdownEditor v-model="newAnswerText" height="160px" />
+          <MarkdownEditor v-model="newAnswerText" height="160px" @image-uploaded="url => addAnswerUploads.push(url)" />
           <select v-model="newAnswerBy" class="form-control mt-8">
             <option value="">작성자 선택</option>
             <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
@@ -143,7 +143,7 @@
           >{{ s.name }}</button>
         </div>
       </div>
-      <MarkdownEditor v-model="newQuestionText" height="160px" />
+      <MarkdownEditor v-model="newQuestionText" height="160px" @image-uploaded="url => addQuestionUploads.push(url)" />
       <div class="flex gap-8 mt-8" style="justify-content:flex-end">
         <button class="btn btn-ghost btn-sm" @click="cancelAddQuestion">취소</button>
         <button class="btn btn-primary btn-sm" @click="addQuestion" :disabled="!hasContent(newQuestionText) || (questioners.length > 0 && !newQuestioner)">등록</button>
@@ -191,7 +191,7 @@ import { useToast } from '../../composables/useToast.js'
 import { hasContent } from '../../utils/content.js'
 import { ADMIN_PASSWORD } from '../../config.js'
 import { copyToClipboard } from '../../utils/clipboard.js'
-import { deleteOrphanedImages, deleteAllImages } from '../../composables/useImageCleanup.js'
+import { deleteOrphanedImages, deleteAllImages, deleteUrls } from '../../composables/useImageCleanup.js'
 
 const props = defineProps({
   questions:   { type: Array, default: () => [] },
@@ -222,17 +222,21 @@ const addingQuestion = ref(false)
 const newQuestionText = ref('')
 const newTargets = ref([])
 const newQuestioner = ref('')
+const addQuestionUploads = ref([])
 
 function openAddQuestion() {
   newQuestioner.value = props.questioners[0] || ''
+  addQuestionUploads.value = []
   addingQuestion.value = true
 }
 
 function cancelAddQuestion() {
+  deleteUrls(addQuestionUploads.value.filter(u => !newQuestionText.value.includes(u)))
   addingQuestion.value = false
   newQuestionText.value = ''
   newTargets.value = []
   newQuestioner.value = ''
+  addQuestionUploads.value = []
 }
 
 async function addQuestion() {
@@ -244,6 +248,7 @@ async function addQuestion() {
       targets: [...newTargets.value],
       questioner: newQuestioner.value || '',
     })
+    await deleteUrls(addQuestionUploads.value.filter(u => !newQuestionText.value.includes(u)))
     emit('update:questions', [...props.questions, data])
     cancelAddQuestion()
     showToast('의견/질문이 추가되었습니다')
@@ -255,18 +260,22 @@ const editingQuestionId = ref('')
 const editingQuestionText = ref('')
 const editingTargets = ref([])
 const editingQuestioner = ref('')
+const editQuestionUploads = ref([])
 
 function startEditQuestion(qa) {
   editingQuestionId.value = qa.id
   editingQuestionText.value = qa.question
   editingTargets.value = [...(qa.targets || [])]
   editingQuestioner.value = qa.questioner || props.questioners[0] || ''
+  editQuestionUploads.value = []
 }
 function cancelEditQuestion() {
+  deleteUrls(editQuestionUploads.value.filter(u => !editingQuestionText.value.includes(u)))
   editingQuestionId.value = ''
   editingQuestionText.value = ''
   editingTargets.value = []
   editingQuestioner.value = ''
+  editQuestionUploads.value = []
 }
 
 async function updateQuestion(questionId) {
@@ -279,6 +288,7 @@ async function updateQuestion(questionId) {
       questioner: editingQuestioner.value || '',
     })
     await deleteOrphanedImages(oldQ?.question, editingQuestionText.value)
+    await deleteUrls(editQuestionUploads.value.filter(u => !editingQuestionText.value.includes(u)))
     emit('update:questions', props.questions.map(q => q.id === questionId ? { ...q, ...data } : q))
     cancelEditQuestion()
     showToast('수정되었습니다')
@@ -325,14 +335,22 @@ async function confirmDelete() {
 const addingAnswerToId = ref('')
 const newAnswerText = ref('')
 const newAnswerBy = ref('')
+const addAnswerUploads = ref([])
 const editingAnswerId = ref('')
 const editingAnswerText = ref('')
 const editingAnswerBy = ref('')
+const editAnswerUploads = ref([])
 
-function startAddAnswer(questionId) { addingAnswerToId.value = questionId; newAnswerText.value = ''; newAnswerBy.value = '' }
-function cancelAddAnswer() { addingAnswerToId.value = ''; newAnswerText.value = ''; newAnswerBy.value = '' }
-function startEditAnswer(answer) { editingAnswerId.value = answer.id; editingAnswerText.value = answer.answer; editingAnswerBy.value = answer.answer_by }
-function cancelEditAnswer() { editingAnswerId.value = ''; editingAnswerText.value = ''; editingAnswerBy.value = '' }
+function startAddAnswer(questionId) { addingAnswerToId.value = questionId; newAnswerText.value = ''; newAnswerBy.value = ''; addAnswerUploads.value = [] }
+function cancelAddAnswer() {
+  deleteUrls(addAnswerUploads.value.filter(u => !newAnswerText.value.includes(u)))
+  addingAnswerToId.value = ''; newAnswerText.value = ''; newAnswerBy.value = ''; addAnswerUploads.value = []
+}
+function startEditAnswer(answer) { editingAnswerId.value = answer.id; editingAnswerText.value = answer.answer; editingAnswerBy.value = answer.answer_by; editAnswerUploads.value = [] }
+function cancelEditAnswer() {
+  deleteUrls(editAnswerUploads.value.filter(u => !editingAnswerText.value.includes(u)))
+  editingAnswerId.value = ''; editingAnswerText.value = ''; editingAnswerBy.value = ''; editAnswerUploads.value = []
+}
 
 async function addAnswer(questionId) {
   if (!hasContent(newAnswerText.value) || !newAnswerBy.value) return
@@ -340,6 +358,7 @@ async function addAnswer(questionId) {
     const { data } = await axios.post('/api/qna/answers', {
       question_id: questionId, answer: newAnswerText.value.trim(), answer_by: newAnswerBy.value,
     })
+    await deleteUrls(addAnswerUploads.value.filter(u => !newAnswerText.value.includes(u)))
     emit('update:questions', props.questions.map(q =>
       q.id === questionId ? { ...q, answers: [...(q.answers || []), data] } : q
     ))
@@ -356,6 +375,7 @@ async function updateAnswer(answerId) {
       answer: editingAnswerText.value.trim(), answer_by: editingAnswerBy.value,
     })
     await deleteOrphanedImages(oldAnswer?.answer, editingAnswerText.value)
+    await deleteUrls(editAnswerUploads.value.filter(u => !editingAnswerText.value.includes(u)))
     emit('update:questions', props.questions.map(q => ({
       ...q,
       answers: q.answers?.map(a => a.id === answerId ? data : a) ?? [],

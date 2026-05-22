@@ -88,7 +88,7 @@
             </div>
             <div class="form-group">
               <label class="form-label">내용</label>
-              <MarkdownEditor v-model="form.content" height="200px" />
+              <MarkdownEditor v-model="form.content" height="200px" @image-uploaded="url => sessionUploads.push(url)" />
             </div>
           </div>
           <div class="fb-modal-footer">
@@ -111,7 +111,7 @@ import axios from 'axios'
 import { MdPreview } from 'md-editor-v3'
 import MarkdownEditor from '../components/MarkdownEditor.vue'
 import { useToast } from '../composables/useToast.js'
-import { deleteOrphanedImages, deleteAllImages } from '../composables/useImageCleanup.js'
+import { deleteOrphanedImages, deleteAllImages, deleteUrls } from '../composables/useImageCleanup.js'
 
 const { toastMsg, showToast, toastError } = useToast()
 
@@ -141,17 +141,25 @@ function countByCategory(cat) {
 
 // ── 폼 상태 ──
 const form = reactive({ open: false, id: '', category: 'bug', title: '', content: '', author: '' })
+const sessionUploads = ref([])
 
 function openAdd() {
   form.id = ''; form.category = 'bug'; form.title = ''; form.content = ''; form.author = ''
+  sessionUploads.value = []
   form.open = true
 }
 function startEdit(fb) {
   form.id = fb.id; form.category = fb.category; form.title = fb.title
   form.content = fb.content; form.author = fb.author
+  sessionUploads.value = []
   form.open = true
 }
-function closeForm() { form.open = false }
+function closeForm() {
+  // 취소 시 이번 세션에서 업로드했으나 저장되지 않은 파일 삭제
+  deleteUrls(sessionUploads.value.filter(u => !form.content.includes(u)))
+  sessionUploads.value = []
+  form.open = false
+}
 
 async function submitForm() {
   if (!form.category || !form.author || !form.title.trim()) return
@@ -162,15 +170,18 @@ async function submitForm() {
         category: form.category, title: form.title, content: form.content, author: form.author,
       })
       await deleteOrphanedImages(oldContent, form.content)
+      await deleteUrls(sessionUploads.value.filter(u => !form.content.includes(u)))
       feedbacks.value = feedbacks.value.map(f => f.id === form.id ? data : f)
       showToast('수정되었습니다')
     } else {
       const { data } = await axios.post('/api/feedback', {
         category: form.category, title: form.title, content: form.content, author: form.author,
       })
+      await deleteUrls(sessionUploads.value.filter(u => !form.content.includes(u)))
       feedbacks.value = [data, ...feedbacks.value]
       showToast('등록되었습니다')
     }
+    sessionUploads.value = []
     closeForm()
   } catch (e) { toastError(e, '저장 실패') }
 }

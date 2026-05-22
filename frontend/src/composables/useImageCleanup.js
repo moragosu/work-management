@@ -26,6 +26,18 @@ export async function deleteOrphanedImages(oldText, newText) {
   })
 }
 
+// URL 배열을 직접 받아 삭제 (세션 업로드 정리용)
+export async function deleteUrls(urls) {
+  const list = [...new Set(urls.filter(Boolean))]
+  if (!list.length) return
+  console.log('[이미지정리] 세션 업로드 정리:', list)
+  const results = await Promise.allSettled(list.map(deleteUrl))
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') console.warn('[이미지 삭제 실패]', list[i], r.reason?.response?.status, r.reason?.message)
+    else console.log('[이미지정리] 삭제 성공:', list[i])
+  })
+}
+
 // 텍스트 내 모든 업로드 이미지 삭제 (항목 삭제 시)
 export async function deleteAllImages(...texts) {
   const urls = new Set()
