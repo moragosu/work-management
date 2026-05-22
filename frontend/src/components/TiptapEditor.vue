@@ -70,7 +70,7 @@
     <!-- 업로드 에러 -->
     <div v-if="uploadError" class="tiptap-error">{{ uploadError }}</div>
 
-    <!-- 이미지 사이즈 피커 -->
+    <!-- 이미지 사이즈 피커 (새 이미지) -->
     <div v-if="pendingImage.url" class="img-picker">
       <span class="img-picker-label">이미지 크기 선택</span>
       <button type="button" class="size-btn" @click="insertImage(null)">원본</button>
@@ -78,6 +78,15 @@
       <button type="button" class="size-btn" @click="insertImage(500)">M <span class="size-hint">500px</span></button>
       <button type="button" class="size-btn" @click="insertImage(700)">L <span class="size-hint">700px</span></button>
       <button type="button" class="size-btn size-btn-cancel" @click="cancelImage">취소</button>
+    </div>
+
+    <!-- 이미지 사이즈 변경 (기존 이미지 선택 시) -->
+    <div v-else-if="editor && editor.isActive('image')" class="img-picker">
+      <span class="img-picker-label">크기 변경</span>
+      <button type="button" class="size-btn" @click="resizeImage(null)">원본</button>
+      <button type="button" class="size-btn" @click="resizeImage(300)">S <span class="size-hint">300px</span></button>
+      <button type="button" class="size-btn" @click="resizeImage(500)">M <span class="size-hint">500px</span></button>
+      <button type="button" class="size-btn" @click="resizeImage(700)">L <span class="size-hint">700px</span></button>
     </div>
 
     <!-- 표 컨텍스트 툴바 -->
@@ -222,6 +231,11 @@ function insertImage(widthPx) {
   editor.value?.chain().focus().setImage({ src: url, alt }).run()
   localUploads.value = localUploads.value.filter(u => u !== url)
   pendingImage.value.url = null
+}
+
+function resizeImage(widthPx) {
+  const alt = widthPx ? `${widthPx}px` : ''
+  editor.value?.chain().focus().updateAttributes('image', { alt }).run()
 }
 
 function cancelImage() {
