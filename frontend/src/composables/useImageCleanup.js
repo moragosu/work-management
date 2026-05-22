@@ -18,9 +18,11 @@ async function deleteUrl(url) {
 export async function deleteOrphanedImages(oldText, newText) {
   const newUrls = extractUploadUrls(newText)
   const removed = [...extractUploadUrls(oldText)].filter(u => !newUrls.has(u))
+  console.log('[이미지정리] 이전:', [...extractUploadUrls(oldText)], '→ 삭제대상:', removed)
   const results = await Promise.allSettled(removed.map(deleteUrl))
   results.forEach((r, i) => {
     if (r.status === 'rejected') console.warn('[이미지 삭제 실패]', removed[i], r.reason?.response?.status, r.reason?.message)
+    else console.log('[이미지정리] 삭제 성공:', removed[i])
   })
 }
 
@@ -29,8 +31,10 @@ export async function deleteAllImages(...texts) {
   const urls = new Set()
   texts.forEach(t => extractUploadUrls(t).forEach(u => urls.add(u)))
   const list = [...urls]
+  console.log('[이미지정리] 전체삭제 대상:', list)
   const results = await Promise.allSettled(list.map(deleteUrl))
   results.forEach((r, i) => {
     if (r.status === 'rejected') console.warn('[이미지 삭제 실패]', list[i], r.reason?.response?.status, r.reason?.message)
+    else console.log('[이미지정리] 삭제 성공:', list[i])
   })
 }
