@@ -119,7 +119,9 @@ let isUnmounted = false
 
 onUnmounted(() => {
   isUnmounted = true
-  const currentContent = editor.value?.storage?.markdown?.getMarkdown?.() ?? props.modelValue ?? ''
+  // editor는 onBeforeUnmount(useEditor)에서 이미 destroy됨 → schema가 null이므로
+  // getMarkdown() 호출 시 TypeError 발생. props.modelValue는 onUpdate로 항상 동기화됨.
+  const currentContent = props.modelValue ?? ''
   localUploads.value.filter(u => !currentContent.includes(u)).forEach(u => {
     axios.delete(`/api/upload/${u.split('/').pop()}`).catch(() => {})
   })
@@ -167,7 +169,7 @@ function onFileSelect(e) {
 // ── Tiptap 에디터 초기화 ──
 const editor = useEditor({
   extensions: [
-    StarterKit.configure({ codeBlock: { HTMLAttributes: { class: 'code-block' } } }),
+    StarterKit.configure({ codeBlock: { HTMLAttributes: { class: 'code-block' } }, link: false }),
     Markdown.configure({ html: true, tightLists: true, transformPastedText: true }),
     CustomImage.configure({ allowBase64: false }),
     Link.configure({ openOnClick: false, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } }),
