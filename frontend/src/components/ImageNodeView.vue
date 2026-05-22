@@ -1,7 +1,7 @@
 <template>
   <node-view-wrapper class="image-nv" :class="{ 'image-nv--selected': selected }">
     <img :src="node.attrs.src" :style="imgStyle" data-drag-handle draggable="true" />
-    <div v-if="selected" class="image-size-bar">
+    <div v-if="selected" class="image-size-bar" contenteditable="false">
       <span class="bar-label">크기변경</span>
       <span class="bar-sep">:</span>
       <input
@@ -12,15 +12,13 @@
         min="50"
         max="1200"
         @keyup.enter="applyCustom"
-        @mousedown.stop
-        @click.stop
       />
-      <button class="bar-btn" @mousedown.prevent @click="applyCustom">적용</button>
+      <button class="bar-btn" @click="applyCustom">적용</button>
       <span class="bar-div">|</span>
-      <button class="bar-btn" @mousedown.prevent @click="applySize(300)">S</button>
-      <button class="bar-btn" @mousedown.prevent @click="applySize(500)">M</button>
-      <button class="bar-btn" @mousedown.prevent @click="applySize(700)">L</button>
-      <button class="bar-btn" @mousedown.prevent @click="applySize(null)">원본</button>
+      <button class="bar-btn" @click="applySize(300)">S</button>
+      <button class="bar-btn" @click="applySize(500)">M</button>
+      <button class="bar-btn" @click="applySize(700)">L</button>
+      <button class="bar-btn" @click="applySize(null)">원본</button>
     </div>
   </node-view-wrapper>
 </template>
