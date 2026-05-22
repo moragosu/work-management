@@ -15,7 +15,7 @@
             <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
           </select>
         </div>
-        <MarkdownEditor v-model="editText" height="140px" />
+        <MarkdownEditor v-model="editText" height="140px" @image-uploaded="url => editUploads.push(url)" />
         <div class="flex gap-8 mt-8" style="justify-content:flex-end">
           <button class="btn btn-ghost btn-sm" @click="cancelEdit">취소</button>
           <button class="btn btn-primary btn-sm" @click="saveEdit(iss.id)" :disabled="!hasContent(editText) || !editAssignee">저장</button>
@@ -48,14 +48,14 @@
           <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
         </select>
       </div>
-      <MarkdownEditor v-model="newText" height="140px" />
+      <MarkdownEditor v-model="newText" height="140px" @image-uploaded="url => addUploads.push(url)" />
       <div class="flex gap-8 mt-8" style="justify-content:flex-end">
         <button class="btn btn-ghost btn-sm" @click="cancelAdd">취소</button>
         <button class="btn btn-primary btn-sm" @click="addIssue" :disabled="!hasContent(newText) || !newAssignee">저장</button>
       </div>
     </div>
 
-    <button v-if="!adding" class="btn btn-ghost btn-sm mt-4" @click="adding = true" data-tooltip="이번 주 이슈를 등록합니다">+ 이슈 등록</button>
+    <button v-if="!adding" class="btn btn-ghost btn-sm mt-4" @click="openAdd" data-tooltip="이번 주 이슈를 등록합니다">+ 이슈 등록</button>
   </div>
 
   <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
@@ -69,6 +69,7 @@ import MarkdownEditor from '../MarkdownEditor.vue'
 import { useToast } from '../../composables/useToast.js'
 import { hasContent } from '../../utils/content.js'
 import { copyToClipboard } from '../../utils/clipboard.js'
+import { deleteOrphanedImages, deleteAllImages, deleteUrls } from '../../composables/useImageCleanup.js'
 
 const props = defineProps({
   issues:   { type: Array,  default: () => [] },
@@ -87,11 +88,16 @@ async function copyLink(iss) {
 }
 
 // ── 추가 ──
-const adding     = ref(false)
-const newText    = ref('')
+const adding      = ref(false)
+const newText     = ref('')
 const newAssignee = ref('')
+const addUploads  = ref([])
 
-function cancelAdd() { adding.value = false; newText.value = ''; newAssignee.value = '' }
+function openAdd() { adding.value = true; addUploads.value = [] }
+function cancelAdd() {
+  deleteUrls(addUploads.value.filter(u => !newText.value.includes(u)))
+  adding.value = false; newText.value = ''; newAssignee.value = ''; addUploads.value = []
+}
 
 async function addIssue() {
   if (!hasContent(newText.value) || !newAssignee.value) return
@@ -102,6 +108,7 @@ async function addIssue() {
       issue: newText.value.trim(),
       assignee: newAssignee.value,
     })
+    await deleteUrls(addUploads.value.filter(u => !newText.value.includes(u)))
     emit('update:issues', [...props.issues, data])
     cancelAdd()
     showToast('이슈가 등록되었습니다')
@@ -109,20 +116,30 @@ async function addIssue() {
 }
 
 // ── 수정 ──
-const editingId  = ref('')
-const editText   = ref('')
+const editingId   = ref('')
+const editText    = ref('')
 const editAssignee = ref('')
+const editUploads = ref([])
 
-function startEdit(iss) { editingId.value = iss.id; editText.value = iss.issue; editAssignee.value = iss.assignee }
-function cancelEdit() { editingId.value = ''; editText.value = ''; editAssignee.value = '' }
+function startEdit(iss) {
+  editingId.value = iss.id; editText.value = iss.issue; editAssignee.value = iss.assignee
+  editUploads.value = []
+}
+function cancelEdit() {
+  deleteUrls(editUploads.value.filter(u => !editText.value.includes(u)))
+  editingId.value = ''; editText.value = ''; editAssignee.value = ''; editUploads.value = []
+}
 
 async function saveEdit(id) {
   if (!hasContent(editText.value) || !editAssignee.value) return
   try {
+    const oldIssue = props.issues.find(i => i.id === id)
     const { data } = await axios.put(`/api/issues/${id}`, {
       issue: editText.value.trim(),
       assignee: editAssignee.value,
     })
+    await deleteOrphanedImages(oldIssue?.issue, editText.value)
+    await deleteUrls(editUploads.value.filter(u => !editText.value.includes(u)))
     emit('update:issues', props.issues.map(i => i.id === id ? data : i))
     cancelEdit()
     showToast('수정되었습니다')
@@ -133,7 +150,9 @@ async function saveEdit(id) {
 async function deleteIssue(id) {
   if (!confirm('이슈를 삭제하시겠습니까?')) return
   try {
+    const target = props.issues.find(i => i.id === id)
     await axios.delete(`/api/issues/${id}`)
+    await deleteAllImages(target?.issue)
     emit('update:issues', props.issues.filter(i => i.id !== id))
     showToast('삭제되었습니다')
   } catch (e) { toastError(e, '삭제 실패') }
