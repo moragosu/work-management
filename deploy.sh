@@ -69,7 +69,8 @@ chmod -R a+rX /usr/local/share/uv-python
 echo "[4/7] 프론트엔드 빌드..."
 cd "$REPO_DIR/frontend"
 echo "  node: $(node --version 2>/dev/null || echo '없음'), npm: $(npm --version 2>/dev/null || echo '없음')"
-npm install || { echo "❌ npm install 실패"; exit 1; }
+rm -rf node_modules
+npm ci || { echo "❌ npm ci 실패"; exit 1; }
 NODE_OPTIONS=--max-old-space-size=1024 npm run build || { echo "❌ npm run build 실패 (메모리 부족이면 서버 RAM 확인: free -h)"; exit 1; }
 cp -r "$REPO_DIR/dist/." "$APP_DIR/dist/"
 
