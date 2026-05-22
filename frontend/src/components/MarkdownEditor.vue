@@ -121,7 +121,7 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onUnmounted } from 'vue'
 import { MdEditor, NormalToolbar } from 'md-editor-v3'
 import axios from 'axios'
 
@@ -138,6 +138,23 @@ const content = computed({
 
 const editorHeight = computed(() => props.height)
 const showHelp = ref(false)
+
+// ── 업로드된 URL 자체 추적 (컴포넌트 파괴 시 미삽입 이미지 삭제용) ──
+const localUploads = ref([])
+let isUnmounted = false
+
+function deleteLocalUrl(url) {
+  axios.delete(`/api/upload/${url.split('/').pop()}`).catch(() => {})
+  localUploads.value = localUploads.value.filter(u => u !== url)
+}
+
+onUnmounted(() => {
+  isUnmounted = true
+  const currentContent = props.modelValue || ''
+  localUploads.value.filter(u => !currentContent.includes(u)).forEach(u => {
+    axios.delete(`/api/upload/${u.split('/').pop()}`).catch(() => {})
+  })
+})
 
 // ── 이미지 피커 상태 ──
 const pendingImage = reactive({ url: null, border: false })
@@ -156,8 +173,10 @@ function buildImageMarkdown(url, size, border) {
 
 function insertImage(size) {
   if (!pendingImage.url) return
-  const md = buildImageMarkdown(pendingImage.url, size, pendingImage.border)
+  const url = pendingImage.url
+  const md = buildImageMarkdown(url, size, pendingImage.border)
   content.value = (content.value ? content.value + '\n' : '') + md
+  localUploads.value = localUploads.value.filter(u => u !== url) // 삽입 확정 → 추적 해제
   pendingImage.url = null
   pendingImage.border = false
 }
@@ -196,15 +215,25 @@ async function handleUpload(files, callback) {
   try {
     const urls = await uploadFiles(files)
     callback([])
-    urls.forEach(u => emit('image-uploaded', u))
+    if (isUnmounted) {
+      // 업로드 완료 전에 컴포넌트가 파괴됨 → 즉시 삭제
+      urls.forEach(u => axios.delete(`/api/upload/${u.split('/').pop()}`).catch(() => {}))
+      return
+    }
+    urls.forEach(u => {
+      emit('image-uploaded', u)
+      localUploads.value.push(u)
+    })
     if (urls.length > 0) {
       pendingImage.url = urls[0]
       pendingImage.border = false
     }
   } catch (e) {
-    const msg = e?.response?.data?.detail || e?.message || '알 수 없는 오류'
-    showUploadError(`이미지 업로드 실패: ${msg}`)
-    callback([])
+    if (!isUnmounted) {
+      const msg = e?.response?.data?.detail || e?.message || '알 수 없는 오류'
+      showUploadError(`이미지 업로드 실패: ${msg}`)
+      callback([])
+    }
   }
 }
 
@@ -235,8 +264,10 @@ function applyExpand() {
 
 function insertExpandImage(size) {
   if (!pendingImage.url) return
-  const md = buildImageMarkdown(pendingImage.url, size, pendingImage.border)
+  const url = pendingImage.url
+  const md = buildImageMarkdown(url, size, pendingImage.border)
   expandContent.value = (expandContent.value ? expandContent.value + '\n' : '') + md
+  localUploads.value = localUploads.value.filter(u => u !== url)
   pendingImage.url = null
   pendingImage.border = false
 }
@@ -259,15 +290,24 @@ async function handleExpandUpload(files, callback) {
   try {
     const urls = await uploadFiles(files)
     callback([])
-    urls.forEach(u => emit('image-uploaded', u))
+    if (isUnmounted) {
+      urls.forEach(u => axios.delete(`/api/upload/${u.split('/').pop()}`).catch(() => {}))
+      return
+    }
+    urls.forEach(u => {
+      emit('image-uploaded', u)
+      localUploads.value.push(u)
+    })
     if (urls.length > 0) {
       pendingImage.url = urls[0]
       pendingImage.border = false
     }
   } catch (e) {
-    const msg = e?.response?.data?.detail || e?.message || '알 수 없는 오류'
-    showExpandUploadError(`이미지 업로드 실패: ${msg}`)
-    callback([])
+    if (!isUnmounted) {
+      const msg = e?.response?.data?.detail || e?.message || '알 수 없는 오류'
+      showExpandUploadError(`이미지 업로드 실패: ${msg}`)
+      callback([])
+    }
   }
 }
 
