@@ -62,6 +62,10 @@
           <span class="material-symbols-outlined">redo</span>
         </button>
       </div>
+      <div style="flex:1"></div>
+      <button v-if="expandable" type="button" class="tb-btn tb-expand" @click="expanded = true" title="크게 보기">
+        <span class="material-symbols-outlined">open_in_full</span>
+      </button>
     </div>
 
     <!-- 에디터 본문 -->
@@ -83,6 +87,28 @@
       <button type="button" class="tb-sm tb-danger" @click="editor.chain().focus().deleteTable().run()">표 삭제</button>
     </div>
   </div>
+
+  <Teleport to="body">
+    <div v-if="expanded && expandable" class="tiptap-modal-overlay" @click.self="expanded = false">
+      <div class="tiptap-modal">
+        <div class="tiptap-modal-header">
+          <span class="tiptap-modal-title">내용 편집</span>
+          <span class="tiptap-modal-hint">변경사항은 자동으로 반영됩니다</span>
+          <button class="tiptap-modal-close" @click="expanded = false">닫기</button>
+        </div>
+        <div class="tiptap-modal-body">
+          <TiptapEditor
+            :model-value="modelValue"
+            @update:model-value="emit('update:modelValue', $event)"
+            @image-uploaded="emit('image-uploaded', $event)"
+            height="calc(85vh - 110px)"
+            :expandable="false"
+            :placeholder="placeholder"
+          />
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -107,11 +133,14 @@ import { Markdown } from 'tiptap-markdown'
 import axios from 'axios'
 
 const props = defineProps({
-  modelValue: { type: String, default: '' },
-  height:     { type: String, default: '160px' },
-  placeholder: { type: String, default: '내용을 입력하세요...' },
+  modelValue:  { type: String,  default: '' },
+  height:      { type: String,  default: '160px' },
+  placeholder: { type: String,  default: '내용을 입력하세요...' },
+  expandable:  { type: Boolean, default: true },
 })
 const emit = defineEmits(['update:modelValue', 'image-uploaded'])
+
+const expanded = ref(false)
 
 // ── 업로드된 URL 추적 (언마운트 시 미삽입 이미지 정리) ──
 const localUploads = ref([])
@@ -372,6 +401,49 @@ function setLink() {
 .tb-danger { color: var(--danger, #ef4444); }
 .tb-danger:hover { background: var(--danger-light, #fef2f2); }
 .tb-div { color: var(--outline, #e5e7eb); font-size: 12px; padding: 0 2px; }
+.tb-expand { color: var(--text-muted, #9ca3af); }
+.tb-expand:hover { color: var(--primary, #2563eb); }
+
+/* 확장 모달 */
+.tiptap-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  display: flex; align-items: center; justify-content: center;
+}
+.tiptap-modal {
+  background: #fff;
+  border-radius: 10px;
+  width: 860px;
+  max-width: 94vw;
+  height: 85vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  animation: tiptap-modal-in 0.15s ease;
+}
+@keyframes tiptap-modal-in {
+  from { opacity:0; transform: scale(0.97); }
+  to   { opacity:1; transform: scale(1); }
+}
+.tiptap-modal-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--outline, #e5e7eb);
+  flex-shrink: 0;
+}
+.tiptap-modal-title { font-weight: 600; font-size: 14px; color: var(--text-primary, #111); }
+.tiptap-modal-hint { font-size: 12px; color: var(--text-muted, #9ca3af); flex: 1; }
+.tiptap-modal-close {
+  padding: 4px 12px;
+  border: 1px solid var(--outline, #e5e7eb);
+  border-radius: 5px;
+  background: #fff; font-size: 13px; cursor: pointer;
+  color: var(--text-secondary, #555);
+  transition: all 0.1s;
+}
+.tiptap-modal-close:hover { background: var(--gray-100, #f3f4f6); color: var(--text-primary, #111); }
+.tiptap-modal-body { flex: 1; overflow: hidden; padding: 12px; display: flex; flex-direction: column; }
+.tiptap-modal-body :deep(.tiptap-wrap) { flex: 1; height: 100%; }
 
 /* 에러 */
 .tiptap-error {
