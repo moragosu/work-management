@@ -109,6 +109,21 @@ import { ref, watch, onBeforeUnmount, onUnmounted } from 'vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
+
+// alt 텍스트의 Npx 패턴을 에디터 내 style로 변환
+const CustomImage = Image.extend({
+  renderHTML({ HTMLAttributes }) {
+    const { alt = '', src, title } = HTMLAttributes
+    const widthMatch = alt.match(/^(\d+)px$/)
+    const style = widthMatch
+      ? `width:${widthMatch[1]}px;max-width:100%;height:auto;border-radius:4px;`
+      : 'max-width:100%;height:auto;border-radius:4px;'
+    const attrs = { src, style }
+    if (title) attrs.title = title
+    if (!widthMatch && alt) attrs.alt = alt
+    return ['img', attrs]
+  },
+})
 import Link from '@tiptap/extension-link'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
@@ -180,7 +195,7 @@ const editor = useEditor({
   extensions: [
     StarterKit.configure({ codeBlock: { HTMLAttributes: { class: 'code-block' } } }),
     Markdown.configure({ html: true, tightLists: true, transformPastedText: true }),
-    Image.configure({ allowBase64: false }),
+    CustomImage.configure({ allowBase64: false }),
     Link.configure({ openOnClick: false, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } }),
     TaskList,
     TaskItem.configure({ nested: true }),
