@@ -93,7 +93,7 @@
             액션 패널 (3가지)
           </div>
           <ul class="feature-list">
-            <li><strong>미답변 의견/질문</strong> — 전체 기간 누적 미답변 목록. 항목에 <em>과제명 + 주차</em>가 표시되며, 클릭하면 해당 주차의 해당 의견/질문 위치로 바로 이동합니다</li>
+            <li><strong>미답변 의견/질문</strong> — 전체 기간 누적 목록. 상단의 <strong>미답변 / 답변완료 / 전체</strong> 필터 버튼으로 표시 범위를 전환할 수 있습니다. 항목에 <em>과제명 + 주차</em>가 표시되며, 클릭하면 해당 주차의 해당 의견/질문 위치로 바로 이동합니다</li>
             <li><strong>이슈</strong> — 이번 주 등록된 이슈 목록. 클릭하면 해당 과제의 이슈 위치로 이동</li>
             <li><strong>미배정 과제</strong> — 담당자가 없는 과제 목록. 클릭하면 관리 도구 과제 탭으로 이동</li>
           </ul>
@@ -310,6 +310,49 @@
           <div v-for="item in markdownGuide" :key="item.syntax" class="md-row">
             <code class="md-syntax">{{ item.syntax }}</code>
             <span class="md-result" v-html="item.result"></span>
+          </div>
+        </div>
+
+        <!-- 이미지 삽입 -->
+        <div class="sub-section" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--outline)">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">image</span>
+            이미지 삽입
+          </div>
+          <ul class="feature-list">
+            <li>클립보드 이미지를 에디터에 <strong>Ctrl+V</strong>로 바로 붙여넣기 할 수 있습니다 — 스크린샷 캡처 후 즉시 붙여넣기 가능</li>
+            <li>이미지가 업로드되면 에디터 하단에 <strong>이미지 삽입 피커</strong>가 나타납니다</li>
+            <li>피커에서 크기를 선택합니다:
+              <ul style="margin-top:4px;display:flex;flex-direction:column;gap:3px">
+                <li><strong>원본</strong> — 이미지 원래 크기 그대로 삽입</li>
+                <li><strong>S</strong> — 300px 너비로 삽입</li>
+                <li><strong>M</strong> — 500px 너비로 삽입</li>
+                <li><strong>L</strong> — 800px 너비로 삽입</li>
+              </ul>
+            </li>
+            <li><strong>Border</strong> 체크박스를 선택하면 이미지에 회색 테두리가 추가됩니다 — 배경과 이미지를 구분하고 싶을 때 유용</li>
+            <li>크기를 선택하면 에디터에 즉시 삽입됩니다. <strong>취소</strong> 버튼으로 삽입 없이 닫을 수도 있습니다</li>
+            <li>툴바의 <strong>이미지(🖼) 버튼</strong>을 클릭해 파일 선택으로도 업로드할 수 있습니다</li>
+          </ul>
+        </div>
+
+        <!-- 전체화면 편집 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">open_in_full</span>
+            전체화면 편집
+          </div>
+          <ul class="feature-list">
+            <li>에디터 툴바 우측의 <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">open_in_full</span> 버튼을 클릭하면 <strong>전체화면 편집 모달</strong>이 열립니다</li>
+            <li>모달은 960px 너비 × 90% 높이로 넓게 표시되어 긴 내용을 편하게 작성할 수 있습니다</li>
+            <li>이미지 붙여넣기와 피커도 전체화면 모달 안에서 동일하게 작동합니다</li>
+            <li><strong>취소</strong> — 모달을 닫고 편집 전 원래 내용으로 되돌립니다</li>
+            <li><strong>적용</strong> — 전체화면에서 작성한 내용을 원래 에디터에 반영하고 모달을 닫습니다</li>
+            <li>모달 헤더와 하단 푸터 양쪽에 취소/적용 버튼이 있어 어디서든 동작을 완료할 수 있습니다</li>
+          </ul>
+          <div class="callout callout-tip">
+            <span class="material-symbols-outlined callout-icon">star</span>
+            <div>전체화면 모달에서 <strong>취소</strong>를 누르면 모달을 열기 전 상태로 완전히 복원됩니다. 수정한 내용을 저장하려면 반드시 <strong>적용</strong>을 눌러야 합니다.</div>
           </div>
         </div>
       </div>
