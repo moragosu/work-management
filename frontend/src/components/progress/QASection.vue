@@ -30,7 +30,7 @@
                 >{{ s.name }}</button>
               </div>
             </div>
-            <MarkdownEditor v-model="editingQuestionText" height="140px" @image-uploaded="url => editQuestionUploads.push(url)" />
+            <TiptapEditor v-model="editingQuestionText" height="140px" @image-uploaded="url => editQuestionUploads.push(url)" />
             <div class="flex gap-4 mt-8" style="justify-content:flex-end">
               <button class="btn btn-ghost btn-xs" @click="cancelEditQuestion">취소</button>
               <button class="btn btn-primary btn-xs" @click="updateQuestion(qa.id)" :disabled="!hasContent(editingQuestionText)">저장</button>
@@ -45,7 +45,7 @@
                 <span v-for="t in qa.targets" :key="t" class="badge badge-blue" style="font-size:11px">{{ t }}</span>
               </template>
             </div>
-            <MdPreview language="en-US" :modelValue="qa.question" class="md-preview-inline" :noImgZoomIn="true" />
+            <TiptapPreview :modelValue="qa.question" />
           </template>
         </div>
         <div v-if="editingQuestionId !== qa.id" class="qa-actions">
@@ -74,7 +74,7 @@
         <div class="qa-content">
           <template v-if="editingAnswerId === ans.id">
             <div style="flex:1">
-              <MarkdownEditor v-model="editingAnswerText" height="160px" @image-uploaded="url => editAnswerUploads.push(url)" />
+              <TiptapEditor v-model="editingAnswerText" height="160px" @image-uploaded="url => editAnswerUploads.push(url)" />
               <select v-model="editingAnswerBy" class="form-control mt-8">
                 <option value="">작성자 선택</option>
                 <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
@@ -86,7 +86,7 @@
             </div>
           </template>
           <template v-else>
-            <MdPreview language="en-US" :modelValue="ans.answer" class="md-preview-inline" :noImgZoomIn="true" />
+            <TiptapPreview :modelValue="ans.answer" />
             <span class="answer-by">
               — {{ ans.answer_by }}
               <span class="answer-date">{{ ans.updated_at ?? ans.created_at }}</span>
@@ -104,7 +104,7 @@
       <div v-if="addingAnswerToId === qa.id" class="answer-row">
         <span class="badge badge-green">A</span>
         <div style="flex:1">
-          <MarkdownEditor v-model="newAnswerText" height="160px" @image-uploaded="url => addAnswerUploads.push(url)" />
+          <TiptapEditor v-model="newAnswerText" height="160px" @image-uploaded="url => addAnswerUploads.push(url)" />
           <select v-model="newAnswerBy" class="form-control mt-8">
             <option value="">작성자 선택</option>
             <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
@@ -143,7 +143,7 @@
           >{{ s.name }}</button>
         </div>
       </div>
-      <MarkdownEditor v-model="newQuestionText" height="160px" @image-uploaded="url => addQuestionUploads.push(url)" />
+      <TiptapEditor v-model="newQuestionText" height="160px" @image-uploaded="url => addQuestionUploads.push(url)" />
       <div class="flex gap-8 mt-8" style="justify-content:flex-end">
         <button class="btn btn-ghost btn-sm" @click="cancelAddQuestion">취소</button>
         <button class="btn btn-primary btn-sm" @click="addQuestion" :disabled="!hasContent(newQuestionText) || (questioners.length > 0 && !newQuestioner)">등록</button>
@@ -185,8 +185,8 @@
 <script setup>
 import { ref, nextTick } from 'vue'
 import axios from 'axios'
-import { MdPreview } from 'md-editor-v3'
-import MarkdownEditor from '../MarkdownEditor.vue'
+import TiptapPreview from '../TiptapPreview.vue'
+import TiptapEditor from '../TiptapEditor.vue'
 import { useToast } from '../../composables/useToast.js'
 import { hasContent } from '../../utils/content.js'
 import { ADMIN_PASSWORD } from '../../config.js'

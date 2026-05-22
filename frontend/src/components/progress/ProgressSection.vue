@@ -15,7 +15,7 @@
             <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
           </select>
         </div>
-        <MarkdownEditor v-model="editText" height="140px" @image-uploaded="url => editUploads.push(url)" />
+        <TiptapEditor v-model="editText" height="140px" @image-uploaded="url => editUploads.push(url)" />
         <div class="flex gap-8 mt-8" style="justify-content:flex-end">
           <button class="btn btn-ghost btn-sm" @click="cancelEdit">취소</button>
           <button class="btn btn-primary btn-sm" @click="saveEdit(iss.id)" :disabled="!hasContent(editText) || !editAssignee">저장</button>
@@ -23,7 +23,7 @@
       </template>
       <template v-else>
         <div class="issue-box">
-          <MdPreview language="en-US" :modelValue="iss.issue" class="md-preview-inline" :noImgZoomIn="true" />
+          <TiptapPreview :modelValue="iss.issue" />
         </div>
         <div class="flex gap-4 mt-8" style="align-items:center">
           <span v-if="iss.assignee" class="badge badge-gray">{{ iss.assignee }}</span>
@@ -48,7 +48,7 @@
           <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
         </select>
       </div>
-      <MarkdownEditor v-model="newText" height="140px" @image-uploaded="url => addUploads.push(url)" />
+      <TiptapEditor v-model="newText" height="140px" @image-uploaded="url => addUploads.push(url)" />
       <div class="flex gap-8 mt-8" style="justify-content:flex-end">
         <button class="btn btn-ghost btn-sm" @click="cancelAdd">취소</button>
         <button class="btn btn-primary btn-sm" @click="addIssue" :disabled="!hasContent(newText) || !newAssignee">저장</button>
@@ -64,8 +64,8 @@
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'
-import { MdPreview } from 'md-editor-v3'
-import MarkdownEditor from '../MarkdownEditor.vue'
+import TiptapPreview from '../TiptapPreview.vue'
+import TiptapEditor from '../TiptapEditor.vue'
 import { useToast } from '../../composables/useToast.js'
 import { hasContent } from '../../utils/content.js'
 import { copyToClipboard } from '../../utils/clipboard.js'

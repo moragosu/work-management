@@ -8,9 +8,22 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tiptap/extension-image": "^3.23.6",
+    "@tiptap/extension-link": "^3.23.6",
+    "@tiptap/extension-placeholder": "^3.23.6",
+    "@tiptap/extension-table": "^3.23.6",
+    "@tiptap/extension-table-cell": "^3.23.6",
+    "@tiptap/extension-table-header": "^3.23.6",
+    "@tiptap/extension-table-row": "^3.23.6",
+    "@tiptap/extension-task-item": "^3.23.6",
+    "@tiptap/extension-task-list": "^3.23.6",
+    "@tiptap/starter-kit": "^3.23.6",
+    "@tiptap/vue-3": "^3.23.6",
     "axios": "^1.7.2",
+    "marked": "^18.0.4",
     "md-editor-v3": "^6.5.0",
     "pinia": "^2.1.7",
+    "tiptap-markdown": "^0.9.0",
     "vue": "^3.4.27",
     "vue-router": "^4.3.2"
   },

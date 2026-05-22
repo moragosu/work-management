@@ -49,7 +49,7 @@
             </div>
           </div>
           <div class="feedback-card-body">
-            <MdPreview language="en-US" :modelValue="fb.content" class="md-preview-inline" :noImgZoomIn="true" />
+            <TiptapPreview :modelValue="fb.content" />
           </div>
         </div>
       </div>
@@ -88,7 +88,7 @@
             </div>
             <div class="form-group">
               <label class="form-label">내용</label>
-              <MarkdownEditor v-model="form.content" height="200px" @image-uploaded="url => sessionUploads.push(url)" />
+              <TiptapEditor v-model="form.content" height="200px" @image-uploaded="url => sessionUploads.push(url)" />
             </div>
           </div>
           <div class="fb-modal-footer">
@@ -108,8 +108,8 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
 import axios from 'axios'
-import { MdPreview } from 'md-editor-v3'
-import MarkdownEditor from '../components/MarkdownEditor.vue'
+import TiptapPreview from '../components/TiptapPreview.vue'
+import TiptapEditor from '../components/TiptapEditor.vue'
 import { useToast } from '../composables/useToast.js'
 import { deleteOrphanedImages, deleteAllImages, deleteUrls } from '../composables/useImageCleanup.js'
 

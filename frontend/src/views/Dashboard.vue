@@ -320,13 +320,13 @@
         </div>
         <div class="dash-modal-body">
           <template v-if="modal.type === 'issue'">
-            <MdPreview language="en-US" :modelValue="modal.item.issue" class="dash-modal-md" :noImgZoomIn="true" />
+            <TiptapPreview :modelValue="modal.item.issue" class="dash-modal-md" />
           </template>
           <template v-else>
             <div class="dash-modal-q">{{ modal.item.question }}</div>
             <template v-if="modal.item.answers && modal.item.answers.length > 0">
               <div class="dash-modal-a-label">답변</div>
-              <MdPreview v-for="a in modal.item.answers" :key="a.id" language="en-US" :modelValue="a.answer" class="dash-modal-md" :noImgZoomIn="true" />
+              <TiptapPreview v-for="a in modal.item.answers" :key="a.id" :modelValue="a.answer" class="dash-modal-md" />
             </template>
             <div v-else class="dash-modal-no-answer">아직 답변이 없습니다.</div>
           </template>
@@ -344,7 +344,7 @@
 import { ref, computed, onMounted, reactive } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import axios from 'axios'
-import { MdPreview } from 'md-editor-v3'
+import TiptapPreview from '../components/TiptapPreview.vue'
 import { parseIds } from '../utils/parseIds.js'
 import { getCurrentWeek, formatWeekLabel, normalizeWeek } from '../utils/week.js'
 import { statusBadgeClass } from '../utils/status.js'
