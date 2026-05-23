@@ -790,6 +790,10 @@ async function fetchAll() {
     objectives.value = oRes.data
     staffList.value = sRes.data
     if (Array.isArray(stRes.data.questioners)) questioners.value = stRes.data.questioners
+    // 소과제 전체 기본 펼침
+    const allSubIds = new Set()
+    tRes.data.forEach(t => (t.sub_tasks || []).forEach(st => allSubIds.add(st.id)))
+    expandedSubTaskIds.value = allSubIds
     initLinkInputs()
     selectedWeek.value = route.query.week || getCurrentWeek()
     await onWeekChange()
