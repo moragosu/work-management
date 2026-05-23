@@ -293,66 +293,83 @@
       </div>
     </section>
 
-    <!-- ④ 마크다운 -->
+    <!-- ④ 에디터 사용법 -->
     <section id="markdown" class="help-section card">
       <div class="card-body">
         <div class="section-heading">
           <span class="material-symbols-outlined section-icon-lg">edit_note</span>
-          <h3 class="section-title">마크다운 작성법</h3>
+          <h3 class="section-title">에디터 사용법</h3>
         </div>
-        <p class="section-desc">이슈 내용과 의견/질문는 마크다운 형식을 지원합니다. 에디터 상단 툴바 버튼으로도 적용할 수 있습니다.</p>
+        <p class="section-desc">이슈·의견/질문·피드백 작성에 WYSIWYG 에디터를 사용합니다. 툴바 버튼으로 서식을 적용하거나, 마크다운 단축키(<code class="md-syntax">**굵게**</code>, <code class="md-syntax"># 제목</code> 등)를 직접 입력해도 자동으로 변환됩니다.</p>
 
-        <div class="md-table">
-          <div class="md-row md-header">
-            <span>작성 방법</span>
-            <span>결과</span>
+        <!-- 툴바 기능 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">toolbar</span>
+            툴바 기능
           </div>
-          <div v-for="item in markdownGuide" :key="item.syntax" class="md-row">
-            <code class="md-syntax">{{ item.syntax }}</code>
-            <span class="md-result" v-html="item.result"></span>
+          <div class="md-table">
+            <div class="md-row md-header">
+              <span>버튼</span>
+              <span>기능</span>
+            </div>
+            <div v-for="item in toolbarGuide" :key="item.name" class="md-row">
+              <span style="display:flex;align-items:center;gap:6px">
+                <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-secondary)">{{ item.icon }}</span>
+                <strong style="font-size:12px">{{ item.name }}</strong>
+              </span>
+              <span class="md-result" style="font-size:12px;color:var(--text-secondary)">{{ item.desc }}</span>
+            </div>
+          </div>
+          <div class="callout callout-tip" style="margin-top:12px">
+            <span class="material-symbols-outlined callout-icon">star</span>
+            <div>단축키도 사용할 수 있습니다 — <strong>Ctrl+B</strong> 굵게 / <strong>Ctrl+I</strong> 기울임 / <strong>Ctrl+U</strong> 밑줄 / <strong>Ctrl+Z</strong> 실행취소</div>
           </div>
         </div>
 
         <!-- 이미지 삽입 -->
-        <div class="sub-section" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--outline)">
+        <div class="sub-section">
           <div class="sub-section-title">
             <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">image</span>
             이미지 삽입
           </div>
           <ul class="feature-list">
             <li>클립보드 이미지를 에디터에 <strong>Ctrl+V</strong>로 바로 붙여넣기 할 수 있습니다 — 스크린샷 캡처 후 즉시 붙여넣기 가능</li>
-            <li>이미지가 업로드되면 에디터 하단에 <strong>이미지 삽입 피커</strong>가 나타납니다</li>
-            <li>피커에서 크기를 선택합니다:
+            <li>이미지가 업로드되면 에디터 안에 <strong>즉시 삽입</strong>되고, 이미지 바로 아래에 <strong>크기 조절 바</strong>가 나타납니다</li>
+            <li>크기 조절 바에서 원하는 크기를 선택합니다:
               <ul style="margin-top:4px;display:flex;flex-direction:column;gap:3px">
-                <li><strong>원본</strong> — 이미지 원래 크기 그대로 삽입</li>
-                <li><strong>S</strong> — 300px 너비로 삽입</li>
-                <li><strong>M</strong> — 500px 너비로 삽입</li>
-                <li><strong>L</strong> — 800px 너비로 삽입</li>
+                <li><strong>S</strong> — 300px 너비</li>
+                <li><strong>M</strong> — 500px 너비</li>
+                <li><strong>L</strong> — 700px 너비</li>
+                <li><strong>원본</strong> — 이미지 원래 크기 그대로</li>
+                <li><strong>px 직접 입력</strong> — 숫자 입력 후 <em>적용</em> 버튼 클릭</li>
               </ul>
             </li>
-            <li><strong>Border</strong> 체크박스를 선택하면 이미지에 회색 테두리가 추가됩니다 — 배경과 이미지를 구분하고 싶을 때 유용</li>
-            <li>크기를 선택하면 에디터에 즉시 삽입됩니다. <strong>취소</strong> 버튼으로 삽입 없이 닫을 수도 있습니다</li>
-            <li>툴바의 <strong>이미지(🖼) 버튼</strong>을 클릭해 파일 선택으로도 업로드할 수 있습니다</li>
+            <li>이미지 바깥을 클릭하면 크기 조절 바가 사라집니다. 이미지를 다시 클릭하면 크기 조절 바가 다시 표시됩니다</li>
+            <li>툴바의 <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">image</span> <strong>이미지 버튼</strong>을 클릭해 파일 선택으로도 업로드할 수 있습니다</li>
           </ul>
+          <div class="callout callout-info">
+            <span class="material-symbols-outlined callout-icon">info</span>
+            <div>이미지를 붙여넣고 <strong>저장하지 않은 채 취소</strong>하면 업로드된 이미지 파일은 서버에서 자동으로 삭제됩니다.</div>
+          </div>
         </div>
 
         <!-- 전체화면 편집 -->
         <div class="sub-section">
           <div class="sub-section-title">
             <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">open_in_full</span>
-            전체화면 편집
+            크게 보기 (전체화면 편집)
           </div>
           <ul class="feature-list">
-            <li>에디터 툴바 우측의 <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">open_in_full</span> 버튼을 클릭하면 <strong>전체화면 편집 모달</strong>이 열립니다</li>
-            <li>모달은 960px 너비 × 90% 높이로 넓게 표시되어 긴 내용을 편하게 작성할 수 있습니다</li>
-            <li>이미지 붙여넣기와 피커도 전체화면 모달 안에서 동일하게 작동합니다</li>
-            <li><strong>취소</strong> — 모달을 닫고 편집 전 원래 내용으로 되돌립니다</li>
-            <li><strong>적용</strong> — 전체화면에서 작성한 내용을 원래 에디터에 반영하고 모달을 닫습니다</li>
-            <li>모달 헤더와 하단 푸터 양쪽에 취소/적용 버튼이 있어 어디서든 동작을 완료할 수 있습니다</li>
+            <li>에디터 툴바 맨 왼쪽의 <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">open_in_full</span> 버튼을 클릭하면 <strong>전체화면 편집 모달</strong>이 열립니다</li>
+            <li>모달에서 작성한 내용은 <strong>원본 에디터와 실시간으로 동기화</strong>됩니다</li>
+            <li><strong>닫기</strong> — 모달에서 작성한 내용을 그대로 유지하고 모달을 닫습니다</li>
+            <li><strong>취소</strong> — 모달을 열기 전 원래 내용으로 되돌리고 모달을 닫습니다</li>
+            <li>이미지 붙여넣기와 크기 조절도 전체화면 모달 안에서 동일하게 작동합니다</li>
           </ul>
           <div class="callout callout-tip">
             <span class="material-symbols-outlined callout-icon">star</span>
-            <div>전체화면 모달에서 <strong>취소</strong>를 누르면 모달을 열기 전 상태로 완전히 복원됩니다. 수정한 내용을 저장하려면 반드시 <strong>적용</strong>을 눌러야 합니다.</div>
+            <div>전체화면 모달에서 <strong>취소</strong>를 누르면 모달을 열기 전 상태로 완전히 복원됩니다. 작성 내용을 반영하려면 <strong>닫기</strong>를 눌러야 합니다.</div>
           </div>
         </div>
       </div>
@@ -506,20 +523,35 @@ const toc = [
   { id: 'overview',  icon: 'info',      title: '시스템 소개' },
   { id: 'dashboard', icon: 'dashboard', title: '대시보드' },
   { id: 'progress',  icon: 'assignment', title: '주간 진행 현황' },
-  { id: 'markdown',  icon: 'edit_note', title: '마크다운 작성법' },
+  { id: 'markdown',  icon: 'edit_note', title: '에디터 사용법' },
   { id: 'admin',     icon: 'settings',  title: '관리 도구' },
   { id: 'faq',       icon: 'help',      title: 'FAQ' },
 ]
 
-const markdownGuide = [
-  { syntax: '**굵게**',           result: '<strong>굵게</strong>' },
-  { syntax: '*기울임*',           result: '<em>기울임</em>' },
-  { syntax: '~~취소선~~',         result: '<s>취소선</s>' },
-  { syntax: '# 제목 1 / ## 제목 2', result: '<strong>제목</strong> (크기 조절)' },
-  { syntax: '- 항목 1',           result: '• 항목 1 (목록)' },
-  { syntax: '1. 첫번째',          result: '1. 첫번째 (번호 목록)' },
-  { syntax: '`인라인 코드`',      result: '<code style="background:#f3f4f6;padding:1px 5px;border-radius:3px">인라인 코드</code>' },
-  { syntax: '> 인용문',           result: '<span style="border-left:3px solid #d1d5db;padding-left:8px;color:#6b7280">인용문</span>' },
+const toolbarGuide = [
+  { icon: 'format_bold',        name: '굵게',       desc: '선택한 텍스트를 굵게 표시 (Ctrl+B)' },
+  { icon: 'format_italic',      name: '기울임',     desc: '선택한 텍스트를 기울여 표시 (Ctrl+I)' },
+  { icon: 'format_underlined',  name: '밑줄',       desc: '선택한 텍스트에 밑줄 추가 (Ctrl+U)' },
+  { icon: 'strikethrough_s',    name: '취소선',     desc: '선택한 텍스트에 취소선 추가' },
+  { icon: 'code',               name: '인라인 코드', desc: '선택한 텍스트를 코드 스타일로 표시' },
+  { icon: 'subscript',          name: '아래 첨자',  desc: '선택한 텍스트를 아래 첨자로 표시 (H₂O 등)' },
+  { icon: 'superscript',        name: '위 첨자',    desc: '선택한 텍스트를 위 첨자로 표시 (x² 등)' },
+  { icon: 'ink_highlighter',    name: '형광펜',     desc: '선택한 텍스트에 노란 형광펜 효과 적용' },
+  { icon: 'format_color_text',  name: '글자색',     desc: '선택한 텍스트의 색상 변경 — 색상 클릭으로 피커 열기' },
+  { icon: 'title',              name: '제목 H1~H6', desc: 'H1(가장 큼)~H6(가장 작음) 중 원하는 크기 선택' },
+  { icon: 'format_align_left',  name: '정렬',       desc: '왼쪽 / 가운데 / 오른쪽 / 양쪽 정렬 선택' },
+  { icon: 'format_list_bulleted', name: '글머리 목록', desc: '• 기호 목록 생성 (마크다운: - 또는 *)' },
+  { icon: 'format_list_numbered', name: '번호 목록', desc: '1. 2. 3. 번호 목록 생성 (마크다운: 1.)' },
+  { icon: 'checklist',          name: '체크박스 목록', desc: '체크 가능한 할 일 목록 생성' },
+  { icon: 'format_quote',       name: '인용문',     desc: '블록 인용문 형식 적용 (마크다운: >)' },
+  { icon: 'data_object',        name: '코드 블록',  desc: '여러 줄 코드를 코드 블록으로 표시' },
+  { icon: 'horizontal_rule',    name: '구분선',     desc: '가로 구분선(---) 삽입' },
+  { icon: 'table_chart',        name: '표',         desc: '3×3 표 삽입 — 삽입 후 열·행 추가/삭제 가능' },
+  { icon: 'link',               name: '링크',       desc: '선택한 텍스트에 URL 링크 연결' },
+  { icon: 'image',              name: '이미지',     desc: '파일 선택으로 이미지 업로드 (Ctrl+V 붙여넣기도 가능)' },
+  { icon: 'undo',               name: '실행취소',   desc: '마지막 작업 취소 (Ctrl+Z)' },
+  { icon: 'redo',               name: '다시실행',   desc: '취소한 작업 다시 실행 (Ctrl+Y)' },
+  { icon: 'format_clear',       name: '서식 초기화', desc: '선택한 텍스트의 모든 서식(굵기·색상·정렬 등) 제거' },
 ]
 
 const faqs = reactive([
@@ -530,7 +562,7 @@ const faqs = reactive([
   },
   {
     q: '이슈 내용은 어떤 형식으로 작성하나요?',
-    a: '마크다운 형식을 지원합니다. 에디터 상단의 툴바 버튼을 클릭하거나, 직접 **굵게**, - 목록 등의 문법을 입력할 수 있습니다.',
+    a: 'WYSIWYG 에디터를 사용합니다. 툴바 버튼으로 굵게·기울임·제목·정렬·형광펜·글자색·목록·표 등 다양한 서식을 적용할 수 있습니다. 마크다운 단축키(**굵게**, # 제목, - 목록 등)를 직접 입력하면 자동으로 변환됩니다.',
     open: false,
   },
   {
