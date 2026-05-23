@@ -17,10 +17,10 @@
             </button>
             <div class="week-nav-info">
               <div style="display:flex;align-items:center;gap:6px">
-                <span class="week-nav-label">{{ getWeekDateRange(selectedWeek) }}</span>
+                <span class="week-nav-label">{{ weekNavLabel }}</span>
                 <span v-if="selectedWeek === getCurrentWeek()" class="week-current-badge">이번 주</span>
               </div>
-              <span class="week-nav-range">{{ weekDisplayLabel }}</span>
+              <span class="week-nav-range">지난주 | 이번주</span>
             </div>
             <button class="week-nav-btn" @click="nextWeek" :disabled="getCurrentWeekIndex() >= availableWeeks.length - 1" data-tooltip="다음 주">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -52,199 +52,371 @@
         <p>주차를 선택해주세요.</p>
       </div>
 
-      <div v-else>
-        <div v-for="task in filteredTasks" :key="task.id" :id="'task-' + task.id" class="card mb-16">
-          <!-- 카드 헤더: 과제명 + Objective + 담당 인력 -->
-          <div class="card-header" style="flex-wrap:wrap;gap:8px">
-            <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
-              <h3 style="margin:0">{{ task.name }}</h3>
-              <span class="badge badge-blue">{{ task.objective_id }}: {{ getObjectiveName(task.objective_id) }}</span>
-              <span v-if="task.sub_tasks && task.sub_tasks.length > 0" class="badge badge-outline" style="font-size:11px">소과제 {{ task.sub_tasks.length }}개</span>
-              <button
-                v-if="task.sub_tasks && task.sub_tasks.length > 0"
-                class="btn btn-ghost btn-xs subtask-toggle-all"
-                @click="toggleAllSubTasks(task)"
-                :data-tooltip="isAllSubTasksCollapsed(task) ? '소과제 전체 펼치기' : '소과제 전체 접기'"
-              >
-                <span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">{{ isAllSubTasksCollapsed(task) ? 'unfold_more' : 'unfold_less' }}</span>
-                {{ isAllSubTasksCollapsed(task) ? '전체 펼치기' : '전체 접기' }}
-              </button>
+      <div v-else class="split-container">
+
+        <!-- ══ 지난주 패널 복원 버튼 ══ -->
+        <button
+          v-if="panelState === 'right'"
+          class="panel-restore-btn"
+          @click="panelState = 'split'"
+          title="지난주 패널 펼치기"
+        >
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+
+        <!-- ══ 지난주 패널 ══ -->
+        <div v-show="panelState !== 'right'" class="split-panel split-left">
+          <div class="panel-header">
+            <span class="panel-title">
+              <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">history</span>
+              지난주 · {{ leftWeekDisplay }}
+            </span>
+            <button class="panel-collapse-btn" @click="panelState = 'right'" title="지난주 패널 접기">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+          </div>
+
+          <div v-for="task in filteredTasks" :key="'L-' + task.id" class="card mb-16">
+            <div class="card-header" style="flex-wrap:wrap;gap:8px">
+              <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
+                <h3 style="margin:0">{{ task.name }}</h3>
+                <span class="badge badge-blue">{{ task.objective_id }}: {{ getObjectiveName(task.objective_id) }}</span>
+                <span v-if="task.sub_tasks && task.sub_tasks.length > 0" class="badge badge-outline" style="font-size:11px">소과제 {{ task.sub_tasks.length }}개</span>
+                <button
+                  v-if="task.sub_tasks && task.sub_tasks.length > 0"
+                  class="btn btn-ghost btn-xs subtask-toggle-all"
+                  @click="toggleAllSubTasks(task)"
+                  :data-tooltip="isAllSubTasksCollapsed(task) ? '소과제 전체 펼치기' : '소과제 전체 접기'"
+                >
+                  <span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">{{ isAllSubTasksCollapsed(task) ? 'unfold_more' : 'unfold_less' }}</span>
+                  {{ isAllSubTasksCollapsed(task) ? '전체 펼치기' : '전체 접기' }}
+                </button>
+              </div>
+              <div class="member-badges">
+                <template v-if="task.sub_tasks && task.sub_tasks.length > 0">
+                  <span v-for="m in allTaskMembers(task)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                  <span v-if="allTaskMembers(task).length === 0" class="text-muted text-sm">담당자 미배정</span>
+                </template>
+                <template v-else>
+                  <span v-for="m in taskMembers(task.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                  <span v-if="taskMembers(task.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
+                </template>
+              </div>
             </div>
-            <div class="member-badges">
+
+            <div class="card-body">
               <template v-if="task.sub_tasks && task.sub_tasks.length > 0">
-                <span
-                  v-for="m in allTaskMembers(task)"
-                  :key="m.id"
-                  class="badge badge-gray"
-                  :title="m.role"
-                >{{ m.name }}</span>
-                <span v-if="allTaskMembers(task).length === 0" class="text-muted text-sm">담당자 미배정</span>
+                <div
+                  v-for="st in task.sub_tasks"
+                  :key="'L-' + st.id"
+                  class="sub-task-section"
+                  :class="{ 'sub-task-done': st.done }"
+                >
+                  <div
+                    class="sub-task-header"
+                    :class="{ 'sub-task-header-collapsed': !expandedSubTaskIds.has(st.id) }"
+                    @click="toggleSubTaskCollapse(st.id)"
+                  >
+                    <div class="sub-task-title">
+                      <span class="material-symbols-outlined sub-collapse-icon" :class="{ collapsed: !expandedSubTaskIds.has(st.id) }">expand_more</span>
+                      <span class="sub-task-id-badge">{{ st.id }}</span>
+                      <span class="sub-task-name">{{ st.name || '(이름 없음)' }}</span>
+                      <template v-if="!expandedSubTaskIds.has(st.id)">
+                        <span v-if="(leftIssueMap[st.id] || []).length > 0" class="subtask-sum-badge subtask-sum-issue">이슈 {{ (leftIssueMap[st.id] || []).length }}건</span>
+                        <span v-if="getLeftQuestionsForTask(st.id).length > 0" class="subtask-sum-badge subtask-sum-qa">의견/질문 {{ getLeftQuestionsForTask(st.id).length }}건</span>
+                      </template>
+                    </div>
+                    <div class="sub-task-meta" @click.stop>
+                      <div class="member-badges">
+                        <span v-for="m in subTaskMembers(st.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                        <span v-if="subTaskMembers(st.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
+                      </div>
+                      <button
+                        class="btn btn-xs sub-task-done-btn"
+                        :class="st.done ? 'btn-success' : 'btn-ghost'"
+                        @click="toggleSubTaskDone(task.id, st.id, !st.done)"
+                        :data-tooltip="st.done ? '완료됨 — 클릭하여 진행중으로 변경' : '진행중 — 클릭하여 완료 처리'"
+                      >
+                        <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">{{ st.done ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                        {{ st.done ? '완료' : '진행중' }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="!expandedSubTaskIds.has(st.id) && getLeftTaskLink(st.id)"
+                    class="sub-task-link-row sub-task-link-collapsed-preview"
+                    @click.stop
+                  >
+                    <span class="material-symbols-outlined sub-task-link-icon">link</span>
+                    <a :href="getLeftTaskLink(st.id).url" target="_blank" class="text-primary sub-task-link-text">{{ getLeftTaskLink(st.id).url }}</a>
+                  </div>
+
+                  <template v-if="expandedSubTaskIds.has(st.id)">
+                    <div v-if="getLeftTaskLink(st.id)" class="sub-task-link-row">
+                      <span class="material-symbols-outlined sub-task-link-icon">link</span>
+                      <a :href="getLeftTaskLink(st.id).url" target="_blank" class="text-primary sub-task-link-text">{{ getLeftTaskLink(st.id).url }}</a>
+                    </div>
+                    <ProgressSection
+                      :issues="leftIssueMap[st.id] || []"
+                      :staff-list="staffList"
+                      :task-id="st.id"
+                      :week="leftWeek"
+                      :readonly="true"
+                      @update:issues="iss => onLeftIssuesUpdate(st.id, iss)"
+                    />
+                    <QASection
+                      :questions="getLeftQuestionsForTask(st.id)"
+                      :staff-list="staffList"
+                      :questioners="questioners"
+                      :task-id="st.id"
+                      :week="leftWeek"
+                      :readonlyQuestion="true"
+                      @update:questions="qs => onLeftQuestionsUpdate(st.id, qs)"
+                    />
+                  </template>
+                </div>
               </template>
+
               <template v-else>
-                <span
-                  v-for="m in taskMembers(task.id)"
-                  :key="m.id"
-                  class="badge badge-gray"
-                  :title="m.role"
-                >{{ m.name }}</span>
-                <span v-if="taskMembers(task.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
+                <div v-if="getLeftTaskLink(task.id)" class="section-block">
+                  <div class="section-label">
+                    <span class="material-symbols-outlined section-icon">link</span>
+                    컨플루언스
+                  </div>
+                  <a :href="getLeftTaskLink(task.id).url" target="_blank" class="text-primary link-text">{{ getLeftTaskLink(task.id).url }}</a>
+                </div>
+                <ProgressSection
+                  :issues="leftIssueMap[task.id] || []"
+                  :staff-list="staffList"
+                  :task-id="task.id"
+                  :week="leftWeek"
+                  :readonly="true"
+                  @update:issues="iss => onLeftIssuesUpdate(task.id, iss)"
+                />
+                <QASection
+                  :questions="getLeftQuestionsForTask(task.id)"
+                  :staff-list="staffList"
+                  :questioners="questioners"
+                  :task-id="task.id"
+                  :week="leftWeek"
+                  :readonlyQuestion="true"
+                  @update:questions="qs => onLeftQuestionsUpdate(task.id, qs)"
+                />
               </template>
             </div>
           </div>
+        </div>
 
-          <div class="card-body">
-            <!-- 소과제가 있는 경우: 소과제별 섹션 (컨플루언스 포함) -->
-            <template v-if="task.sub_tasks && task.sub_tasks.length > 0">
-              <div
-                v-for="st in task.sub_tasks"
-                :key="st.id"
-                :id="'task-' + st.id"
-                class="sub-task-section"
-                :class="{ 'sub-task-done': st.done }"
-              >
-                <div
-                  class="sub-task-header"
-                  :class="{ 'sub-task-header-collapsed': !expandedSubTaskIds.has(st.id) }"
-                  @click="toggleSubTaskCollapse(st.id)"
+        <!-- ══ 이번주 패널 복원 버튼 ══ -->
+        <button
+          v-if="panelState === 'left'"
+          class="panel-restore-btn panel-restore-right"
+          @click="panelState = 'split'"
+          title="이번주 패널 펼치기"
+        >
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+
+        <!-- ══ 이번주 패널 ══ -->
+        <div v-show="panelState !== 'left'" class="split-panel split-right">
+          <div class="panel-header">
+            <button class="panel-collapse-btn" @click="panelState = 'left'" title="이번주 패널 접기">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+            <span class="panel-title">
+              <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">today</span>
+              이번주 · {{ rightWeekDisplay }}
+              <span v-if="selectedWeek === getCurrentWeek()" class="week-current-badge">이번 주</span>
+            </span>
+          </div>
+
+          <div v-for="task in filteredTasks" :key="task.id" :id="'task-' + task.id" class="card mb-16">
+            <div class="card-header" style="flex-wrap:wrap;gap:8px">
+              <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
+                <h3 style="margin:0">{{ task.name }}</h3>
+                <span class="badge badge-blue">{{ task.objective_id }}: {{ getObjectiveName(task.objective_id) }}</span>
+                <span v-if="task.sub_tasks && task.sub_tasks.length > 0" class="badge badge-outline" style="font-size:11px">소과제 {{ task.sub_tasks.length }}개</span>
+                <button
+                  v-if="task.sub_tasks && task.sub_tasks.length > 0"
+                  class="btn btn-ghost btn-xs subtask-toggle-all"
+                  @click="toggleAllSubTasks(task)"
+                  :data-tooltip="isAllSubTasksCollapsed(task) ? '소과제 전체 펼치기' : '소과제 전체 접기'"
                 >
-                  <div class="sub-task-title">
-                    <span class="material-symbols-outlined sub-collapse-icon" :class="{ collapsed: !expandedSubTaskIds.has(st.id) }">expand_more</span>
-                    <span class="sub-task-id-badge">{{ st.id }}</span>
-                    <span class="sub-task-name">{{ st.name || '(이름 없음)' }}</span>
-                    <template v-if="!expandedSubTaskIds.has(st.id)">
-                      <span v-if="(issueMap[st.id] || []).length > 0" class="subtask-sum-badge subtask-sum-issue">이슈 {{ (issueMap[st.id] || []).length }}건</span>
-                      <span v-if="getQuestionsForTask(st.id).length > 0" class="subtask-sum-badge subtask-sum-qa">의견/질문 {{ getQuestionsForTask(st.id).length }}건</span>
-                    </template>
-                  </div>
-                  <div class="sub-task-meta" @click.stop>
-                    <div class="member-badges">
-                      <span v-for="m in subTaskMembers(st.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
-                      <span v-if="subTaskMembers(st.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
+                  <span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">{{ isAllSubTasksCollapsed(task) ? 'unfold_more' : 'unfold_less' }}</span>
+                  {{ isAllSubTasksCollapsed(task) ? '전체 펼치기' : '전체 접기' }}
+                </button>
+              </div>
+              <div class="member-badges">
+                <template v-if="task.sub_tasks && task.sub_tasks.length > 0">
+                  <span
+                    v-for="m in allTaskMembers(task)"
+                    :key="m.id"
+                    class="badge badge-gray"
+                    :title="m.role"
+                  >{{ m.name }}</span>
+                  <span v-if="allTaskMembers(task).length === 0" class="text-muted text-sm">담당자 미배정</span>
+                </template>
+                <template v-else>
+                  <span
+                    v-for="m in taskMembers(task.id)"
+                    :key="m.id"
+                    class="badge badge-gray"
+                    :title="m.role"
+                  >{{ m.name }}</span>
+                  <span v-if="taskMembers(task.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
+                </template>
+              </div>
+            </div>
+
+            <div class="card-body">
+              <template v-if="task.sub_tasks && task.sub_tasks.length > 0">
+                <div
+                  v-for="st in task.sub_tasks"
+                  :key="st.id"
+                  :id="'task-' + st.id"
+                  class="sub-task-section"
+                  :class="{ 'sub-task-done': st.done }"
+                >
+                  <div
+                    class="sub-task-header"
+                    :class="{ 'sub-task-header-collapsed': !expandedSubTaskIds.has(st.id) }"
+                    @click="toggleSubTaskCollapse(st.id)"
+                  >
+                    <div class="sub-task-title">
+                      <span class="material-symbols-outlined sub-collapse-icon" :class="{ collapsed: !expandedSubTaskIds.has(st.id) }">expand_more</span>
+                      <span class="sub-task-id-badge">{{ st.id }}</span>
+                      <span class="sub-task-name">{{ st.name || '(이름 없음)' }}</span>
+                      <template v-if="!expandedSubTaskIds.has(st.id)">
+                        <span v-if="(issueMap[st.id] || []).length > 0" class="subtask-sum-badge subtask-sum-issue">이슈 {{ (issueMap[st.id] || []).length }}건</span>
+                        <span v-if="getQuestionsForTask(st.id).length > 0" class="subtask-sum-badge subtask-sum-qa">의견/질문 {{ getQuestionsForTask(st.id).length }}건</span>
+                      </template>
                     </div>
-                    <button
-                      class="btn btn-xs sub-task-done-btn"
-                      :class="st.done ? 'btn-success' : 'btn-ghost'"
-                      @click="toggleSubTaskDone(task.id, st.id, !st.done)"
-                      :data-tooltip="st.done ? '완료됨 — 클릭하여 진행중으로 변경' : '진행중 — 클릭하여 완료 처리'"
-                    >
-                      <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">{{ st.done ? 'check_circle' : 'radio_button_unchecked' }}</span>
-                      {{ st.done ? '완료' : '진행중' }}
-                    </button>
+                    <div class="sub-task-meta" @click.stop>
+                      <div class="member-badges">
+                        <span v-for="m in subTaskMembers(st.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                        <span v-if="subTaskMembers(st.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
+                      </div>
+                      <button
+                        class="btn btn-xs sub-task-done-btn"
+                        :class="st.done ? 'btn-success' : 'btn-ghost'"
+                        @click="toggleSubTaskDone(task.id, st.id, !st.done)"
+                        :data-tooltip="st.done ? '완료됨 — 클릭하여 진행중으로 변경' : '진행중 — 클릭하여 완료 처리'"
+                      >
+                        <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">{{ st.done ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                        {{ st.done ? '완료' : '진행중' }}
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                <!-- 접힌 상태에서 링크 미리보기 -->
-                <div
-                  v-if="!expandedSubTaskIds.has(st.id) && getTaskLink(st.id)"
-                  class="sub-task-link-row sub-task-link-collapsed-preview"
-                  @click.stop
-                >
-                  <span class="material-symbols-outlined sub-task-link-icon">link</span>
-                  <a :href="getTaskLink(st.id).url" target="_blank" class="text-primary sub-task-link-text">{{ getTaskLink(st.id).url }}</a>
-                </div>
-
-                <template v-if="expandedSubTaskIds.has(st.id)">
-                  <!-- 소과제 컨플루언스 링크 -->
-                  <div class="sub-task-link-row">
-                    <button class="link-help-btn" :class="{ active: linkHelpOpen.has(st.id) }" @click="toggleLinkHelp(st.id)" data-tooltip="링크 가져오는 방법">?</button>
+                  <div
+                    v-if="!expandedSubTaskIds.has(st.id) && getTaskLink(st.id)"
+                    class="sub-task-link-row sub-task-link-collapsed-preview"
+                    @click.stop
+                  >
                     <span class="material-symbols-outlined sub-task-link-icon">link</span>
-                    <template v-if="getTaskLink(st.id) && !editingLinkId[st.id]">
-                      <a :href="getTaskLink(st.id).url" target="_blank" class="text-primary sub-task-link-text">{{ getTaskLink(st.id).url }}</a>
-                      <button class="btn btn-ghost btn-xs" @click="startEditLink(st.id)" data-tooltip="링크 수정">수정</button>
-                      <button class="btn btn-danger btn-xs" @click="deleteLink(st.id)" data-tooltip="링크 삭제">삭제</button>
-                    </template>
-                    <template v-else>
-                      <input
-                        v-model="linkInputs[st.id]"
-                        class="form-control sub-task-link-input"
-                        placeholder="컨플루언스 링크"
-                        @keyup.enter="saveLink(st.id)"
-                      />
-                      <button class="btn btn-primary btn-xs" @click="saveLink(st.id)" :disabled="!linkInputs[st.id]" data-tooltip="링크 저장">저장</button>
-                      <button v-if="getTaskLink(st.id)" class="btn btn-ghost btn-xs" @click="cancelEditLink(st.id)" data-tooltip="수정 취소">취소</button>
-                    </template>
+                    <a :href="getTaskLink(st.id).url" target="_blank" class="text-primary sub-task-link-text">{{ getTaskLink(st.id).url }}</a>
                   </div>
-                  <div v-if="linkHelpOpen.has(st.id)" class="link-help-panel">
+
+                  <template v-if="expandedSubTaskIds.has(st.id)">
+                    <div class="sub-task-link-row">
+                      <button class="link-help-btn" :class="{ active: linkHelpOpen.has(st.id) }" @click="toggleLinkHelp(st.id)" data-tooltip="링크 가져오는 방법">?</button>
+                      <span class="material-symbols-outlined sub-task-link-icon">link</span>
+                      <template v-if="getTaskLink(st.id) && !editingLinkId[st.id]">
+                        <a :href="getTaskLink(st.id).url" target="_blank" class="text-primary sub-task-link-text">{{ getTaskLink(st.id).url }}</a>
+                        <button class="btn btn-ghost btn-xs" @click="startEditLink(st.id)" data-tooltip="링크 수정">수정</button>
+                        <button class="btn btn-danger btn-xs" @click="deleteLink(st.id)" data-tooltip="링크 삭제">삭제</button>
+                      </template>
+                      <template v-else>
+                        <input
+                          v-model="linkInputs[st.id]"
+                          class="form-control sub-task-link-input"
+                          placeholder="컨플루언스 링크"
+                          @keyup.enter="saveLink(st.id)"
+                        />
+                        <button class="btn btn-primary btn-xs" @click="saveLink(st.id)" :disabled="!linkInputs[st.id]" data-tooltip="링크 저장">저장</button>
+                        <button v-if="getTaskLink(st.id)" class="btn btn-ghost btn-xs" @click="cancelEditLink(st.id)" data-tooltip="수정 취소">취소</button>
+                      </template>
+                    </div>
+                    <div v-if="linkHelpOpen.has(st.id)" class="link-help-panel">
+                      <div class="link-help-step"><span class="link-help-num">1</span><span>컨플루언스 페이지 우 상단 <strong>Share</strong> 버튼 클릭</span></div>
+                      <div class="link-help-step"><span class="link-help-num">2</span><span>드롭다운에서 <strong>Share Link</strong> 생성 확인</span></div>
+                      <div class="link-help-step"><span class="link-help-num">3</span><span><strong>Copy</strong> 버튼 클릭 → 아래 입력란에 붙여넣기</span></div>
+                    </div>
+
+                    <ProgressSection
+                      :issues="issueMap[st.id] || []"
+                      :staff-list="staffList"
+                      :task-id="st.id"
+                      :week="selectedWeek"
+                      @update:issues="iss => onIssuesUpdate(st.id, iss)"
+                    />
+
+                    <QASection
+                      :questions="getQuestionsForTask(st.id)"
+                      :staff-list="staffList"
+                      :questioners="questioners"
+                      :task-id="st.id"
+                      :week="selectedWeek"
+                      @update:questions="qs => onQuestionsUpdate(st.id, qs)"
+                    />
+                  </template>
+                </div>
+              </template>
+
+              <template v-else>
+                <div class="section-block">
+                  <div class="section-label">
+                    <button class="link-help-btn" :class="{ active: linkHelpOpen.has(task.id) }" @click="toggleLinkHelp(task.id)" data-tooltip="링크 가져오는 방법">?</button>
+                    <span class="material-symbols-outlined section-icon">link</span>
+                    컨플루언스
+                  </div>
+                  <div v-if="linkHelpOpen.has(task.id)" class="link-help-panel">
                     <div class="link-help-step"><span class="link-help-num">1</span><span>컨플루언스 페이지 우 상단 <strong>Share</strong> 버튼 클릭</span></div>
                     <div class="link-help-step"><span class="link-help-num">2</span><span>드롭다운에서 <strong>Share Link</strong> 생성 확인</span></div>
                     <div class="link-help-step"><span class="link-help-num">3</span><span><strong>Copy</strong> 버튼 클릭 → 아래 입력란에 붙여넣기</span></div>
                   </div>
-
-                  <ProgressSection
-                    :issues="issueMap[st.id] || []"
-                    :staff-list="staffList"
-                    :task-id="st.id"
-                    :week="selectedWeek"
-                    @update:issues="iss => onIssuesUpdate(st.id, iss)"
-                  />
-
-                  <QASection
-                    :questions="getQuestionsForTask(st.id)"
-                    :staff-list="staffList"
-                    :questioners="questioners"
-                    :task-id="st.id"
-                    :week="selectedWeek"
-                    @update:questions="qs => onQuestionsUpdate(st.id, qs)"
-                  />
-                </template>
-              </div>
-            </template>
-
-            <!-- 소과제가 없는 경우: 기존 방식 -->
-            <template v-else>
-              <!-- ① 컨플루언스 링크 -->
-              <div class="section-block">
-                <div class="section-label">
-                  <button class="link-help-btn" :class="{ active: linkHelpOpen.has(task.id) }" @click="toggleLinkHelp(task.id)" data-tooltip="링크 가져오는 방법">?</button>
-                  <span class="material-symbols-outlined section-icon">link</span>
-                  컨플루언스
+                  <div v-if="getTaskLink(task.id) && !editingLinkId[task.id]" class="flex gap-8" style="align-items:center">
+                    <a :href="getTaskLink(task.id).url" target="_blank" class="text-primary link-text">
+                      {{ getTaskLink(task.id).url }}
+                    </a>
+                    <button class="btn btn-ghost btn-xs" @click="startEditLink(task.id)" data-tooltip="링크 수정">수정</button>
+                    <button class="btn btn-danger btn-xs" @click="deleteLink(task.id)" data-tooltip="링크 삭제">삭제</button>
+                  </div>
+                  <div v-else class="flex gap-8">
+                    <input
+                      v-model="linkInputs[task.id]"
+                      class="form-control"
+                      placeholder="링크를 입력하세요"
+                      style="flex:1"
+                      @keyup.enter="saveLink(task.id)"
+                    />
+                    <button class="btn btn-primary btn-xs" @click="saveLink(task.id)" :disabled="!linkInputs[task.id]" data-tooltip="링크 저장">저장</button>
+                    <button v-if="getTaskLink(task.id)" class="btn btn-ghost btn-xs" @click="cancelEditLink(task.id)" data-tooltip="수정 취소">취소</button>
+                  </div>
                 </div>
-                <div v-if="linkHelpOpen.has(task.id)" class="link-help-panel">
-                  <div class="link-help-step"><span class="link-help-num">1</span><span>컨플루언스 페이지 우 상단 <strong>Share</strong> 버튼 클릭</span></div>
-                  <div class="link-help-step"><span class="link-help-num">2</span><span>드롭다운에서 <strong>Share Link</strong> 생성 확인</span></div>
-                  <div class="link-help-step"><span class="link-help-num">3</span><span><strong>Copy</strong> 버튼 클릭 → 아래 입력란에 붙여넣기</span></div>
-                </div>
-                <div v-if="getTaskLink(task.id) && !editingLinkId[task.id]" class="flex gap-8" style="align-items:center">
-                  <a :href="getTaskLink(task.id).url" target="_blank" class="text-primary link-text">
-                    {{ getTaskLink(task.id).url }}
-                  </a>
-                  <button class="btn btn-ghost btn-xs" @click="startEditLink(task.id)" data-tooltip="링크 수정">수정</button>
-                  <button class="btn btn-danger btn-xs" @click="deleteLink(task.id)" data-tooltip="링크 삭제">삭제</button>
-                </div>
-                <div v-else class="flex gap-8">
-                  <input
-                    v-model="linkInputs[task.id]"
-                    class="form-control"
-                    placeholder="링크를 입력하세요"
-                    style="flex:1"
-                    @keyup.enter="saveLink(task.id)"
-                  />
-                  <button class="btn btn-primary btn-xs" @click="saveLink(task.id)" :disabled="!linkInputs[task.id]" data-tooltip="링크 저장">저장</button>
-                  <button v-if="getTaskLink(task.id)" class="btn btn-ghost btn-xs" @click="cancelEditLink(task.id)" data-tooltip="수정 취소">취소</button>
-                </div>
-              </div>
 
-              <!-- ② 이슈 -->
-              <ProgressSection
-                :issues="issueMap[task.id] || []"
-                :staff-list="staffList"
-                :task-id="task.id"
-                :week="selectedWeek"
-                @update:issues="iss => onIssuesUpdate(task.id, iss)"
-              />
+                <ProgressSection
+                  :issues="issueMap[task.id] || []"
+                  :staff-list="staffList"
+                  :task-id="task.id"
+                  :week="selectedWeek"
+                  @update:issues="iss => onIssuesUpdate(task.id, iss)"
+                />
 
-              <!-- ③ 의견/질문 -->
-              <QASection
-                :questions="getQuestionsForTask(task.id)"
-                :staff-list="staffList"
-                :questioners="questioners"
-                :task-id="task.id"
-                :week="selectedWeek"
-                @update:questions="qs => onQuestionsUpdate(task.id, qs)"
-              />
-            </template>
+                <QASection
+                  :questions="getQuestionsForTask(task.id)"
+                  :staff-list="staffList"
+                  :questioners="questioners"
+                  :task-id="task.id"
+                  :week="selectedWeek"
+                  @update:questions="qs => onQuestionsUpdate(task.id, qs)"
+                />
+              </template>
+            </div>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -271,6 +443,10 @@ const staffList = ref([])
 const loading = ref(false)
 const { toastMsg, showToast, toastError } = useToast()
 
+// ── 패널 상태: 'split' | 'left' | 'right' ──
+const panelState = ref('split')
+
+// ── 인력 필터 ──
 const selectedStaff = ref([])
 const filteredTasks = computed(() => {
   if (selectedStaff.value.length === 0) return tasks.value
@@ -284,11 +460,10 @@ function toggleStaff(name) {
   else selectedStaff.value.splice(idx, 1)
 }
 
+// ── 주차 (selectedWeek = 이번주 패널, leftWeek = 지난주 패널) ──
 const selectedWeek = ref('')
-const weekDisplayLabel = computed(() => {
-  const m = selectedWeek.value?.match(/^(\d{4})-W(\d+)$/)
-  return m ? `${m[1]}년 W${parseInt(m[2])}` : selectedWeek.value
-})
+const leftWeek = computed(() => addWeeks(selectedWeek.value, -1))
+
 const qnaList = ref([])
 const linkMap = ref({})
 const issueMap = ref({})
@@ -297,6 +472,27 @@ const linkInputs = ref({})
 const editingLinkId = ref({})
 const linkHelpOpen = ref(new Set())
 const expandedSubTaskIds = ref(new Set())
+
+// ── 지난주 패널 데이터 ──
+const leftQnA = ref([])
+const leftLinkMap = ref({})
+const leftIssueMap = ref({})
+
+// ── 주차 표시 ──
+const leftWeekNum = computed(() => parseInt(leftWeek.value?.match(/-W(\d+)$/)?.[1] || '0'))
+const rightWeekNum = computed(() => parseInt(selectedWeek.value?.match(/-W(\d+)$/)?.[1] || '0'))
+const leftWeekYear = computed(() => leftWeek.value?.match(/^(\d{4})/)?.[1] || '')
+const rightWeekYear = computed(() => selectedWeek.value?.match(/^(\d{4})/)?.[1] || '')
+
+const weekNavLabel = computed(() => {
+  if (!leftWeek.value || !selectedWeek.value) return ''
+  if (leftWeekYear.value === rightWeekYear.value) {
+    return `${leftWeekYear.value}년 W${leftWeekNum.value} | W${rightWeekNum.value}`
+  }
+  return `${leftWeekYear.value}년 W${leftWeekNum.value} | ${rightWeekYear.value}년 W${rightWeekNum.value}`
+})
+const leftWeekDisplay = computed(() => `W${leftWeekNum.value} (${getWeekDateRange(leftWeek.value)})`)
+const rightWeekDisplay = computed(() => `W${rightWeekNum.value} (${getWeekDateRange(selectedWeek.value)})`)
 
 function toggleLinkHelp(id) {
   const next = new Set(linkHelpOpen.value)
@@ -323,25 +519,17 @@ function toggleAllSubTasks(task) {
   expandedSubTaskIds.value = next
 }
 
-// ── 주차 (연도 경계 자동 처리) ──
+// ── 주차 네비게이션 ──
 const availableWeeks = computed(() => {
   const center = selectedWeek.value || getCurrentWeek()
   return [-4, -3, -2, -1, 0, 1, 2, 3, 4].map(d => addWeeks(center, d))
 })
 
 function getCurrentWeekIndex() { return availableWeeks.value.indexOf(selectedWeek.value) }
-function prevWeek() {
-  selectedWeek.value = addWeeks(selectedWeek.value, -1)
-  onWeekChange()
-}
-function nextWeek() {
-  selectedWeek.value = addWeeks(selectedWeek.value, 1)
-  onWeekChange()
-}
-function goToCurrentWeek() {
-  selectedWeek.value = getCurrentWeek()
-  onWeekChange()
-}
+function prevWeek() { selectedWeek.value = addWeeks(selectedWeek.value, -1); onWeekChange() }
+function nextWeek() { selectedWeek.value = addWeeks(selectedWeek.value, 1); onWeekChange() }
+function goToCurrentWeek() { selectedWeek.value = getCurrentWeek(); onWeekChange() }
+
 function initLinkInputs() {
   const ids = []
   tasks.value.forEach(t => {
@@ -355,7 +543,10 @@ async function onWeekChange() {
   if (!selectedWeek.value) return
   initLinkInputs()
   editingLinkId.value = {}
-  await Promise.all([loadQnA(), loadLinks(), loadIssues()])
+  await Promise.all([
+    loadQnA(), loadLinks(), loadIssues(),
+    loadLeftQnA(), loadLeftLinks(), loadLeftIssues(),
+  ])
 }
 
 // ── 헬퍼 ──
@@ -365,6 +556,8 @@ function subTaskMembers(subTaskId) { return getTaskMembers(subTaskId, staffList.
 function allTaskMembers(task) { return getAllTaskMembers(task, staffList.value) }
 function getQuestionsForTask(taskId) { return qnaList.value.filter(q => q.task_id === taskId) }
 function getTaskLink(taskId) { return linkMap.value[taskId] || null }
+function getLeftQuestionsForTask(taskId) { return leftQnA.value.filter(q => q.task_id === taskId) }
+function getLeftTaskLink(taskId) { return leftLinkMap.value[taskId] || null }
 
 async function toggleSubTaskDone(taskId, subTaskId, done) {
   try {
@@ -377,15 +570,22 @@ async function toggleSubTaskDone(taskId, subTaskId, done) {
   } catch (e) { toastError(e, '소과제 상태 변경 실패') }
 }
 
-// ── 의견/질문 업데이트 핸들러 ──
+// ── 이번주 업데이트 핸들러 ──
 function onQuestionsUpdate(taskId, newQuestions) {
   const others = qnaList.value.filter(q => q.task_id !== taskId)
   qnaList.value = [...others, ...newQuestions]
 }
-
-// ── 이슈 업데이트 핸들러 ──
 function onIssuesUpdate(taskId, newIssues) {
   issueMap.value = { ...issueMap.value, [taskId]: newIssues }
+}
+
+// ── 지난주 업데이트 핸들러 ──
+function onLeftQuestionsUpdate(taskId, newQuestions) {
+  const others = leftQnA.value.filter(q => q.task_id !== taskId)
+  leftQnA.value = [...others, ...newQuestions]
+}
+function onLeftIssuesUpdate(taskId, newIssues) {
+  leftIssueMap.value = { ...leftIssueMap.value, [taskId]: newIssues }
 }
 
 // ── 컨플루언스 링크 ──
@@ -426,13 +626,11 @@ async function deleteLink(taskId) {
   } catch (e) { toastError(e, '링크 삭제 실패') }
 }
 
-// ── 의견/질문 로드 ──
+// ── 이번주 로드 ──
 async function loadQnA() {
   const { data } = await axios.get('/api/qna/questions', { params: { week: selectedWeek.value } })
   qnaList.value = data
 }
-
-// ── 이슈 로드 ──
 async function loadIssues() {
   const { data } = await axios.get('/api/issues', { params: { week: selectedWeek.value } })
   const map = {}
@@ -443,12 +641,32 @@ async function loadIssues() {
   issueMap.value = map
 }
 
+// ── 지난주 로드 ──
+async function loadLeftQnA() {
+  const { data } = await axios.get('/api/qna/questions', { params: { week: leftWeek.value } })
+  leftQnA.value = data
+}
+async function loadLeftLinks() {
+  const { data } = await axios.get('/api/confluence', { params: { week: leftWeek.value } })
+  const map = {}
+  data.forEach(l => { map[l.task_id] = l })
+  leftLinkMap.value = map
+}
+async function loadLeftIssues() {
+  const { data } = await axios.get('/api/issues', { params: { week: leftWeek.value } })
+  const map = {}
+  data.forEach(iss => {
+    if (!map[iss.task_id]) map[iss.task_id] = []
+    map[iss.task_id].push(iss)
+  })
+  leftIssueMap.value = map
+}
+
 // ── 포커스 이동 ──
 async function handleFocusQuery() {
   const { focusQuestion, focusIssue, focusIssueId, focusTask } = route.query
   if (!focusQuestion && !focusIssue && !focusIssueId && !focusTask) return
 
-  // 소과제 자동 전개
   if (focusQuestion) {
     const q = qnaList.value.find(q => q.id === focusQuestion)
     if (q && q.task_id.includes('-')) {
@@ -465,7 +683,6 @@ async function handleFocusQuery() {
     }
   }
   if (focusTask) {
-    // 소과제 ID인 경우 해당 소과제 자동 전개
     const isSubTask = tasks.value.some(t => (t.sub_tasks || []).some(st => st.id === focusTask))
     if (isSubTask) {
       expandedSubTaskIds.value = new Set([...expandedSubTaskIds.value, focusTask])
@@ -524,6 +741,7 @@ onMounted(fetchAll)
   white-space: nowrap;
 }
 
+/* ── 주차 네비게이터 ── */
 .week-nav {
   display: inline-flex;
   align-items: stretch;
@@ -554,7 +772,7 @@ onMounted(fetchAll)
   padding: 8px 20px;
   border-left: 1px solid var(--outline);
   border-right: 1px solid var(--outline);
-  min-width: 150px;
+  min-width: 180px;
   gap: 2px;
 }
 .week-nav-label { font-size: 14px; font-weight: 700; color: var(--text-primary); letter-spacing: 0.01em; }
@@ -582,6 +800,7 @@ onMounted(fetchAll)
   border-color: var(--color-primary, #4f8ef7);
 }
 
+/* ── 인력 칩 ── */
 .staff-chip {
   display: inline-flex;
   align-items: center;
@@ -600,6 +819,75 @@ onMounted(fetchAll)
 
 .member-badges { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 
+/* ── 분할 화면 ── */
+.split-container {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.split-panel {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--gray-50, #f9fafb);
+  border: 1px solid var(--outline);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.panel-collapse-btn {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+.panel-collapse-btn:hover {
+  background: var(--gray-200, #e5e7eb);
+  color: var(--text-primary);
+}
+.panel-restore-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  flex-shrink: 0;
+  align-self: stretch;
+  min-height: 120px;
+  background: var(--gray-50, #f9fafb);
+  border: 1px solid var(--outline);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.panel-restore-btn:hover {
+  background: var(--primary-light, #eff6ff);
+  color: var(--primary, #4f8ef7);
+  border-color: var(--primary, #4f8ef7);
+}
+
+/* ── 컨텐츠 ── */
 .section-block {
   padding-bottom: 16px;
   margin-bottom: 16px;
@@ -685,7 +973,6 @@ onMounted(fetchAll)
   font-size: 12px;
   white-space: nowrap;
 }
-
 .sub-collapse-icon {
   font-size: 18px;
   color: var(--text-muted);

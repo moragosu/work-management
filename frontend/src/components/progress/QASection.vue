@@ -52,8 +52,8 @@
           <button class="btn btn-ghost btn-xs" @click="copyLink('question', qa.id)" data-tooltip="링크 복사 — 메신저 공유용">
             <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">link</span>
           </button>
-          <button class="btn btn-ghost btn-xs" @click="startEditQuestion(qa)" data-tooltip="의견/질문 수정">수정</button>
-          <button class="btn btn-danger btn-xs" @click="deleteQuestion(qa.id)" data-tooltip="의견/질문 및 모든 답변 삭제">삭제</button>
+          <button v-if="!readonlyQuestion" class="btn btn-ghost btn-xs" @click="startEditQuestion(qa)" data-tooltip="의견/질문 수정">수정</button>
+          <button v-if="!readonlyQuestion" class="btn btn-danger btn-xs" @click="deleteQuestion(qa.id)" data-tooltip="의견/질문 및 모든 답변 삭제">삭제</button>
         </div>
       </div>
 
@@ -123,7 +123,7 @@
     </div>
 
     <!-- 질문 추가 -->
-    <div v-if="addingQuestion" class="mt-16">
+    <div v-if="addingQuestion && !readonlyQuestion" class="mt-16">
       <!-- 질문자 선택 (필수) -->
       <div v-if="questioners.length > 0" class="target-row">
         <span class="target-label">질문자 <span style="color:var(--danger)">*</span></span>
@@ -149,7 +149,7 @@
         <button class="btn btn-primary btn-sm" @click="addQuestion" :disabled="!hasContent(newQuestionText) || (questioners.length > 0 && !newQuestioner)">등록</button>
       </div>
     </div>
-    <div v-else class="mt-8">
+    <div v-else-if="!readonlyQuestion" class="mt-8">
       <button class="btn btn-ghost btn-sm" @click="openAddQuestion" data-tooltip="이 과제에 의견/질문 등록">+ 의견/질문 추가</button>
     </div>
 
@@ -194,11 +194,12 @@ import { copyToClipboard } from '../../utils/clipboard.js'
 import { deleteOrphanedImages, deleteAllImages, deleteUrls } from '../../composables/useImageCleanup.js'
 
 const props = defineProps({
-  questions:   { type: Array, default: () => [] },
-  staffList:   { type: Array, default: () => [] },
-  questioners: { type: Array, default: () => [] },
-  taskId:      { type: String, required: true },
-  week:        { type: String, required: true },
+  questions:       { type: Array,   default: () => [] },
+  staffList:       { type: Array,   default: () => [] },
+  questioners:     { type: Array,   default: () => [] },
+  taskId:          { type: String,  required: true },
+  week:            { type: String,  required: true },
+  readonlyQuestion:{ type: Boolean, default: false },
 })
 const emit = defineEmits(['update:questions'])
 const { toastMsg, showToast, toastError } = useToast()

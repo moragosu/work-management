@@ -32,8 +32,8 @@
             <button class="btn btn-ghost btn-xs" @click="copyLink(iss)" data-tooltip="링크 복사 — 메신저 공유용">
               <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">link</span>
             </button>
-            <button class="btn btn-ghost btn-xs" @click="startEdit(iss)" data-tooltip="이슈 수정">수정</button>
-            <button class="btn btn-danger btn-xs" @click="deleteIssue(iss.id)" data-tooltip="이슈 삭제">삭제</button>
+            <button v-if="!readonly" class="btn btn-ghost btn-xs" @click="startEdit(iss)" data-tooltip="이슈 수정">수정</button>
+            <button v-if="!readonly" class="btn btn-danger btn-xs" @click="deleteIssue(iss.id)" data-tooltip="이슈 삭제">삭제</button>
           </div>
         </div>
       </template>
@@ -55,7 +55,7 @@
       </div>
     </div>
 
-    <button v-if="!adding" class="btn btn-ghost btn-sm mt-4" @click="openAdd" data-tooltip="이번 주 이슈를 등록합니다">+ 이슈 등록</button>
+    <button v-if="!adding && !readonly" class="btn btn-ghost btn-sm mt-4" @click="openAdd" data-tooltip="이번 주 이슈를 등록합니다">+ 이슈 등록</button>
   </div>
 
   <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
@@ -76,6 +76,7 @@ const props = defineProps({
   staffList: { type: Array, default: () => [] },
   taskId:   { type: String, required: true },
   week:     { type: String, required: true },
+  readonly: { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:issues'])
 const { toastMsg, showToast, toastError } = useToast()
