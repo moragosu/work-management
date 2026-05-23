@@ -95,12 +95,13 @@ const newAssignee = ref('')
 const addUploads  = ref([])
 
 function openAdd() { adding.value = true; addUploads.value = [] }
-function onAddImageUploaded(url) {
-  addUploads.value.push(url)
+function onAddImageUploaded(url) { addUploads.value.push(url) }
+function resetAddForm() {
+  adding.value = false; newText.value = ''; newAssignee.value = ''; addUploads.value = []
 }
 function cancelAdd() {
   deleteUrls(addUploads.value)
-  adding.value = false; newText.value = ''; newAssignee.value = ''; addUploads.value = []
+  resetAddForm()
 }
 
 async function addIssue() {
@@ -114,7 +115,7 @@ async function addIssue() {
     })
     await deleteUrls(addUploads.value.filter(u => !newText.value.includes(u)))
     emit('update:issues', [...props.issues, data])
-    cancelAdd()
+    resetAddForm()
     showToast('이슈가 등록되었습니다')
   } catch (e) { toastError(e, '이슈 등록 실패') }
 }
@@ -129,9 +130,12 @@ function startEdit(iss) {
   editingId.value = iss.id; editText.value = iss.issue; editAssignee.value = iss.assignee
   editUploads.value = []
 }
+function resetEditForm() {
+  editingId.value = ''; editText.value = ''; editAssignee.value = ''; editUploads.value = []
+}
 function cancelEdit() {
   deleteUrls(editUploads.value)
-  editingId.value = ''; editText.value = ''; editAssignee.value = ''; editUploads.value = []
+  resetEditForm()
 }
 
 async function saveEdit(id) {
@@ -145,7 +149,7 @@ async function saveEdit(id) {
     await deleteOrphanedImages(oldIssue?.issue, editText.value)
     await deleteUrls(editUploads.value.filter(u => !editText.value.includes(u)))
     emit('update:issues', props.issues.map(i => i.id === id ? data : i))
-    cancelEdit()
+    resetEditForm()
     showToast('수정되었습니다')
   } catch (e) { toastError(e, '수정 실패') }
 }

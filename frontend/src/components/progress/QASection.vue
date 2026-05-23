@@ -231,13 +231,12 @@ function openAddQuestion() {
   addingQuestion.value = true
 }
 
+function resetAddQuestionForm() {
+  addingQuestion.value = false; newQuestionText.value = ''; newTargets.value = []; newQuestioner.value = ''; addQuestionUploads.value = []
+}
 function cancelAddQuestion() {
   deleteUrls(addQuestionUploads.value)
-  addingQuestion.value = false
-  newQuestionText.value = ''
-  newTargets.value = []
-  newQuestioner.value = ''
-  addQuestionUploads.value = []
+  resetAddQuestionForm()
 }
 
 async function addQuestion() {
@@ -251,7 +250,7 @@ async function addQuestion() {
     })
     await deleteUrls(addQuestionUploads.value.filter(u => !newQuestionText.value.includes(u)))
     emit('update:questions', [...props.questions, data])
-    cancelAddQuestion()
+    resetAddQuestionForm()
     showToast('의견/질문이 추가되었습니다')
   } catch (e) { toastError(e, '의견/질문 추가 실패') }
 }
@@ -270,13 +269,12 @@ function startEditQuestion(qa) {
   editingQuestioner.value = qa.questioner || props.questioners[0] || ''
   editQuestionUploads.value = []
 }
+function resetEditQuestionForm() {
+  editingQuestionId.value = ''; editingQuestionText.value = ''; editingTargets.value = []; editingQuestioner.value = ''; editQuestionUploads.value = []
+}
 function cancelEditQuestion() {
   deleteUrls(editQuestionUploads.value)
-  editingQuestionId.value = ''
-  editingQuestionText.value = ''
-  editingTargets.value = []
-  editingQuestioner.value = ''
-  editQuestionUploads.value = []
+  resetEditQuestionForm()
 }
 
 async function updateQuestion(questionId) {
@@ -291,7 +289,7 @@ async function updateQuestion(questionId) {
     await deleteOrphanedImages(oldQ?.question, editingQuestionText.value)
     await deleteUrls(editQuestionUploads.value.filter(u => !editingQuestionText.value.includes(u)))
     emit('update:questions', props.questions.map(q => q.id === questionId ? { ...q, ...data } : q))
-    cancelEditQuestion()
+    resetEditQuestionForm()
     showToast('수정되었습니다')
   } catch (e) { toastError(e, '의견/질문 수정 실패') }
 }
@@ -343,14 +341,20 @@ const editingAnswerBy = ref('')
 const editAnswerUploads = ref([])
 
 function startAddAnswer(questionId) { addingAnswerToId.value = questionId; newAnswerText.value = ''; newAnswerBy.value = ''; addAnswerUploads.value = [] }
-function cancelAddAnswer() {
-  deleteUrls(addAnswerUploads.value)
+function resetAddAnswerForm() {
   addingAnswerToId.value = ''; newAnswerText.value = ''; newAnswerBy.value = ''; addAnswerUploads.value = []
 }
+function cancelAddAnswer() {
+  deleteUrls(addAnswerUploads.value)
+  resetAddAnswerForm()
+}
 function startEditAnswer(answer) { editingAnswerId.value = answer.id; editingAnswerText.value = answer.answer; editingAnswerBy.value = answer.answer_by; editAnswerUploads.value = [] }
+function resetEditAnswerForm() {
+  editingAnswerId.value = ''; editingAnswerText.value = ''; editingAnswerBy.value = ''; editAnswerUploads.value = []
+}
 function cancelEditAnswer() {
   deleteUrls(editAnswerUploads.value)
-  editingAnswerId.value = ''; editingAnswerText.value = ''; editingAnswerBy.value = ''; editAnswerUploads.value = []
+  resetEditAnswerForm()
 }
 
 async function addAnswer(questionId) {
@@ -363,7 +367,7 @@ async function addAnswer(questionId) {
     emit('update:questions', props.questions.map(q =>
       q.id === questionId ? { ...q, answers: [...(q.answers || []), data] } : q
     ))
-    cancelAddAnswer()
+    resetAddAnswerForm()
     showToast('답변이 저장되었습니다')
   } catch (e) { toastError(e, '답변 저장 실패') }
 }
@@ -381,7 +385,7 @@ async function updateAnswer(answerId) {
       ...q,
       answers: q.answers?.map(a => a.id === answerId ? data : a) ?? [],
     })))
-    cancelEditAnswer()
+    resetEditAnswerForm()
     showToast('수정되었습니다')
   } catch (e) { toastError(e, '답변 수정 실패') }
 }

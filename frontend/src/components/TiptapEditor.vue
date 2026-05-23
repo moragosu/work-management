@@ -234,19 +234,9 @@ function cancelExpand() {
   expanded.value = false
 }
 
-// ── 업로드된 URL 추적 (언마운트 시 미삽입 이미지 정리) ──
-const localUploads = ref([])
+// ── 업로드 중 unmount 안전 처리 (부모가 이미지 정리 담당) ──
 let isUnmounted = false
-
-onUnmounted(() => {
-  isUnmounted = true
-  // editor는 onBeforeUnmount(useEditor)에서 이미 destroy됨 → schema가 null이므로
-  // getMarkdown() 호출 시 TypeError 발생. props.modelValue는 onUpdate로 항상 동기화됨.
-  const currentContent = props.modelValue ?? ''
-  localUploads.value.filter(u => !currentContent.includes(u)).forEach(u => {
-    axios.delete(`/api/upload/${u.split('/').pop()}`).catch(() => {})
-  })
-})
+onUnmounted(() => { isUnmounted = true })
 
 // ── 업로드 에러 ──
 const uploadError = ref('')
@@ -269,7 +259,6 @@ async function uploadAndInsert(file) {
       return
     }
     emit('image-uploaded', url)
-    localUploads.value.push(url)
     editor.value?.chain().focus().setImage({ src: url, alt: '' }).run()
     await nextTick()
     const pos = editor.value?.state.selection.from - 1
