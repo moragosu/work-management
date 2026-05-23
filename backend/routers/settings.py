@@ -9,6 +9,7 @@ SETTINGS_FILE = "settings.json"
 DEFAULT_SETTINGS = {
     "task_targets": ["MX", "VD", "DA", "공통"],
     "questioners": [],
+    "notice": "",
 }
 
 
@@ -42,3 +43,20 @@ def update_settings(update: SettingsUpdate):
         data["questioners"] = [q.strip() for q in update.questioners if q.strip()]
     _save(data)
     return data
+
+
+class NoticeUpdate(BaseModel):
+    notice: str
+
+
+@router.get("/notice")
+def get_notice():
+    return {"notice": _load().get("notice", "")}
+
+
+@router.put("/notice")
+def update_notice(body: NoticeUpdate):
+    data = _load()
+    data["notice"] = body.notice
+    _save(data)
+    return {"notice": data["notice"]}

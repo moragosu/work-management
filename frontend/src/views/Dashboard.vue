@@ -40,7 +40,37 @@
         </div>
       </div>
 
-      <!-- ② 액션 패널 2종 -->
+      <!-- ② 파트 공지 -->
+      <div v-if="notice || isAdminMode" class="card notice-card" style="margin-bottom:24px">
+        <div class="card-header notice-header">
+          <div class="panel-title">
+            <span class="panel-icon" style="background:#eff6ff;color:var(--primary)">
+              <span class="material-symbols-outlined">campaign</span>
+            </span>
+            파트 공지
+          </div>
+          <div v-if="isAdminMode && !noticeEditing" style="display:flex;gap:6px;margin-left:auto">
+            <button class="btn btn-ghost btn-xs" @click="startEditNotice">수정</button>
+          </div>
+          <div v-if="noticeEditing" style="display:flex;gap:6px;margin-left:auto">
+            <button class="btn btn-ghost btn-sm" @click="cancelEditNotice">취소</button>
+            <button class="btn btn-primary btn-sm" :disabled="noticeSaving" @click="saveNotice">저장</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:16px">
+          <div v-if="noticeEditing">
+            <TiptapEditor v-model="noticeDraft" height="180px" />
+          </div>
+          <div v-else-if="notice">
+            <TiptapPreview :modelValue="notice" />
+          </div>
+          <div v-else class="notice-empty">
+            공지 내용을 작성하세요. (관리자 모드에서만 표시됩니다)
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ 액션 패널 2종 -->
       <div class="grid-2" style="margin-bottom:24px;align-items:start">
 
         <!-- 의견/질문 -->
@@ -325,6 +355,7 @@ import { ref, computed, onMounted, reactive } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import axios from 'axios'
 import TiptapPreview from '../components/TiptapPreview.vue'
+import TiptapEditor from '../components/TiptapEditor.vue'
 import { parseIds } from '../utils/parseIds.js'
 import { getCurrentWeek, formatWeekLabel, normalizeWeek, addWeeks } from '../utils/week.js'
 import { statusBadgeClass } from '../utils/status.js'
@@ -345,6 +376,37 @@ const loading = ref(false)
 const actionLoading = ref(false)
 const activityOpen = ref(true)
 const panelExpanded = reactive({ questions: false, issues: false })
+
+// ── 공지 ──
+const notice        = ref('')
+const noticeEditing = ref(false)
+const noticeDraft   = ref('')
+const noticeSaving  = ref(false)
+const isAdminMode   = ref(localStorage.getItem('adminMode') === 'true')
+
+async function loadNotice() {
+  const { data } = await axios.get('/api/settings/notice')
+  notice.value = data.notice || ''
+}
+function startEditNotice() {
+  noticeDraft.value = notice.value
+  noticeEditing.value = true
+}
+function cancelEditNotice() {
+  noticeEditing.value = false
+  noticeDraft.value = ''
+}
+async function saveNotice() {
+  noticeSaving.value = true
+  try {
+    const { data } = await axios.put('/api/settings/notice', { notice: noticeDraft.value })
+    notice.value = data.notice
+    noticeEditing.value = false
+    noticeDraft.value = ''
+  } finally {
+    noticeSaving.value = false
+  }
+}
 const questionFilter = ref('unanswered') // 'unanswered' | 'answered' | 'all'
 const qWeekFilter    = ref('this')       // 'this' | 'last'
 const issWeekFilter  = ref('this')       // 'this' | 'last'
@@ -606,7 +668,7 @@ async function refresh() {
   }
 }
 
-onMounted(refresh)
+onMounted(() => { refresh(); loadNotice() })
 </script>
 
 <style scoped>
@@ -635,6 +697,11 @@ onMounted(refresh)
 .stat-denom { font-size: 14px; font-weight: 400; color: var(--text-muted); }
 .stat-mini-bar { width: 100%; height: 4px; background: var(--gray-100); border-radius: 999px; overflow: hidden; margin-top: 10px; }
 .stat-mini-fill { height: 100%; background: var(--primary); border-radius: 999px; transition: width 0.5s ease; }
+
+/* ── 파트 공지 ── */
+.notice-card { border-left: 4px solid var(--primary); }
+.notice-header { gap: 8px; }
+.notice-empty { font-size: 13px; color: var(--text-muted); font-style: italic; }
 
 /* ── 액션 패널 ── */
 .action-panel { display: flex; flex-direction: column; }
