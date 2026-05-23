@@ -95,12 +95,9 @@ const addUploads  = ref([])
 
 function openAdd() { adding.value = true; addUploads.value = [] }
 function onAddImageUploaded(url) {
-  console.log('[DEBUG] ProgressSection image-uploaded 수신:', url)
   addUploads.value.push(url)
-  console.log('[DEBUG] addUploads 현재:', [...addUploads.value])
 }
 function cancelAdd() {
-  console.log('[DEBUG] cancelAdd 호출, addUploads:', [...addUploads.value])
   deleteUrls(addUploads.value)
   adding.value = false; newText.value = ''; newAssignee.value = ''; addUploads.value = []
 }
