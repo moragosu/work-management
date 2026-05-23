@@ -178,7 +178,7 @@
                     <th>파트원</th>
                     <th data-tooltip="배정된 과제 수 (누적)">담당 과제</th>
                     <th data-tooltip="등록한 이슈 수 (누적)">이슈 등록</th>
-                    <th data-tooltip="의견/질문에 달린 답변 수 (누적)">의견/질문 답변</th>
+                    <th data-tooltip="등록한 질문 수 / 작성한 답변 수 (누적)">질문 / 답변</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -205,9 +205,10 @@
                       </div>
                     </td>
                     <td style="vertical-align:middle">
-                      <div class="stat-bar-row">
-                        <span class="stat-num">{{ memberStatsMap[s.name]?.answers ?? 0 }}</span>
-                        <div class="stat-bar"><div class="stat-fill stat-fill-green" :style="{ width: barWidth(memberStatsMap[s.name]?.answers, maxStats.answers) }"></div></div>
+                      <div class="qa-ratio-cell">
+                        <span class="qa-pill qa-pill-q" :data-tooltip="`등록한 질문 ${memberStatsMap[s.name]?.questions ?? 0}건`">{{ memberStatsMap[s.name]?.questions ?? 0 }}Q</span>
+                        <span class="qa-sep">/</span>
+                        <span class="qa-pill qa-pill-a" :data-tooltip="`작성한 답변 ${memberStatsMap[s.name]?.answers ?? 0}건`">{{ memberStatsMap[s.name]?.answers ?? 0 }}A</span>
                       </div>
                     </td>
                   </tr>
@@ -414,9 +415,10 @@ const memberStatsMap = computed(() => {
   const map = {}
   staffList.value.forEach(s => {
     map[s.name] = {
-      tasks:   parseIds(s.selected_tasks || '').length,
-      issues:  allIssuesList.value.filter(i => i.assignee === s.name).length,
-      answers: allQuestions.value.flatMap(q => q.answers || []).filter(a => a.answer_by === s.name).length,
+      tasks:     parseIds(s.selected_tasks || '').length,
+      issues:    allIssuesList.value.filter(i => i.assignee === s.name).length,
+      questions: allQuestions.value.filter(q => q.questioner === s.name).length,
+      answers:   allQuestions.value.flatMap(q => q.answers || []).filter(a => a.answer_by === s.name).length,
     }
   })
   return map
@@ -424,11 +426,12 @@ const memberStatsMap = computed(() => {
 
 const maxStats = computed(() => {
   const vals = Object.values(memberStatsMap.value)
-  if (!vals.length) return { tasks: 1, issues: 1, answers: 1 }
+  if (!vals.length) return { tasks: 1, issues: 1, questions: 1, answers: 1 }
   return {
-    tasks:   Math.max(1, ...vals.map(v => v.tasks)),
-    issues:  Math.max(1, ...vals.map(v => v.issues)),
-    answers: Math.max(1, ...vals.map(v => v.answers)),
+    tasks:     Math.max(1, ...vals.map(v => v.tasks)),
+    issues:    Math.max(1, ...vals.map(v => v.issues)),
+    questions: Math.max(1, ...vals.map(v => v.questions)),
+    answers:   Math.max(1, ...vals.map(v => v.answers)),
   }
 })
 
@@ -835,6 +838,11 @@ onMounted(refresh)
 .stat-fill-blue   { background: var(--primary); }
 .stat-fill-orange { background: var(--orange); }
 .stat-fill-green  { background: var(--success); }
+.qa-ratio-cell { display: flex; align-items: center; gap: 4px; }
+.qa-pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+.qa-pill-q { background: #ede9fe; color: #7c3aed; }
+.qa-pill-a { background: #d1fae5; color: #059669; }
+.qa-sep { font-size: 12px; color: var(--text-muted); }
 
 .latest-issue { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .latest-issue-text {
