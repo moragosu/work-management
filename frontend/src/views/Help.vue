@@ -77,12 +77,11 @@
         <div class="feature-block">
           <div class="feature-label">
             <span class="badge-num">1</span>
-            상단 통계 카드 (4개)
+            상단 통계 카드 (3개)
           </div>
           <ul class="feature-list">
-            <li><strong>미답변 의견/질문</strong> — 전체 기간 중 아직 답변이 없는 질문 수. 주황색이면 확인 필요, 초록이면 양호</li>
+            <li><strong>미답변 의견/질문</strong> — 전체 기간 누적 중 아직 답변이 없는 질문 수. 주황색이면 확인 필요, 초록이면 양호</li>
             <li><strong>이번 주 이슈</strong> — 이번 주 등록된 이슈 수</li>
-            <li><strong>미배정 과제</strong> — 담당자가 지정되지 않은 과제 수</li>
             <li><strong>컨플루언스 등록률</strong> — 이번 주 컨플루언스 링크를 등록한 과제 비율. 진행 바로 확인 가능</li>
           </ul>
         </div>
@@ -90,12 +89,11 @@
         <div class="feature-block">
           <div class="feature-label">
             <span class="badge-num">2</span>
-            액션 패널 (3가지)
+            액션 패널 (2가지)
           </div>
           <ul class="feature-list">
-            <li><strong>미답변 의견/질문</strong> — 전체 기간 누적 목록. 상단의 <strong>미답변 / 답변완료 / 전체</strong> 필터 버튼으로 표시 범위를 전환할 수 있습니다. 항목에 <em>과제명 + 주차</em>가 표시되며, 클릭하면 해당 주차의 해당 의견/질문 위치로 바로 이동합니다</li>
-            <li><strong>이슈</strong> — 이번 주 등록된 이슈 목록. 클릭하면 해당 과제의 이슈 위치로 이동</li>
-            <li><strong>미배정 과제</strong> — 담당자가 없는 과제 목록. 클릭하면 관리 도구 과제 탭으로 이동</li>
+            <li><strong>의견/질문</strong> — <strong>이번주 / 지난주</strong> 탭으로 주차를 전환하고, <strong>미답변 / 답변완료 / 전체</strong> 필터를 함께 사용할 수 있습니다. 항목에 <em>과제명 + 주차</em>가 표시되며, 클릭하면 해당 주차의 해당 의견/질문 위치로 바로 이동합니다</li>
+            <li><strong>이슈</strong> — <strong>이번주 / 지난주</strong> 탭으로 전환하며 해당 주 이슈 목록을 확인합니다. 클릭하면 해당 과제의 이슈 위치로 이동</li>
           </ul>
         </div>
 
@@ -105,8 +103,8 @@
             파트원별 활동 현황
           </div>
           <ul class="feature-list">
-            <li>각 파트원의 <strong>담당 과제 수 / 이슈 등록 수 / 의견/질문 답변 수</strong>를 막대 그래프로 비교</li>
-            <li>가장 최근에 등록한 이슈도 함께 표시됩니다</li>
+            <li>상단의 <strong>이번주 / 지난주</strong> 탭으로 기준 주차를 전환합니다</li>
+            <li>각 파트원의 <strong>담당 과제 수</strong>(누적)와 해당 주의 <strong>이슈 수 / 질문 수 / 답변 수</strong>를 각각 막대 그래프로 비교합니다 — 질문은 보라색, 답변은 초록색 바로 구분</li>
             <li>우측 상단에 <strong>파트원 N명</strong> 배지로 인원 수를 확인할 수 있습니다</li>
           </ul>
         </div>
@@ -135,6 +133,20 @@
         </div>
         <p class="section-desc">파트원들이 매주 이슈를 등록하고, 서로 의견/질문을 통해 소통하는 화면입니다.</p>
 
+        <!-- 2분할 뷰 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px">splitscreen</span>
+            지난주 / 이번주 2분할 보기
+          </div>
+          <ul class="feature-list">
+            <li>화면이 <strong>지난주(왼쪽) | 이번주(오른쪽)</strong> 2개 패널로 분할되어 한 화면에서 비교할 수 있습니다</li>
+            <li>각 패널 헤더의 <strong>← / →</strong> 버튼을 클릭하면 해당 패널을 접고 반대쪽 패널을 전체화면으로 확대합니다</li>
+            <li>접힌 패널 옆에 표시되는 세로 줄(복원 버튼)을 클릭하면 다시 2분할 상태로 돌아옵니다</li>
+            <li>양쪽 패널 모두 <strong>이슈 등록·수정·삭제</strong>와 <strong>의견/질문 추가·답변</strong> 등 전체 편집이 가능합니다</li>
+          </ul>
+        </div>
+
         <!-- 주차 선택 -->
         <div class="sub-section">
           <div class="sub-section-title">
@@ -142,7 +154,7 @@
             주차 선택
           </div>
           <ul class="feature-list">
-            <li>상단의 <strong>◀ ▶ 버튼</strong>으로 이전/다음 주차로 이동합니다</li>
+            <li>상단의 <strong>◀ ▶ 버튼</strong>으로 이전/다음 주차로 이동합니다 — 이번주 패널 기준으로 이동하며 지난주 패널도 함께 이동합니다</li>
             <li>날짜 범위(<em>예: 5/12 – 5/18</em>)와 주차 번호(<em>예: W20</em>)가 함께 표시됩니다</li>
             <li>현재 주차가 아닌 경우 <strong>"이번 주"</strong> 버튼이 나타납니다 — 클릭 시 현재 주로 이동</li>
           </ul>
@@ -150,6 +162,20 @@
             <span class="material-symbols-outlined callout-icon">star</span>
             <div>현재 주차는 파란색 테두리로 강조 표시됩니다. <strong>"이번 주"</strong> 배지가 날짜 옆에 표시되면 현재 주차입니다.</div>
           </div>
+        </div>
+
+        <!-- 과제 카드 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">style</span>
+            과제 카드 구분
+          </div>
+          <ul class="feature-list">
+            <li>각 메인과제 카드 왼쪽에 <strong>Objective별 고유 색상 줄</strong>이 표시됩니다 — 같은 Objective 소속 카드끼리는 같은 색으로 묶여 한눈에 구분됩니다</li>
+            <li>카드 헤더의 Objective 배지도 동일한 색상으로 표시됩니다</li>
+            <li>과제 카드는 <strong>기본적으로 소과제가 모두 펼쳐진 상태</strong>로 시작합니다. "전체 접기" 버튼으로 정리할 수 있습니다</li>
+            <li>상단의 <strong>이름 칩</strong>을 클릭하면 해당 파트원이 담당한 과제만 필터링됩니다 — 여러 명 동시 선택 가능</li>
+          </ul>
         </div>
 
         <!-- 이슈 등록 -->
@@ -237,7 +263,7 @@
           </div>
           <ul class="feature-list">
             <li>소과제가 있는 과제 카드는 상단에 <strong>"소과제 N개"</strong> 배지와 <strong>"전체 펼치기 / 전체 접기"</strong> 버튼이 표시됩니다</li>
-            <li>각 소과제는 과제 카드 내부에 <strong>파란 왼쪽 테두리</strong>로 구분된 별도 섹션으로 표시되며, <strong>기본적으로 접힌 상태</strong>로 시작합니다</li>
+            <li>각 소과제는 과제 카드 내부에 <strong>파란 왼쪽 테두리</strong>로 구분된 별도 섹션으로 표시되며, <strong>기본적으로 펼쳐진 상태</strong>로 시작합니다</li>
             <li>소과제 헤더(상단 줄)를 <strong>클릭</strong>하면 내용이 펼쳐지거나 접힙니다. 헤더 우측의 완료 버튼·담당자 배지는 클릭해도 접히지 않습니다</li>
             <li>접힌 상태에서 이슈나 의견/질문 내용이 있으면 헤더에 <strong>요약 배지</strong>가 표시됩니다 — <em>이슈 N건</em>, <em>의견/질문 N건</em></li>
             <li><strong>컨플루언스 링크</strong>는 소과제별로 독립 등록됩니다 — 소과제가 있으면 모과제 단위 링크 대신 각 소과제 섹션 내부에 링크 입력란이 표시됩니다</li>
@@ -335,7 +361,7 @@
           </div>
           <ul class="feature-list">
             <li>클립보드 이미지를 에디터에 <strong>Ctrl+V</strong>로 바로 붙여넣기 할 수 있습니다 — 스크린샷 캡처 후 즉시 붙여넣기 가능</li>
-            <li>이미지가 업로드되면 에디터 안에 <strong>즉시 삽입</strong>되고, 이미지 바로 아래에 <strong>크기 조절 바</strong>가 나타납니다</li>
+            <li>이미지가 업로드되면 에디터 안에 <strong>즉시 삽입</strong>되고, 이미지 바로 아래에 <strong>크기·테두리 조절 바</strong>가 나타납니다</li>
             <li>크기 조절 바에서 원하는 크기를 선택합니다:
               <ul style="margin-top:4px;display:flex;flex-direction:column;gap:3px">
                 <li><strong>S</strong> — 300px 너비</li>
@@ -345,7 +371,8 @@
                 <li><strong>px 직접 입력</strong> — 숫자 입력 후 <em>적용</em> 버튼 클릭</li>
               </ul>
             </li>
-            <li>이미지 바깥을 클릭하면 크기 조절 바가 사라집니다. 이미지를 다시 클릭하면 크기 조절 바가 다시 표시됩니다</li>
+            <li><strong>테두리</strong> 버튼을 클릭하면 이미지에 회색 실선 테두리가 추가됩니다. 다시 클릭하면 테두리가 제거됩니다 — 저장 후 미리보기에서도 동일하게 표시됩니다</li>
+            <li>이미지 바깥을 클릭하면 조절 바가 사라집니다. 이미지를 다시 클릭하면 조절 바가 다시 표시됩니다</li>
             <li>툴바의 <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">image</span> <strong>이미지 버튼</strong>을 클릭해 파일 선택으로도 업로드할 수 있습니다</li>
           </ul>
           <div class="callout callout-info">
