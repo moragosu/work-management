@@ -19,6 +19,8 @@
       <button class="bar-btn" @click="applySize(500)">M</button>
       <button class="bar-btn" @click="applySize(700)">L</button>
       <button class="bar-btn" @click="applySize(null)">원본</button>
+      <span class="bar-div">|</span>
+      <button class="bar-btn" :class="{ 'bar-btn--active': hasBorder }" @click="toggleBorder">테두리</button>
     </div>
   </node-view-wrapper>
 </template>
@@ -37,12 +39,14 @@ const currentWidth = computed(() => {
   return m ? parseInt(m[1]) : null
 })
 
+const hasBorder = computed(() => props.node.attrs.title === 'border')
+
 watch(currentWidth, (v) => { customPx.value = v || '' }, { immediate: true })
 
 const imgStyle = computed(() => {
-  return currentWidth.value
-    ? `width:${currentWidth.value}px;max-width:100%;height:auto;border-radius:4px;`
-    : 'max-width:100%;height:auto;border-radius:4px;'
+  const w = currentWidth.value ? `width:${currentWidth.value}px;` : ''
+  const b = hasBorder.value ? 'border:2px solid #94a3b8;' : ''
+  return `${w}max-width:100%;height:auto;border-radius:4px;${b}`
 })
 
 function applySize(widthPx) {
@@ -53,6 +57,10 @@ function applySize(widthPx) {
 function applyCustom() {
   const px = parseInt(customPx.value)
   if (px >= 50 && px <= 1200) applySize(px)
+}
+
+function toggleBorder() {
+  props.updateAttributes({ title: hasBorder.value ? '' : 'border' })
 }
 </script>
 
@@ -111,5 +119,16 @@ function applyCustom() {
   background: var(--primary-light, #dbeafe);
   border-color: var(--primary, #2563eb);
   color: var(--primary, #2563eb);
+}
+.bar-btn--active {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #334155;
+  font-weight: 600;
+}
+.bar-btn--active:hover {
+  background: #cbd5e1;
+  border-color: #64748b;
+  color: #1e293b;
 }
 </style>

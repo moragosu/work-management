@@ -15,12 +15,12 @@ marked.use({
   renderer: {
     image({ href, title, text }) {
       const widthMatch = text?.match(/^(\d+)px$/)
+      const borderStyle = title === 'border' ? 'border:2px solid #94a3b8;' : ''
       const style = widthMatch
-        ? `width:${widthMatch[1]}px;max-width:100%;height:auto;`
-        : 'max-width:100%;height:auto;'
-      const titleAttr = title ? ` title="${title}"` : ''
+        ? `width:${widthMatch[1]}px;max-width:100%;height:auto;border-radius:4px;${borderStyle}`
+        : `max-width:100%;height:auto;border-radius:4px;${borderStyle}`
       const altAttr = widthMatch ? '' : ` alt="${text || ''}"`
-      return `<img src="${href}"${altAttr}${titleAttr} style="${style}" loading="lazy">`
+      return `<img src="${href}"${altAttr} style="${style}" loading="lazy">`
     },
   },
 })
