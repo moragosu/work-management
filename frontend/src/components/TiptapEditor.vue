@@ -171,9 +171,24 @@
 <script setup>
 import { ref, watch, nextTick, onBeforeUnmount, onUnmounted } from 'vue'
 import { useEditor, EditorContent, VueNodeViewRenderer } from '@tiptap/vue-3'
+import { Extension, textInputRule } from '@tiptap/core'
 import ImageNodeView from './ImageNodeView.vue'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
+
+const ArrowInputRules = Extension.create({
+  name: 'arrowInputRules',
+  addInputRules() {
+    return [
+      textInputRule({ find: /->$/, replace: '→' }),
+      textInputRule({ find: /<-$/, replace: '←' }),
+      textInputRule({ find: /=>$/, replace: '⇒' }),
+      textInputRule({ find: /<=$/, replace: '⇐' }),
+      textInputRule({ find: /\^\^$/, replace: '↑' }),
+      textInputRule({ find: /vv$/, replace: '↓' }),
+    ]
+  },
+})
 
 // NodeView로 렌더링 (이미지 바로 아래 사이즈 바 포함)
 const CustomImage = Image.extend({
@@ -293,6 +308,7 @@ const editor = useEditor({
     TableHeader,
     TableCell,
     Placeholder.configure({ placeholder: props.placeholder }),
+    ArrowInputRules,
   ],
   content: props.modelValue || '',
   onUpdate({ editor }) {
