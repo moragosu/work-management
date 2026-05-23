@@ -13,7 +13,7 @@ const props = defineProps({
 // alt 텍스트가 "300px" 형태면 width 스타일 적용
 marked.use({
   renderer: {
-    image(href, title, text) {
+    image({ href, title, text }) {
       const widthMatch = text?.match(/^(\d+)px$/)
       const style = widthMatch
         ? `width:${widthMatch[1]}px;max-width:100%;height:auto;`

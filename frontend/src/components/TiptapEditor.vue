@@ -2,6 +2,10 @@
   <div class="tiptap-wrap" :style="{ minHeight: height }">
     <!-- 툴바 -->
     <div class="tiptap-toolbar" v-if="editor">
+      <button v-if="expandable" type="button" class="tb-expand-btn" @click="openExpand" title="크게 보기">
+        <span class="material-symbols-outlined">open_in_full</span>
+      </button>
+      <div class="toolbar-sep"></div>
       <!-- 인라인 서식 -->
       <div class="toolbar-group">
         <button type="button" class="tb-btn" :class="{ active: editor.isActive('bold') }" @click="editor.chain().focus().toggleBold().run()" title="굵게 (Ctrl+B)">
@@ -117,10 +121,6 @@
           <span class="material-symbols-outlined">format_clear</span>
         </button>
       </div>
-      <div style="flex:1"></div>
-      <button v-if="expandable" type="button" class="tb-btn tb-expand" @click="expanded = true" title="크게 보기">
-        <span class="material-symbols-outlined">open_in_full</span>
-      </button>
     </div>
 
     <!-- 에디터 본문 -->
@@ -144,12 +144,14 @@
   </div>
 
   <Teleport to="body">
-    <div v-if="expanded && expandable" class="tiptap-modal-overlay" @click.self="expanded = false">
+    <div v-if="expanded && expandable" class="tiptap-modal-overlay" @click.self="closeExpand">
       <div class="tiptap-modal">
         <div class="tiptap-modal-header">
           <span class="tiptap-modal-title">내용 편집</span>
-          <span class="tiptap-modal-hint">변경사항은 자동으로 반영됩니다</span>
-          <button class="tiptap-modal-close" @click="expanded = false">닫기</button>
+          <div class="tiptap-modal-actions">
+            <button class="tiptap-modal-cancel" @click="cancelExpand">취소</button>
+            <button class="tiptap-modal-close" @click="closeExpand">닫기</button>
+          </div>
         </div>
         <div class="tiptap-modal-body">
           <TiptapEditor
@@ -203,6 +205,19 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'image-uploaded'])
 
 const expanded = ref(false)
+let preExpandContent = ''
+
+function openExpand() {
+  preExpandContent = props.modelValue ?? ''
+  expanded.value = true
+}
+function closeExpand() {
+  expanded.value = false
+}
+function cancelExpand() {
+  emit('update:modelValue', preExpandContent)
+  expanded.value = false
+}
 
 // ── 업로드된 URL 추적 (언마운트 시 미삽입 이미지 정리) ──
 const localUploads = ref([])
@@ -478,8 +493,22 @@ function setLink() {
 .tb-danger { color: var(--danger, #ef4444); }
 .tb-danger:hover { background: var(--danger-light, #fef2f2); }
 .tb-div { color: var(--outline, #e5e7eb); font-size: 12px; padding: 0 2px; }
-.tb-expand { color: var(--text-muted, #9ca3af); }
-.tb-expand:hover { color: var(--primary, #2563eb); }
+.tb-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid var(--primary, #2563eb);
+  border-radius: 6px;
+  background: var(--primary-light, #dbeafe);
+  color: var(--primary, #2563eb);
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.tb-expand-btn .material-symbols-outlined { font-size: 17px; }
+.tb-expand-btn:hover { background: var(--primary, #2563eb); color: #fff; }
 
 /* 글자색 버튼 */
 .tb-color-wrap {
@@ -524,8 +553,17 @@ function setLink() {
   border-bottom: 1px solid var(--outline, #e5e7eb);
   flex-shrink: 0;
 }
-.tiptap-modal-title { font-weight: 600; font-size: 14px; color: var(--text-primary, #111); }
-.tiptap-modal-hint { font-size: 12px; color: var(--text-muted, #9ca3af); flex: 1; }
+.tiptap-modal-title { font-weight: 600; font-size: 14px; color: var(--text-primary, #111); flex: 1; }
+.tiptap-modal-actions { display: flex; gap: 6px; }
+.tiptap-modal-cancel {
+  padding: 4px 12px;
+  border: 1px solid var(--outline, #e5e7eb);
+  border-radius: 5px;
+  background: #fff; font-size: 13px; cursor: pointer;
+  color: var(--text-secondary, #555);
+  transition: all 0.1s;
+}
+.tiptap-modal-cancel:hover { background: var(--danger-light, #fef2f2); border-color: var(--danger, #ef4444); color: var(--danger, #ef4444); }
 .tiptap-modal-close {
   padding: 4px 12px;
   border: 1px solid var(--outline, #e5e7eb);
