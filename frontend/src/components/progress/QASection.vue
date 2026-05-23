@@ -231,7 +231,7 @@ function openAddQuestion() {
 }
 
 function cancelAddQuestion() {
-  deleteUrls(addQuestionUploads.value.filter(u => !newQuestionText.value.includes(u)))
+  deleteUrls(addQuestionUploads.value)
   addingQuestion.value = false
   newQuestionText.value = ''
   newTargets.value = []
@@ -270,7 +270,7 @@ function startEditQuestion(qa) {
   editQuestionUploads.value = []
 }
 function cancelEditQuestion() {
-  deleteUrls(editQuestionUploads.value.filter(u => !editingQuestionText.value.includes(u)))
+  deleteUrls(editQuestionUploads.value)
   editingQuestionId.value = ''
   editingQuestionText.value = ''
   editingTargets.value = []
@@ -343,12 +343,12 @@ const editAnswerUploads = ref([])
 
 function startAddAnswer(questionId) { addingAnswerToId.value = questionId; newAnswerText.value = ''; newAnswerBy.value = ''; addAnswerUploads.value = [] }
 function cancelAddAnswer() {
-  deleteUrls(addAnswerUploads.value.filter(u => !newAnswerText.value.includes(u)))
+  deleteUrls(addAnswerUploads.value)
   addingAnswerToId.value = ''; newAnswerText.value = ''; newAnswerBy.value = ''; addAnswerUploads.value = []
 }
 function startEditAnswer(answer) { editingAnswerId.value = answer.id; editingAnswerText.value = answer.answer; editingAnswerBy.value = answer.answer_by; editAnswerUploads.value = [] }
 function cancelEditAnswer() {
-  deleteUrls(editAnswerUploads.value.filter(u => !editingAnswerText.value.includes(u)))
+  deleteUrls(editAnswerUploads.value)
   editingAnswerId.value = ''; editingAnswerText.value = ''; editingAnswerBy.value = ''; editAnswerUploads.value = []
 }
 

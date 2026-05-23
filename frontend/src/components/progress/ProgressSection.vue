@@ -95,7 +95,7 @@ const addUploads  = ref([])
 
 function openAdd() { adding.value = true; addUploads.value = [] }
 function cancelAdd() {
-  deleteUrls(addUploads.value.filter(u => !newText.value.includes(u)))
+  deleteUrls(addUploads.value)
   adding.value = false; newText.value = ''; newAssignee.value = ''; addUploads.value = []
 }
 
@@ -126,7 +126,7 @@ function startEdit(iss) {
   editUploads.value = []
 }
 function cancelEdit() {
-  deleteUrls(editUploads.value.filter(u => !editText.value.includes(u)))
+  deleteUrls(editUploads.value)
   editingId.value = ''; editText.value = ''; editAssignee.value = ''; editUploads.value = []
 }
 

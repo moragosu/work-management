@@ -156,7 +156,7 @@ function startEdit(fb) {
 }
 function closeForm() {
   // 취소 시 이번 세션에서 업로드했으나 저장되지 않은 파일 삭제
-  deleteUrls(sessionUploads.value.filter(u => !form.content.includes(u)))
+  deleteUrls(sessionUploads.value)
   sessionUploads.value = []
   form.open = false
 }
