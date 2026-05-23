@@ -13,12 +13,12 @@
 
     <div class="page-body">
       <!-- ① 이번 주 실용 지표 -->
-      <div class="grid-4" style="margin-bottom:24px">
+      <div class="grid-3" style="margin-bottom:24px">
         <div class="card stat-accent" :class="unansweredQuestions.length ? 'stat-accent-orange' : 'stat-accent-green'" data-tooltip="전체 기간 중 아직 답변이 달리지 않은 질문 수" data-tooltip-pos="bottom">
           <div class="card-body stat-card">
             <span class="material-symbols-outlined stat-icon" :class="unansweredQuestions.length ? 'stat-icon-orange' : 'stat-icon-green'">quiz</span>
             <div class="stat-value" :style="unansweredQuestions.length ? 'color:var(--orange,#f97316)' : 'color:var(--success)'">{{ unansweredQuestions.length }}</div>
-            <div class="stat-label">미답변 의견/질문</div>
+            <div class="stat-label">미답변 의견/질문 (전체)</div>
           </div>
         </div>
         <div class="card stat-accent" :class="weekIssues.length ? 'stat-accent-yellow' : 'stat-accent-green'" data-tooltip="이번 주 등록된 이슈 수" data-tooltip-pos="bottom">
@@ -26,13 +26,6 @@
             <span class="material-symbols-outlined stat-icon" :class="weekIssues.length ? 'stat-icon-yellow' : 'stat-icon-green'">warning</span>
             <div class="stat-value" :style="weekIssues.length ? 'color:var(--warning)' : 'color:var(--success)'">{{ weekIssues.length }}</div>
             <div class="stat-label">이번 주 이슈</div>
-          </div>
-        </div>
-        <div class="card stat-accent" :class="unassignedTasks.length ? 'stat-accent-red' : 'stat-accent-green'" data-tooltip="담당자가 지정되지 않은 과제 수" data-tooltip-pos="bottom">
-          <div class="card-body stat-card">
-            <span class="material-symbols-outlined stat-icon" :class="unassignedTasks.length ? 'stat-icon-red' : 'stat-icon-green'">person_off</span>
-            <div class="stat-value" :style="unassignedTasks.length ? 'color:var(--danger)' : 'color:var(--success)'">{{ unassignedTasks.length }}</div>
-            <div class="stat-label">미배정 과제</div>
           </div>
         </div>
         <div class="card stat-accent stat-accent-blue" data-tooltip="이번 주 컨플루언스 링크 등록 현황" data-tooltip-pos="bottom">
@@ -47,22 +40,26 @@
         </div>
       </div>
 
-      <!-- ② 액션 패널 3종 -->
-      <div class="grid-3" style="margin-bottom:24px;align-items:start">
+      <!-- ② 액션 패널 2종 -->
+      <div class="grid-2" style="margin-bottom:24px;align-items:start">
 
-        <!-- 미답변 의견/질문 -->
+        <!-- 의견/질문 -->
         <div class="card action-panel">
           <div class="card-header panel-header-toggle" @click="panelExpanded.questions = !panelExpanded.questions" data-tooltip="클릭하여 펼치기 / 접기">
             <div class="panel-title">
               <span class="panel-icon" style="background:#fff7ed;color:var(--orange)">
                 <span class="material-symbols-outlined">forum</span>
               </span>
-              {{ questionFilter === 'all' ? '전체' : questionFilter === 'answered' ? '답변완료' : '미답변' }} 의견/질문
+              의견/질문
             </div>
             <div class="q-filter-group" @click.stop>
-              <button class="q-filter-btn" :class="{ active: questionFilter === 'unanswered' }" @click="questionFilter = 'unanswered'" data-tooltip="미답변만 보기">미답변</button>
-              <button class="q-filter-btn" :class="{ active: questionFilter === 'answered' }" @click="questionFilter = 'answered'" data-tooltip="답변 완료된 것만 보기">답변완료</button>
-              <button class="q-filter-btn" :class="{ active: questionFilter === 'all' }" @click="questionFilter = 'all'" data-tooltip="전체 보기">전체</button>
+              <button class="q-filter-btn" :class="{ active: qWeekFilter === 'this' }" @click="qWeekFilter = 'this'">이번주</button>
+              <button class="q-filter-btn" :class="{ active: qWeekFilter === 'last' }" @click="qWeekFilter = 'last'">지난주</button>
+            </div>
+            <div class="q-filter-group" @click.stop>
+              <button class="q-filter-btn" :class="{ active: questionFilter === 'unanswered' }" @click="questionFilter = 'unanswered'">미답변</button>
+              <button class="q-filter-btn" :class="{ active: questionFilter === 'answered' }" @click="questionFilter = 'answered'">답변완료</button>
+              <button class="q-filter-btn" :class="{ active: questionFilter === 'all' }" @click="questionFilter = 'all'">전체</button>
             </div>
             <span class="badge" :class="filteredQuestions.length ? (questionFilter === 'answered' ? 'badge-green' : 'badge-orange') : 'badge-gray'">
               {{ filteredQuestions.length }}건
@@ -72,7 +69,7 @@
           <div class="card-body panel-body">
             <div v-if="actionLoading" class="loading-center" style="padding:24px"><div class="spinner"></div></div>
             <div v-else-if="filteredQuestions.length === 0" class="panel-empty">
-              {{ questionFilter === 'all' ? '등록된 의견/질문이 없습니다' : questionFilter === 'answered' ? '답변 완료된 의견/질문이 없습니다' : '미답변 의견/질문이 없습니다 👍' }}
+              {{ questionFilter === 'answered' ? '답변 완료된 의견/질문이 없습니다' : questionFilter === 'all' ? '등록된 의견/질문이 없습니다' : '미답변 의견/질문이 없습니다 👍' }}
             </div>
             <ul v-else class="panel-list" :class="{ 'panel-list-expanded': panelExpanded.questions }">
               <li v-for="q in filteredQuestions" :key="q.id" class="panel-item panel-item-link" @click="openModal('question', q)">
@@ -103,55 +100,27 @@
               </span>
               이슈
             </div>
-            <span class="badge" :class="weekIssues.length ? 'badge-yellow' : 'badge-gray'">
-              {{ weekIssues.length }}건
+            <div class="q-filter-group" @click.stop>
+              <button class="q-filter-btn" :class="{ active: issWeekFilter === 'this' }" @click="issWeekFilter = 'this'">이번주</button>
+              <button class="q-filter-btn" :class="{ active: issWeekFilter === 'last' }" @click="issWeekFilter = 'last'">지난주</button>
+            </div>
+            <span class="badge" :class="filteredIssues.length ? 'badge-yellow' : 'badge-gray'">
+              {{ filteredIssues.length }}건
             </span>
             <span class="material-symbols-outlined section-chevron" :class="{ open: panelExpanded.issues }">expand_more</span>
           </div>
           <div class="card-body panel-body">
             <div v-if="actionLoading" class="loading-center" style="padding:24px"><div class="spinner"></div></div>
-            <div v-else-if="weekIssues.length === 0" class="panel-empty">
-              이번 주 등록된 이슈가 없습니다 👍
+            <div v-else-if="filteredIssues.length === 0" class="panel-empty">
+              등록된 이슈가 없습니다 👍
             </div>
             <ul v-else class="panel-list" :class="{ 'panel-list-expanded': panelExpanded.issues }">
-              <li v-for="p in weekIssues" :key="p.id" class="panel-item panel-item-link" @click="openModal('issue', p)">
+              <li v-for="p in filteredIssues" :key="p.id" class="panel-item panel-item-link" @click="openModal('issue', p)">
                 <div class="issue-text">{{ stripMarkdown(p.issue) }}</div>
                 <div class="panel-item-sub">
                   <span class="badge badge-blue">{{ getTaskName(p.task_id) }}</span>
                   <span v-if="p.assignee" class="badge badge-gray">{{ p.assignee }}</span>
                   <span class="panel-goto">상세보기 →</span>
-                </div>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- 미배정 과제 -->
-        <div class="card action-panel">
-          <div class="card-header panel-header-toggle" @click="panelExpanded.tasks = !panelExpanded.tasks" data-tooltip="클릭하여 펼치기 / 접기">
-            <div class="panel-title">
-              <span class="panel-icon" style="background:#f0f4ff;color:var(--primary)">
-                <span class="material-symbols-outlined">person_off</span>
-              </span>
-              미배정 과제
-            </div>
-            <span class="badge" :class="unassignedTasks.length ? 'badge-red' : 'badge-gray'">
-              {{ unassignedTasks.length }}건
-            </span>
-            <span class="material-symbols-outlined section-chevron" :class="{ open: panelExpanded.tasks }">expand_more</span>
-          </div>
-          <div class="card-body panel-body">
-            <div v-if="actionLoading" class="loading-center" style="padding:24px"><div class="spinner"></div></div>
-            <div v-else-if="unassignedTasks.length === 0" class="panel-empty">
-              모든 과제에 담당자가 배정되어 있습니다 👍
-            </div>
-            <ul v-else class="panel-list" :class="{ 'panel-list-expanded': panelExpanded.tasks }">
-              <li v-for="t in unassignedTasks" :key="t.id" class="panel-item panel-item-link" @click="goToTask(t)">
-                <div class="panel-item-main">{{ t.name }}</div>
-                <div class="panel-item-sub">
-                  <span class="badge badge-blue">{{ t.id }}</span>
-                  <span class="badge badge-gray">{{ getObjectiveName(t.objective_id) }}</span>
-                  <span class="panel-goto">바로가기 →</span>
                 </div>
               </li>
             </ul>
@@ -167,6 +136,10 @@
           <div class="section-header section-header-toggle" @click="activityOpen = !activityOpen" data-tooltip="클릭하여 접기 / 펼치기" data-tooltip-pos="bottom">
             <span class="section-header-title">파트원별 활동 현황</span>
             <span class="panel-count-badge">파트원 {{ staffList.length }}명</span>
+            <div class="q-filter-group" style="margin-left:8px" @click.stop>
+              <button class="q-filter-btn" :class="{ active: activityWeek === 'this' }" @click="activityWeek = 'this'">이번주</button>
+              <button class="q-filter-btn" :class="{ active: activityWeek === 'last' }" @click="activityWeek = 'last'">지난주</button>
+            </div>
             <span class="material-symbols-outlined section-chevron" :class="{ open: activityOpen }">expand_more</span>
           </div>
           <div v-if="activityOpen" class="card panel-card">
@@ -177,8 +150,9 @@
                   <tr>
                     <th>파트원</th>
                     <th data-tooltip="배정된 과제 수 (누적)">담당 과제</th>
-                    <th data-tooltip="등록한 이슈 수 (누적)">이슈 등록</th>
-                    <th data-tooltip="등록한 질문 수 / 작성한 답변 수 (누적)">질문 / 답변</th>
+                    <th data-tooltip="해당 주 등록한 이슈 수">이슈</th>
+                    <th data-tooltip="해당 주 등록한 질문 수">질문</th>
+                    <th data-tooltip="해당 주 작성한 답변 수">답변</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -205,10 +179,15 @@
                       </div>
                     </td>
                     <td style="vertical-align:middle">
-                      <div class="qa-ratio-cell">
-                        <span class="qa-pill qa-pill-q" :data-tooltip="`등록한 질문 ${memberStatsMap[s.name]?.questions ?? 0}건`">{{ memberStatsMap[s.name]?.questions ?? 0 }}Q</span>
-                        <span class="qa-sep">/</span>
-                        <span class="qa-pill qa-pill-a" :data-tooltip="`작성한 답변 ${memberStatsMap[s.name]?.answers ?? 0}건`">{{ memberStatsMap[s.name]?.answers ?? 0 }}A</span>
+                      <div class="stat-bar-row">
+                        <span class="stat-num stat-num-q">{{ memberStatsMap[s.name]?.questions ?? 0 }}</span>
+                        <div class="stat-bar"><div class="stat-fill stat-fill-purple" :style="{ width: barWidth(memberStatsMap[s.name]?.questions, maxStats.questions) }"></div></div>
+                      </div>
+                    </td>
+                    <td style="vertical-align:middle">
+                      <div class="stat-bar-row">
+                        <span class="stat-num stat-num-a">{{ memberStatsMap[s.name]?.answers ?? 0 }}</span>
+                        <div class="stat-bar"><div class="stat-fill stat-fill-green" :style="{ width: barWidth(memberStatsMap[s.name]?.answers, maxStats.answers) }"></div></div>
                       </div>
                     </td>
                   </tr>
@@ -347,7 +326,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import axios from 'axios'
 import TiptapPreview from '../components/TiptapPreview.vue'
 import { parseIds } from '../utils/parseIds.js'
-import { getCurrentWeek, formatWeekLabel, normalizeWeek } from '../utils/week.js'
+import { getCurrentWeek, formatWeekLabel, normalizeWeek, addWeeks } from '../utils/week.js'
 import { statusBadgeClass } from '../utils/status.js'
 
 const router = useRouter()
@@ -365,12 +344,16 @@ const matrixOpen = ref(true)
 const loading = ref(false)
 const actionLoading = ref(false)
 const activityOpen = ref(true)
-const panelExpanded = reactive({ questions: false, issues: false, tasks: false })
+const panelExpanded = reactive({ questions: false, issues: false })
 const questionFilter = ref('unanswered') // 'unanswered' | 'answered' | 'all'
+const qWeekFilter    = ref('this')       // 'this' | 'last'
+const issWeekFilter  = ref('this')       // 'this' | 'last'
+const activityWeek   = ref('this')       // 'this' | 'last'
 
 const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
 
 const currentWeek = getCurrentWeek()
+const lastWeek    = addWeeks(currentWeek, -1)
 
 // ── 목표 통계 ──
 const inProgressCount = computed(() => objectives.value.filter(o => o.status === '진행중').length)
@@ -382,43 +365,33 @@ const unansweredQuestions = computed(() =>
   allQuestions.value.filter(q => !q.answers || q.answers.length === 0)
 )
 
-const answeredQuestions = computed(() =>
-  allQuestions.value.filter(q => q.answers && q.answers.length > 0)
-)
-
 const filteredQuestions = computed(() => {
-  if (questionFilter.value === 'answered') return answeredQuestions.value
-  if (questionFilter.value === 'all') return allQuestions.value
-  return unansweredQuestions.value
+  const w = qWeekFilter.value === 'last' ? lastWeek : currentWeek
+  const qs = allQuestions.value.filter(q => normalizeWeek(q.week) === w)
+  if (questionFilter.value === 'answered') return qs.filter(q => q.answers && q.answers.length > 0)
+  if (questionFilter.value === 'all') return qs
+  return qs.filter(q => !q.answers || q.answers.length === 0)
+})
+
+const filteredIssues = computed(() => {
+  const w = issWeekFilter.value === 'last' ? lastWeek : currentWeek
+  return allIssuesList.value.filter(i => normalizeWeek(i.week) === w)
 })
 
 const weekIssues = computed(() => weekIssuesList.value)
 
-const assignedTaskIds = computed(() => {
-  const ids = new Set()
-  staffList.value.forEach(s => {
-    parseIds(s.selected_tasks).forEach(id => ids.add(id))
-  })
-  return ids
-})
-
-const unassignedTasks = computed(() =>
-  tasks.value.filter(t => {
-    if (assignedTaskIds.value.has(t.id)) return false
-    if (t.sub_tasks && t.sub_tasks.some(st => assignedTaskIds.value.has(st.id))) return false
-    return true
-  })
-)
-
 // ── 팀원별 활동 통계 ──
 const memberStatsMap = computed(() => {
+  const w = activityWeek.value === 'last' ? lastWeek : currentWeek
+  const wQuestions = allQuestions.value.filter(q => normalizeWeek(q.week) === w)
+  const wIssues    = allIssuesList.value.filter(i => normalizeWeek(i.week) === w)
   const map = {}
   staffList.value.forEach(s => {
     map[s.name] = {
       tasks:     parseIds(s.selected_tasks || '').length,
-      issues:    allIssuesList.value.filter(i => i.assignee === s.name).length,
-      questions: allQuestions.value.filter(q => q.questioner === s.name).length,
-      answers:   allQuestions.value.flatMap(q => q.answers || []).filter(a => a.answer_by === s.name).length,
+      issues:    wIssues.filter(i => i.assignee === s.name).length,
+      questions: wQuestions.filter(q => q.questioner === s.name).length,
+      answers:   wQuestions.flatMap(q => q.answers || []).filter(a => a.answer_by === s.name).length,
     }
   })
   return map
@@ -596,9 +569,6 @@ function goToQuestion(q) {
 }
 function goToIssue(p) {
   router.push({ path: '/progress', query: { week: p.week, focusIssueId: p.id } })
-}
-function goToTask(t) {
-  router.push({ path: '/admin', query: { tab: 'task', focusTask: t.id } })
 }
 function goToProgressTask(row) {
   router.push({ path: '/progress', query: { week: currentWeek, focusTask: row.id } })
@@ -838,11 +808,9 @@ onMounted(refresh)
 .stat-fill-blue   { background: var(--primary); }
 .stat-fill-orange { background: var(--orange); }
 .stat-fill-green  { background: var(--success); }
-.qa-ratio-cell { display: flex; align-items: center; gap: 4px; }
-.qa-pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 12px; font-weight: 600; }
-.qa-pill-q { background: #ede9fe; color: #7c3aed; }
-.qa-pill-a { background: #d1fae5; color: #059669; }
-.qa-sep { font-size: 12px; color: var(--text-muted); }
+.stat-fill-purple { background: #7c3aed; }
+.stat-num-q { color: #7c3aed; }
+.stat-num-a { color: #059669; }
 
 .latest-issue { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .latest-issue-text {
