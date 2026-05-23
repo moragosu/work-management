@@ -153,16 +153,30 @@
                   </div>
 
                   <template v-if="expandedSubTaskIds.has(st.id)">
-                    <div v-if="getLeftTaskLink(st.id)" class="sub-task-link-row">
+                    <div class="sub-task-link-row">
+                      <button class="link-help-btn" :class="{ active: leftLinkHelpOpen.has(st.id) }" @click="toggleLeftLinkHelp(st.id)" data-tooltip="링크 가져오는 방법">?</button>
                       <span class="material-symbols-outlined sub-task-link-icon">link</span>
-                      <a :href="getLeftTaskLink(st.id).url" target="_blank" class="text-primary sub-task-link-text">{{ getLeftTaskLink(st.id).url }}</a>
+                      <template v-if="getLeftTaskLink(st.id) && !leftEditingLinkId[st.id]">
+                        <a :href="getLeftTaskLink(st.id).url" target="_blank" class="text-primary sub-task-link-text">{{ getLeftTaskLink(st.id).url }}</a>
+                        <button class="btn btn-ghost btn-xs" @click="startEditLeftLink(st.id)" data-tooltip="링크 수정">수정</button>
+                        <button class="btn btn-danger btn-xs" @click="deleteLeftLink(st.id)" data-tooltip="링크 삭제">삭제</button>
+                      </template>
+                      <template v-else>
+                        <input v-model="leftLinkInputs[st.id]" class="form-control sub-task-link-input" placeholder="컨플루언스 링크" @keyup.enter="saveLeftLink(st.id)" />
+                        <button class="btn btn-primary btn-xs" @click="saveLeftLink(st.id)" :disabled="!leftLinkInputs[st.id]" data-tooltip="링크 저장">저장</button>
+                        <button v-if="getLeftTaskLink(st.id)" class="btn btn-ghost btn-xs" @click="cancelEditLeftLink(st.id)" data-tooltip="수정 취소">취소</button>
+                      </template>
+                    </div>
+                    <div v-if="leftLinkHelpOpen.has(st.id)" class="link-help-panel">
+                      <div class="link-help-step"><span class="link-help-num">1</span><span>컨플루언스 페이지 우 상단 <strong>Share</strong> 버튼 클릭</span></div>
+                      <div class="link-help-step"><span class="link-help-num">2</span><span>드롭다운에서 <strong>Share Link</strong> 생성 확인</span></div>
+                      <div class="link-help-step"><span class="link-help-num">3</span><span><strong>Copy</strong> 버튼 클릭 → 아래 입력란에 붙여넣기</span></div>
                     </div>
                     <ProgressSection
                       :issues="leftIssueMap[st.id] || []"
                       :staff-list="staffList"
                       :task-id="st.id"
                       :week="leftWeek"
-                      :readonly="true"
                       @update:issues="iss => onLeftIssuesUpdate(st.id, iss)"
                     />
                     <QASection
@@ -171,7 +185,6 @@
                       :questioners="questioners"
                       :task-id="st.id"
                       :week="leftWeek"
-                      :readonlyQuestion="true"
                       @update:questions="qs => onLeftQuestionsUpdate(st.id, qs)"
                     />
                   </template>
@@ -179,19 +192,33 @@
               </template>
 
               <template v-else>
-                <div v-if="getLeftTaskLink(task.id)" class="section-block">
+                <div class="section-block">
                   <div class="section-label">
+                    <button class="link-help-btn" :class="{ active: leftLinkHelpOpen.has(task.id) }" @click="toggleLeftLinkHelp(task.id)" data-tooltip="링크 가져오는 방법">?</button>
                     <span class="material-symbols-outlined section-icon">link</span>
                     컨플루언스
                   </div>
-                  <a :href="getLeftTaskLink(task.id).url" target="_blank" class="text-primary link-text">{{ getLeftTaskLink(task.id).url }}</a>
+                  <div v-if="leftLinkHelpOpen.has(task.id)" class="link-help-panel">
+                    <div class="link-help-step"><span class="link-help-num">1</span><span>컨플루언스 페이지 우 상단 <strong>Share</strong> 버튼 클릭</span></div>
+                    <div class="link-help-step"><span class="link-help-num">2</span><span>드롭다운에서 <strong>Share Link</strong> 생성 확인</span></div>
+                    <div class="link-help-step"><span class="link-help-num">3</span><span><strong>Copy</strong> 버튼 클릭 → 아래 입력란에 붙여넣기</span></div>
+                  </div>
+                  <div v-if="getLeftTaskLink(task.id) && !leftEditingLinkId[task.id]" class="flex gap-8" style="align-items:center">
+                    <a :href="getLeftTaskLink(task.id).url" target="_blank" class="text-primary link-text">{{ getLeftTaskLink(task.id).url }}</a>
+                    <button class="btn btn-ghost btn-xs" @click="startEditLeftLink(task.id)" data-tooltip="링크 수정">수정</button>
+                    <button class="btn btn-danger btn-xs" @click="deleteLeftLink(task.id)" data-tooltip="링크 삭제">삭제</button>
+                  </div>
+                  <div v-else class="flex gap-8">
+                    <input v-model="leftLinkInputs[task.id]" class="form-control" placeholder="링크를 입력하세요" style="flex:1" @keyup.enter="saveLeftLink(task.id)" />
+                    <button class="btn btn-primary btn-xs" @click="saveLeftLink(task.id)" :disabled="!leftLinkInputs[task.id]" data-tooltip="링크 저장">저장</button>
+                    <button v-if="getLeftTaskLink(task.id)" class="btn btn-ghost btn-xs" @click="cancelEditLeftLink(task.id)" data-tooltip="수정 취소">취소</button>
+                  </div>
                 </div>
                 <ProgressSection
                   :issues="leftIssueMap[task.id] || []"
                   :staff-list="staffList"
                   :task-id="task.id"
                   :week="leftWeek"
-                  :readonly="true"
                   @update:issues="iss => onLeftIssuesUpdate(task.id, iss)"
                 />
                 <QASection
@@ -200,7 +227,6 @@
                   :questioners="questioners"
                   :task-id="task.id"
                   :week="leftWeek"
-                  :readonlyQuestion="true"
                   @update:questions="qs => onLeftQuestionsUpdate(task.id, qs)"
                 />
               </template>
@@ -477,6 +503,9 @@ const expandedSubTaskIds = ref(new Set())
 const leftQnA = ref([])
 const leftLinkMap = ref({})
 const leftIssueMap = ref({})
+const leftLinkInputs = ref({})
+const leftEditingLinkId = ref({})
+const leftLinkHelpOpen = ref(new Set())
 
 // ── 주차 표시 ──
 const leftWeekNum = computed(() => parseInt(leftWeek.value?.match(/-W(\d+)$/)?.[1] || '0'))
@@ -537,12 +566,14 @@ function initLinkInputs() {
     ;(t.sub_tasks || []).forEach(st => ids.push(st.id))
   })
   linkInputs.value = Object.fromEntries(ids.map(id => [id, '']))
+  leftLinkInputs.value = Object.fromEntries(ids.map(id => [id, '']))
 }
 
 async function onWeekChange() {
   if (!selectedWeek.value) return
   initLinkInputs()
   editingLinkId.value = {}
+  leftEditingLinkId.value = {}
   await Promise.all([
     loadQnA(), loadLinks(), loadIssues(),
     loadLeftQnA(), loadLeftLinks(), loadLeftIssues(),
@@ -639,6 +670,44 @@ async function loadIssues() {
     map[iss.task_id].push(iss)
   })
   issueMap.value = map
+}
+
+// ── 지난주 컨플루언스 링크 ──
+function toggleLeftLinkHelp(id) {
+  const next = new Set(leftLinkHelpOpen.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  leftLinkHelpOpen.value = next
+}
+function startEditLeftLink(taskId) {
+  leftEditingLinkId.value = { ...leftEditingLinkId.value, [taskId]: true }
+  leftLinkInputs.value = { ...leftLinkInputs.value, [taskId]: leftLinkMap.value[taskId]?.url || '' }
+}
+function cancelEditLeftLink(taskId) {
+  const updated = { ...leftEditingLinkId.value }; delete updated[taskId]; leftEditingLinkId.value = updated
+}
+async function saveLeftLink(taskId) {
+  const url = leftLinkInputs.value[taskId]?.trim()
+  if (!url) return
+  try {
+    const existing = leftLinkMap.value[taskId]
+    const saved = existing
+      ? (await axios.put(`/api/confluence/${existing.id}`, { url })).data
+      : (await axios.post('/api/confluence', { week: leftWeek.value, task_id: taskId, url })).data
+    leftLinkMap.value = { ...leftLinkMap.value, [taskId]: saved }
+    leftLinkInputs.value[taskId] = ''
+    cancelEditLeftLink(taskId)
+    showToast('링크가 저장되었습니다')
+  } catch (e) { toastError(e, '링크 저장 실패') }
+}
+async function deleteLeftLink(taskId) {
+  if (!confirm('링크를 삭제하시겠습니까?')) return
+  try {
+    const existing = leftLinkMap.value[taskId]
+    if (existing) await axios.delete(`/api/confluence/${existing.id}`)
+    const updated = { ...leftLinkMap.value }; delete updated[taskId]; leftLinkMap.value = updated
+    showToast('삭제되었습니다')
+  } catch (e) { toastError(e, '링크 삭제 실패') }
 }
 
 // ── 지난주 로드 ──
