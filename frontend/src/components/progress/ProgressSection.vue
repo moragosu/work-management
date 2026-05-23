@@ -48,7 +48,7 @@
           <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
         </select>
       </div>
-      <TiptapEditor v-model="newText" height="140px" @image-uploaded="url => addUploads.push(url)" />
+      <TiptapEditor v-model="newText" height="140px" @image-uploaded="onAddImageUploaded" />
       <div class="flex gap-8 mt-8" style="justify-content:flex-end">
         <button class="btn btn-ghost btn-sm" @click="cancelAdd">취소</button>
         <button class="btn btn-primary btn-sm" @click="addIssue" :disabled="!hasContent(newText) || !newAssignee">저장</button>
@@ -94,7 +94,13 @@ const newAssignee = ref('')
 const addUploads  = ref([])
 
 function openAdd() { adding.value = true; addUploads.value = [] }
+function onAddImageUploaded(url) {
+  console.log('[DEBUG] ProgressSection image-uploaded 수신:', url)
+  addUploads.value.push(url)
+  console.log('[DEBUG] addUploads 현재:', [...addUploads.value])
+}
 function cancelAdd() {
+  console.log('[DEBUG] cancelAdd 호출, addUploads:', [...addUploads.value])
   deleteUrls(addUploads.value)
   adding.value = false; newText.value = ''; newAssignee.value = ''; addUploads.value = []
 }

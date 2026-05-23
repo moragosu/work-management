@@ -253,6 +253,7 @@ async function uploadAndInsert(file) {
       axios.delete(`/api/upload/${url.split('/').pop()}`).catch(() => {})
       return
     }
+    console.log('[DEBUG] TiptapEditor emit image-uploaded:', url)
     emit('image-uploaded', url)
     localUploads.value.push(url)
     editor.value?.chain().focus().setImage({ src: url, alt: '' }).run()
