@@ -76,11 +76,11 @@
             </button>
           </div>
 
-          <div v-for="task in filteredTasks" :key="'L-' + task.id" class="card mb-16">
+          <div v-for="task in filteredTasks" :key="'L-' + task.id" class="card mb-16" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
             <div class="card-header" style="flex-wrap:wrap;gap:8px">
               <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
                 <h3 style="margin:0">{{ task.name }}</h3>
-                <span class="badge badge-blue">{{ task.objective_id }}: {{ getObjectiveName(task.objective_id) }}</span>
+                <span class="badge" :style="{ background: getObjectiveColor(task.objective_id) + '22', color: getObjectiveColor(task.objective_id), border: '1px solid ' + getObjectiveColor(task.objective_id) + '55' }">{{ task.objective_id }}: {{ getObjectiveName(task.objective_id) }}</span>
                 <span v-if="task.sub_tasks && task.sub_tasks.length > 0" class="badge badge-outline" style="font-size:11px">소과제 {{ task.sub_tasks.length }}개</span>
                 <button
                   v-if="task.sub_tasks && task.sub_tasks.length > 0"
@@ -257,11 +257,11 @@
             </span>
           </div>
 
-          <div v-for="task in filteredTasks" :key="task.id" :id="'task-' + task.id" class="card mb-16">
+          <div v-for="task in filteredTasks" :key="task.id" :id="'task-' + task.id" class="card mb-16" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
             <div class="card-header" style="flex-wrap:wrap;gap:8px">
               <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
                 <h3 style="margin:0">{{ task.name }}</h3>
-                <span class="badge badge-blue">{{ task.objective_id }}: {{ getObjectiveName(task.objective_id) }}</span>
+                <span class="badge" :style="{ background: getObjectiveColor(task.objective_id) + '22', color: getObjectiveColor(task.objective_id), border: '1px solid ' + getObjectiveColor(task.objective_id) + '55' }">{{ task.objective_id }}: {{ getObjectiveName(task.objective_id) }}</span>
                 <span v-if="task.sub_tasks && task.sub_tasks.length > 0" class="badge badge-outline" style="font-size:11px">소과제 {{ task.sub_tasks.length }}개</span>
                 <button
                   v-if="task.sub_tasks && task.sub_tasks.length > 0"
@@ -581,6 +581,11 @@ async function onWeekChange() {
 }
 
 // ── 헬퍼 ──
+const OBJECTIVE_COLORS = ['#4f8ef7','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4']
+function getObjectiveColor(objectiveId) {
+  const idx = objectives.value.findIndex(o => o.id === objectiveId)
+  return OBJECTIVE_COLORS[(idx < 0 ? 0 : idx) % OBJECTIVE_COLORS.length]
+}
 function getObjectiveName(id) { return objectives.value.find(o => o.id === id)?.name ?? id }
 function taskMembers(taskId) { return getTaskMembers(taskId, staffList.value) }
 function subTaskMembers(subTaskId) { return getTaskMembers(subTaskId, staffList.value) }
