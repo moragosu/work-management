@@ -6,7 +6,8 @@ from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload
 import uvicorn
 import os
 
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'uploads')
+DATA_DIR = os.environ.get('DATA_DIR', os.path.join(os.path.dirname(__file__), '..', 'data'))
+UPLOAD_DIR = os.path.join(DATA_DIR, 'uploads')
 DIST_DIR = os.path.join(os.path.dirname(__file__), '..', 'dist')
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
