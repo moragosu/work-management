@@ -5,7 +5,8 @@ import os
 import io
 
 router = APIRouter()
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), '..', 'uploads')
+DATA_DIR = os.environ.get('DATA_DIR', os.path.join(os.path.dirname(__file__), '..', '..', 'data'))
+UPLOAD_DIR = os.path.join(DATA_DIR, 'uploads')
 MAX_WIDTH = 1200
 MAX_HEIGHT = 1200
 

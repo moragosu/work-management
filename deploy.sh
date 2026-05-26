@@ -50,7 +50,13 @@ fi
 
 # 2. App directory
 echo "[2/7] 앱 디렉토리 구성..."
-mkdir -p "$APP_DIR/data" "$APP_DIR/backend" "$APP_DIR/dist"
+mkdir -p "$APP_DIR/data/uploads" "$APP_DIR/backend" "$APP_DIR/dist"
+
+# 기존 backend/uploads 파일 마이그레이션 (있을 경우)
+if [ -d "$APP_DIR/backend/uploads" ] && [ "$(ls -A "$APP_DIR/backend/uploads" 2>/dev/null)" ]; then
+  echo "[마이그레이션] 기존 업로드 파일 이동 중..."
+  cp -n "$APP_DIR/backend/uploads/"* "$APP_DIR/data/uploads/" 2>/dev/null || true
+fi
 mkdir -p /var/log/okr-app
 
 # 3. Python 환경 (uv)
