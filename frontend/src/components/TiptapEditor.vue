@@ -36,12 +36,29 @@
         <button type="button" class="tb-btn" :class="{ active: editor.isActive('highlight') }" @click="editor.chain().focus().toggleHighlight().run()" title="형광펜">
           <span class="material-symbols-outlined">ink_highlighter</span>
         </button>
-        <label class="tb-btn tb-color-wrap" title="글자 색상">
-          <span class="material-symbols-outlined">format_color_text</span>
-          <span class="tb-color-bar" :style="{ background: editor.getAttributes('textStyle').color || '#111' }"></span>
-          <input type="color" class="tb-color-input" :value="editor.getAttributes('textStyle').color || '#111111'"
-            @input="e => editor.chain().focus().setColor(e.target.value).run()" />
-        </label>
+        <div class="tb-color-wrap" style="position:relative">
+          <button type="button" class="tb-btn" title="글자 색상" @click="toggleColorPalette">
+            <span class="material-symbols-outlined">format_color_text</span>
+            <span class="tb-color-bar" :style="{ background: editor.getAttributes('textStyle').color || '#111' }"></span>
+          </button>
+          <div v-if="showColorPalette" class="color-palette" @click.stop>
+            <div class="color-swatches">
+              <button v-for="c in presetColors" :key="c" type="button"
+                class="color-swatch"
+                :class="{ active: editor.getAttributes('textStyle').color === c }"
+                :style="{ background: c }"
+                :title="c"
+                @click="applyColor(c)" />
+            </div>
+            <label class="color-custom-btn">
+              <span class="material-symbols-outlined" style="font-size:13px">colorize</span>
+              직접 선택
+              <input type="color" class="tb-color-input"
+                :value="editor.getAttributes('textStyle').color || '#111111'"
+                @input="e => { editor.chain().focus().setColor(e.target.value).run(); showColorPalette = false }" />
+            </label>
+          </div>
+        </div>
         <button type="button" class="tb-btn" @click="editor.chain().focus().unsetColor().run()" title="색상 초기화">
           <span class="material-symbols-outlined" style="font-size:14px">format_color_reset</span>
         </button>
@@ -169,7 +186,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onBeforeUnmount, onUnmounted } from 'vue'
+import { ref, watch, nextTick, onMounted, onBeforeUnmount, onUnmounted } from 'vue'
 import { useEditor, EditorContent, VueNodeViewRenderer } from '@tiptap/vue-3'
 import { Extension, textInputRule } from '@tiptap/core'
 import ImageNodeView from './ImageNodeView.vue'
@@ -222,6 +239,24 @@ const emit = defineEmits(['update:modelValue', 'image-uploaded'])
 const expanded = ref(false)
 let preExpandContent = ''
 
+// ── 글자색 팔레트 ──
+const showColorPalette = ref(false)
+const presetColors = [
+  '#111827','#374151','#6b7280','#d1d5db',
+  '#ef4444','#f97316','#eab308','#22c55e',
+  '#14b8a6','#3b82f6','#8b5cf6','#ec4899',
+  '#991b1b','#1e40af','#166534','#92400e',
+]
+function applyColor(color) {
+  editor.value?.chain().focus().setColor(color).run()
+  showColorPalette.value = false
+}
+function toggleColorPalette(e) {
+  e.stopPropagation()
+  showColorPalette.value = !showColorPalette.value
+}
+function onDocClickForColor() { showColorPalette.value = false }
+
 function openExpand() {
   preExpandContent = props.modelValue ?? ''
   expanded.value = true
@@ -236,7 +271,11 @@ function cancelExpand() {
 
 // ── 업로드 중 unmount 안전 처리 (부모가 이미지 정리 담당) ──
 let isUnmounted = false
-onUnmounted(() => { isUnmounted = true })
+onMounted(() => document.addEventListener('click', onDocClickForColor))
+onUnmounted(() => {
+  isUnmounted = true
+  document.removeEventListener('click', onDocClickForColor)
+})
 
 // ── 업로드 에러 ──
 const uploadError = ref('')
@@ -517,10 +556,9 @@ function setLink() {
 
 /* 글자색 버튼 */
 .tb-color-wrap {
-  position: relative; cursor: pointer;
-  display: inline-flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .tb-color-bar {
   width: 14px; height: 3px; border-radius: 1px;
@@ -530,6 +568,34 @@ function setLink() {
   position: absolute; inset: 0; opacity: 0; cursor: pointer;
   width: 100%; height: 100%; border: none; padding: 0;
 }
+
+/* 색상 팔레트 팝업 */
+.color-palette {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 200;
+  background: white; border: 1px solid var(--outline);
+  border-radius: 8px; padding: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.12);
+  width: 116px;
+}
+.color-swatches {
+  display: grid; grid-template-columns: repeat(4, 20px); gap: 4px;
+  margin-bottom: 6px;
+}
+.color-swatch {
+  width: 20px; height: 20px; border-radius: 4px;
+  border: 1.5px solid rgba(0,0,0,.1); cursor: pointer; padding: 0;
+  transition: transform .1s;
+}
+.color-swatch:hover { transform: scale(1.2); border-color: rgba(0,0,0,.3); }
+.color-swatch.active { border: 2px solid var(--primary, #2563eb); box-shadow: 0 0 0 1px var(--primary, #2563eb); }
+.color-custom-btn {
+  display: flex; align-items: center; gap: 4px;
+  width: 100%; padding: 4px 6px; border-radius: 4px;
+  font-size: 11px; color: var(--text-secondary); cursor: pointer;
+  position: relative; overflow: hidden; border: none; background: none;
+  box-sizing: border-box;
+}
+.color-custom-btn:hover { background: var(--gray-50); }
 
 /* 확장 모달 */
 .tiptap-modal-overlay {
