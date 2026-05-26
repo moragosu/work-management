@@ -408,8 +408,8 @@ async function saveNotice() {
   }
 }
 const questionFilter = ref('unanswered') // 'unanswered' | 'answered' | 'all'
-const qWeekFilter    = ref('this')       // 'this' | 'last'
-const issWeekFilter  = ref('this')       // 'this' | 'last'
+const qWeekFilter    = ref('last')       // 'this' | 'last'
+const issWeekFilter  = ref('last')       // 'this' | 'last'
 const activityWeek   = ref('this')       // 'this' | 'last'
 
 const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
