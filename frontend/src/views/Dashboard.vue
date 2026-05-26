@@ -83,8 +83,8 @@
               의견/질문
             </div>
             <div class="q-filter-group" @click.stop>
-              <button class="q-filter-btn" :class="{ active: qWeekFilter === 'this' }" @click="qWeekFilter = 'this'">이번주</button>
               <button class="q-filter-btn" :class="{ active: qWeekFilter === 'last' }" @click="qWeekFilter = 'last'">지난주</button>
+              <button class="q-filter-btn" :class="{ active: qWeekFilter === 'this' }" @click="qWeekFilter = 'this'">이번주</button>
             </div>
             <div class="q-filter-group" @click.stop>
               <button class="q-filter-btn" :class="{ active: questionFilter === 'unanswered' }" @click="questionFilter = 'unanswered'">미답변</button>
@@ -131,8 +131,8 @@
               이슈
             </div>
             <div class="q-filter-group" @click.stop>
-              <button class="q-filter-btn" :class="{ active: issWeekFilter === 'this' }" @click="issWeekFilter = 'this'">이번주</button>
               <button class="q-filter-btn" :class="{ active: issWeekFilter === 'last' }" @click="issWeekFilter = 'last'">지난주</button>
+              <button class="q-filter-btn" :class="{ active: issWeekFilter === 'this' }" @click="issWeekFilter = 'this'">이번주</button>
             </div>
             <span class="badge" :class="filteredIssues.length ? 'badge-yellow' : 'badge-gray'">
               {{ filteredIssues.length }}건
@@ -167,8 +167,8 @@
             <span class="section-header-title">파트원별 활동 현황</span>
             <span class="panel-count-badge">파트원 {{ staffList.length }}명</span>
             <div class="q-filter-group" style="margin-left:8px" @click.stop>
-              <button class="q-filter-btn" :class="{ active: activityWeek === 'this' }" @click="activityWeek = 'this'">이번주</button>
               <button class="q-filter-btn" :class="{ active: activityWeek === 'last' }" @click="activityWeek = 'last'">지난주</button>
+              <button class="q-filter-btn" :class="{ active: activityWeek === 'this' }" @click="activityWeek = 'this'">이번주</button>
             </div>
             <span class="material-symbols-outlined section-chevron" :class="{ open: activityOpen }">expand_more</span>
           </div>
@@ -178,15 +178,14 @@
               <table>
                 <thead>
                   <tr>
-                    <th>파트원</th>
-                    <th data-tooltip="배정된 과제 수 (누적)">담당 과제</th>
-                    <th data-tooltip="해당 주 등록한 이슈 수">이슈</th>
-                    <th data-tooltip="해당 주 등록한 질문 수">질문</th>
-                    <th data-tooltip="해당 주 작성한 답변 수">답변</th>
+                    <th class="th-sortable" @click="toggleSort('name')">파트원 <span class="sort-ico">{{ sortIco('name') }}</span></th>
+                    <th class="th-sortable" data-tooltip="배정된 과제 수 (누적)" @click="toggleSort('tasks')">담당 과제 <span class="sort-ico">{{ sortIco('tasks') }}</span></th>
+                    <th class="th-sortable" data-tooltip="해당 주 등록한 이슈 수" @click="toggleSort('issues')">이슈 <span class="sort-ico">{{ sortIco('issues') }}</span></th>
+                    <th class="th-sortable" data-tooltip="받은 질문의 답변 / 미답변 수" @click="toggleSort('answered')">답변 현황 <span class="sort-ico">{{ sortIco('answered') }}</span></th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="s in staffList" :key="s.id" style="cursor:default">
+                  <tr v-for="s in sortedStaff" :key="s.id" style="cursor:default">
                     <td style="vertical-align:middle">
                       <div class="member-cell">
                         <span class="member-avatar">{{ s.name[0] }}</span>
@@ -210,14 +209,12 @@
                     </td>
                     <td style="vertical-align:middle">
                       <div class="stat-bar-row">
-                        <span class="stat-num stat-num-q">{{ memberStatsMap[s.name]?.questions ?? 0 }}</span>
-                        <div class="stat-bar"><div class="stat-fill stat-fill-purple" :style="{ width: barWidth(memberStatsMap[s.name]?.questions, maxStats.questions) }"></div></div>
-                      </div>
-                    </td>
-                    <td style="vertical-align:middle">
-                      <div class="stat-bar-row">
-                        <span class="stat-num stat-num-a">{{ memberStatsMap[s.name]?.answers ?? 0 }}</span>
-                        <div class="stat-bar"><div class="stat-fill stat-fill-green" :style="{ width: barWidth(memberStatsMap[s.name]?.answers, maxStats.answers) }"></div></div>
+                        <span class="stat-num stat-num-a">{{ memberStatsMap[s.name]?.answered ?? 0 }}</span>
+                        <div class="stat-bar stat-bar-dual">
+                          <div class="stat-fill stat-fill-green"   :style="{ width: answerBarWidths(s.name).answered }"></div>
+                          <div class="stat-fill stat-fill-unans"   :style="{ width: answerBarWidths(s.name).unanswered }"></div>
+                        </div>
+                        <span class="stat-num stat-num-unans">{{ memberStatsMap[s.name]?.unanswered ?? 0 }}</span>
                       </div>
                     </td>
                   </tr>
@@ -449,11 +446,14 @@ const memberStatsMap = computed(() => {
   const wIssues    = allIssuesList.value.filter(i => normalizeWeek(i.week) === w)
   const map = {}
   staffList.value.forEach(s => {
+    const received   = wQuestions.filter(q => Array.isArray(q.targets) && q.targets.includes(s.name))
+    const answered   = received.filter(q => q.answers && q.answers.length > 0).length
+    const unanswered = received.length - answered
     map[s.name] = {
-      tasks:     parseIds(s.selected_tasks || '').length,
-      issues:    wIssues.filter(i => i.assignee === s.name).length,
-      questions: wQuestions.filter(q => q.questioner === s.name).length,
-      answers:   wQuestions.flatMap(q => q.answers || []).filter(a => a.answer_by === s.name).length,
+      tasks:      parseIds(s.selected_tasks || '').length,
+      issues:     wIssues.filter(i => i.assignee === s.name).length,
+      answered,
+      unanswered,
     }
   })
   return map
@@ -461,12 +461,10 @@ const memberStatsMap = computed(() => {
 
 const maxStats = computed(() => {
   const vals = Object.values(memberStatsMap.value)
-  if (!vals.length) return { tasks: 1, issues: 1, questions: 1, answers: 1 }
+  if (!vals.length) return { tasks: 1, issues: 1 }
   return {
-    tasks:     Math.max(1, ...vals.map(v => v.tasks)),
-    issues:    Math.max(1, ...vals.map(v => v.issues)),
-    questions: Math.max(1, ...vals.map(v => v.questions)),
-    answers:   Math.max(1, ...vals.map(v => v.answers)),
+    tasks:  Math.max(1, ...vals.map(v => v.tasks)),
+    issues: Math.max(1, ...vals.map(v => v.issues)),
   }
 })
 
@@ -474,6 +472,46 @@ function barWidth(val, max) {
   if (!val) return '0%'
   return `${Math.max(3, Math.round((val / max) * 100))}%`
 }
+
+function answerBarWidths(name) {
+  const s = memberStatsMap.value[name]
+  if (!s) return { answered: '0%', unanswered: '0%' }
+  const total = s.answered + s.unanswered
+  if (!total) return { answered: '0%', unanswered: '0%' }
+  return {
+    answered:   `${Math.round((s.answered   / total) * 100)}%`,
+    unanswered: `${Math.round((s.unanswered / total) * 100)}%`,
+  }
+}
+
+// ── 활동 현황 정렬 ──
+const activitySort = ref({ col: 'tasks', dir: 'desc' })
+
+function toggleSort(col) {
+  if (activitySort.value.col === col) {
+    activitySort.value.dir = activitySort.value.dir === 'desc' ? 'asc' : 'desc'
+  } else {
+    activitySort.value = { col, dir: 'desc' }
+  }
+}
+
+function sortIco(col) {
+  if (activitySort.value.col !== col) return '↕'
+  return activitySort.value.dir === 'desc' ? '▼' : '▲'
+}
+
+const sortedStaff = computed(() => {
+  const { col, dir } = activitySort.value
+  return [...staffList.value].sort((a, b) => {
+    if (col === 'name') {
+      const cmp = a.name.localeCompare(b.name, 'ko')
+      return dir === 'asc' ? cmp : -cmp
+    }
+    const av = memberStatsMap.value[a.name]?.[col] ?? 0
+    const bv = memberStatsMap.value[b.name]?.[col] ?? 0
+    return dir === 'asc' ? av - bv : bv - av
+  })
+})
 
 const latestIssueMap = computed(() => {
   const map = {}
@@ -876,8 +914,13 @@ onMounted(() => { refresh(); loadNotice() })
 .stat-fill-orange { background: var(--orange); }
 .stat-fill-green  { background: var(--success); }
 .stat-fill-purple { background: #7c3aed; }
-.stat-num-q { color: #7c3aed; }
-.stat-num-a { color: #059669; }
+.stat-num-a     { color: #059669; }
+.stat-num-unans { color: #f97316; min-width: 18px; text-align: left; }
+.stat-fill-unans { background: #f97316; }
+.stat-bar-dual { position: relative; display: flex; overflow: hidden; }
+.th-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+.th-sortable:hover { color: var(--primary); }
+.sort-ico { font-size: 10px; color: var(--text-muted); margin-left: 2px; }
 
 .latest-issue { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .latest-issue-text {
