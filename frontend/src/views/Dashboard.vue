@@ -410,7 +410,7 @@ async function saveNotice() {
 const questionFilter = ref('unanswered') // 'unanswered' | 'answered' | 'all'
 const qWeekFilter    = ref('last')       // 'this' | 'last'
 const issWeekFilter  = ref('last')       // 'this' | 'last'
-const activityWeek   = ref('this')       // 'this' | 'last'
+const activityWeek   = ref('last')       // 'this' | 'last'
 
 const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
 
