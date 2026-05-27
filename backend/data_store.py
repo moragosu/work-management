@@ -109,6 +109,16 @@ CREATE TABLE IF NOT EXISTS id_counters (
     prefix TEXT PRIMARY KEY,
     value  INTEGER NOT NULL DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS notifications (
+    id         TEXT PRIMARY KEY,
+    recipient  TEXT NOT NULL DEFAULT '',
+    type       TEXT NOT NULL DEFAULT '',
+    title      TEXT NOT NULL DEFAULT '',
+    message    TEXT NOT NULL DEFAULT '',
+    link       TEXT NOT NULL DEFAULT '',
+    is_read    INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT
+);
 """
 
 # ── JSON 직렬화 컬럼 목록 (테이블별) ─────────────────────────────────────────
