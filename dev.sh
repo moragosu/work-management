@@ -30,7 +30,7 @@ echo "백엔드 시작 (포트 8001)..."
 cd "$REPO_DIR/backend"
 export DATA_DIR="$REPO_DIR/data"
 uv sync --quiet --python 3.12 --native-tls
-uv run --python 3.12 uvicorn main:app --host 127.0.0.1 --port 8001 --reload &
+uv run --python 3.12 uvicorn main:app --host 0.0.0.0 --port 8001 --reload &
 BACKEND_PID=$!
 echo "  PID: $BACKEND_PID"
 
