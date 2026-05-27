@@ -37,7 +37,7 @@ echo "  PID: $BACKEND_PID"
 # Frontend
 echo "프론트엔드 시작 (포트 5174)..."
 cd "$REPO_DIR/frontend"
-if [ ! -f "node_modules/.bin/vite" ]; then
+if [ ! -d "node_modules" ]; then
   npm install
 fi
 npm run dev &
