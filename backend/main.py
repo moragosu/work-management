@@ -5,11 +5,15 @@ from fastapi.responses import FileResponse
 from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload, settings, issues, go, feedback
 import uvicorn
 import os
+import data_store
 
 DATA_DIR = os.environ.get('DATA_DIR', os.path.join(os.path.dirname(__file__), '..', 'data'))
 UPLOAD_DIR = os.path.join(DATA_DIR, 'uploads')
 DIST_DIR = os.path.join(os.path.dirname(__file__), '..', 'dist')
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# DB 초기화 (테이블 없으면 생성)
+data_store.init_db()
 
 app = FastAPI(title="OKR Management API", version="1.0.0")
 
