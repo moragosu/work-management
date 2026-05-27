@@ -26,11 +26,11 @@ else
 fi
 
 # Backend
-echo "백엔드 시작 (포트 8000)..."
+echo "백엔드 시작 (포트 8001)..."
 cd "$REPO_DIR/backend"
 export DATA_DIR="$REPO_DIR/data"
 uv sync --quiet --python 3.12 --native-tls
-uv run --python 3.12 python main.py &
+uv run --python 3.12 uvicorn main:app --host 127.0.0.1 --port 8001 --reload &
 BACKEND_PID=$!
 echo "  PID: $BACKEND_PID"
 
@@ -47,7 +47,7 @@ echo "  PID: $FRONTEND_PID"
 echo ""
 echo "✅ 개발 서버 실행 중"
 echo "   프론트엔드: http://localhost:5174"
-echo "   API:        http://localhost:8000/docs"
+echo "   API:        http://localhost:8001/docs"
 echo ""
 echo "종료: Ctrl+C"
 
