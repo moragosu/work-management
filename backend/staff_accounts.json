@@ -1,0 +1,24 @@
+{
+  "default_password": "1234",
+  "staff": [
+    { "name": "김경산", "username": "" },
+    { "name": "김용빈", "username": "" },
+    { "name": "김정훈", "username": "" },
+    { "name": "김진호", "username": "" },
+    { "name": "맹한영", "username": "" },
+    { "name": "박선미", "username": "" },
+    { "name": "박오용", "username": "" },
+    { "name": "박찬규", "username": "" },
+    { "name": "박태준", "username": "" },
+    { "name": "신대호", "username": "" },
+    { "name": "우제균", "username": "" },
+    { "name": "윤희동", "username": "" },
+    { "name": "이강태", "username": "" },
+    { "name": "이승목", "username": "" },
+    { "name": "임기진", "username": "" },
+    { "name": "정병주", "username": "" },
+    { "name": "정영달", "username": "" },
+    { "name": "조효제", "username": "" },
+    { "name": "황성연", "username": "" }
+  ]
+}
