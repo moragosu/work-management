@@ -56,6 +56,14 @@ def create_issue(body: IssueCreate):
     }
     items.append(new_item)
     _save(items)
+    # 알림: 담당자에게
+    recipient = data_store.get_username_by_name(body.assignee)
+    data_store.insert_notification(
+        recipient, "issue_assigned",
+        "담당 과제에 이슈가 등록되었습니다",
+        body.issue[:50],
+        "/progress",
+    )
     return new_item
 
 

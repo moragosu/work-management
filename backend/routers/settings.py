@@ -59,4 +59,12 @@ def update_notice(body: NoticeUpdate):
     data = _load()
     data["notice"] = body.notice
     _save(data)
+    if body.notice.strip():
+        for username in data_store.get_all_usernames():
+            data_store.insert_notification(
+                username, "notice_updated",
+                "파트 공지가 업데이트되었습니다",
+                body.notice[:50],
+                "/dashboard",
+            )
     return {"notice": data["notice"]}

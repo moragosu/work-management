@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, Query, Header
+from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date, datetime
 import data_store
 from utils.id_generator import short_uuid
+from dependencies import require_leader, require_admin
 
 router = APIRouter()
 
@@ -59,7 +60,7 @@ def list_questions(week: Optional[str] = Query(None), task_id: Optional[str] = Q
 
 
 @router.post("/questions", status_code=201)
-def create_question(body: QuestionCreate):
+def create_question(body: QuestionCreate, _user: dict = Depends(require_leader)):
     questions, answers = _load()
     new_q = {
         "id": short_uuid("Q"),
@@ -72,6 +73,16 @@ def create_question(body: QuestionCreate):
     }
     questions.append(new_q)
     _save(questions, answers)
+    # 알림: 질문 대상자에게
+    preview = body.question[:40].replace('\n', ' ')
+    for target_name in body.targets:
+        recipient = data_store.get_username_by_name(target_name)
+        data_store.insert_notification(
+            recipient, "question_tagged",
+            "새 질문이 등록되었습니다",
+            f"{body.questioner or '질문자'}: {preview}",
+            "/progress",
+        )
     return {**new_q, "answers": []}
 
 
@@ -92,11 +103,7 @@ def update_question(question_id: str, body: QuestionUpdate):
 
 
 @router.delete("/questions/{question_id}")
-def delete_question(question_id: str, x_admin_password: str = Header(None)):
-    settings = data_store.load("settings.json")
-    admin_password = settings.get("admin_password", "admin123")
-    if x_admin_password != admin_password:
-        raise HTTPException(status_code=401, detail="암호가 올바르지 않습니다")
+def delete_question(question_id: str, _user: dict = Depends(require_admin)):
     questions, answers = _load()
     questions = [q for q in questions if q["id"] != question_id]
     answers = [a for a in answers if a["question_id"] != question_id]
@@ -107,7 +114,8 @@ def delete_question(question_id: str, x_admin_password: str = Header(None)):
 @router.post("/answers", status_code=201)
 def create_answer(body: AnswerCreate):
     questions, answers = _load()
-    if not any(q["id"] == body.question_id for q in questions):
+    target_q = next((q for q in questions if q["id"] == body.question_id), None)
+    if not target_q:
         raise HTTPException(status_code=404, detail="Question not found")
     new_a = {
         "id": short_uuid("A"),
@@ -119,6 +127,16 @@ def create_answer(body: AnswerCreate):
     }
     answers.append(new_a)
     _save(questions, answers)
+    # 알림: 질문자에게
+    questioner_name = target_q.get("questioner", "")
+    recipient = data_store.get_username_by_name(questioner_name)
+    if recipient and recipient != data_store.get_username_by_name(body.answer_by):
+        data_store.insert_notification(
+            recipient, "answer_received",
+            "답변이 달렸습니다",
+            f"{body.answer_by}님이 답변을 등록했습니다",
+            "/progress",
+        )
     return new_a
 
 

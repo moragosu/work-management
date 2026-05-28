@@ -36,6 +36,16 @@
           <span class="nav-text">도움말</span>
         </RouterLink>
       </nav>
+      <div v-if="auth.isLoggedIn" class="sidebar-footer">
+        <NotificationBell />
+        <div class="user-info">
+          <span class="material-symbols-outlined user-icon">person</span>
+          <span class="user-name">{{ auth.user?.name }}</span>
+          <button class="logout-btn" @click="doLogout" data-tooltip="로그아웃">
+            <span class="material-symbols-outlined">logout</span>
+          </button>
+        </div>
+      </div>
     </aside>
     <main class="main-content">
       <RouterView />
@@ -61,8 +71,18 @@
 </template>
 
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { reactive, computed, onMounted, onUnmounted } from 'vue'
+import { useAuthStore } from './stores/auth.js'
+import NotificationBell from './components/NotificationBell.vue'
+
+const auth = useAuthStore()
+const router = useRouter()
+
+function doLogout() {
+  auth.logout()
+  router.push('/login')
+}
 
 const tooltip = reactive({ visible: false, text: '', x: 0, y: 0 })
 const lightbox = reactive({ visible: false, src: '' })
@@ -171,4 +191,44 @@ function onMouseOut(e) {
   transition: background 0.15s;
 }
 .lightbox-close:hover { background: rgba(255,255,255,0.28); }
+</style>
+
+<style>
+.sidebar-footer {
+  padding: 10px 12px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.user-icon { font-size: 18px; color: rgba(255,255,255,0.6); flex-shrink: 0; }
+.user-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255,255,255,0.5);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+.logout-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); }
+.logout-btn .material-symbols-outlined { font-size: 18px; }
 </style>
