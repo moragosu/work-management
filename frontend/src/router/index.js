@@ -8,11 +8,13 @@ import Feedback from '../views/Feedback.vue'
 import Login from '../views/Login.vue'
 import Signup from '../views/Signup.vue'
 import Notifications from '../views/Notifications.vue'
+import ChangePassword from '../views/ChangePassword.vue'
 
 const routes = [
   { path: '/', redirect: '/dashboard' },
   { path: '/login', component: Login, meta: { public: true, title: '로그인' } },
   { path: '/signup', component: Signup, meta: { public: true, title: '회원가입' } },
+  { path: '/change-password', component: ChangePassword, meta: { title: '비밀번호 변경' } },
   { path: '/dashboard', component: Dashboard, meta: { title: '대시보드' } },
   { path: '/progress', component: Progress, meta: { title: '주간 진행 현황' } },
   { path: '/staff', redirect: '/admin' },
@@ -32,6 +34,11 @@ router.beforeEach((to, _from, next) => {
   if (to.meta.public) return next()
   const token = localStorage.getItem('token')
   if (!token) return next({ path: '/login', query: { redirect: to.fullPath } })
+  // 임시 비밀번호 사용 중이면 비밀번호 변경 페이지로 강제 이동
+  const user = JSON.parse(localStorage.getItem('authUser') || 'null')
+  if (user?.force_password_change && to.path !== '/change-password') {
+    return next('/change-password')
+  }
   next()
 })
 

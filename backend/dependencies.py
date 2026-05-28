@@ -11,7 +11,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     if not payload or "sub" not in payload:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="인증이 필요합니다")
     with data_store.get_conn() as conn:
-        row = conn.execute("SELECT username, name, role, is_admin FROM users WHERE username=?", (payload["sub"],)).fetchone()
+        row = conn.execute("SELECT username, name, role, is_admin, force_password_change FROM users WHERE username=?", (payload["sub"],)).fetchone()
     if not row:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="사용자를 찾을 수 없습니다")
     return dict(row)

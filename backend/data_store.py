@@ -124,12 +124,13 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at TEXT
 );
 CREATE TABLE IF NOT EXISTS users (
-    username      TEXT PRIMARY KEY,
-    name          TEXT NOT NULL DEFAULT '',
-    password_hash TEXT NOT NULL DEFAULT '',
-    role          TEXT NOT NULL DEFAULT 'member',
-    is_admin      INTEGER NOT NULL DEFAULT 0,
-    created_at    TEXT
+    username               TEXT PRIMARY KEY,
+    name                   TEXT NOT NULL DEFAULT '',
+    password_hash          TEXT NOT NULL DEFAULT '',
+    role                   TEXT NOT NULL DEFAULT 'member',
+    is_admin               INTEGER NOT NULL DEFAULT 0,
+    force_password_change  INTEGER NOT NULL DEFAULT 0,
+    created_at             TEXT
 );
 """
 
@@ -167,6 +168,7 @@ def init_db() -> None:
             "ALTER TABLE issues ADD COLUMN created_by TEXT NOT NULL DEFAULT ''",
             "ALTER TABLE questions ADD COLUMN created_by TEXT NOT NULL DEFAULT ''",
             "ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE users ADD COLUMN force_password_change INTEGER NOT NULL DEFAULT 0",
         ]:
             try:
                 conn.execute(sql)
