@@ -5,9 +5,8 @@
         <h2>관리 도구</h2>
         <div class="subtitle">목표 · Key Result · 과제 · 인력 관리</div>
       </div>
-      <div v-if="adminMode" class="flex gap-8">
-        <span class="badge badge-red">관리자 모드</span>
-        <button class="btn btn-ghost btn-sm" @click="toggleAdminMode">관리자 모드 해제</button>
+      <div v-if="auth.isAdmin" class="flex gap-8">
+        <span class="badge badge-red">관리자</span>
       </div>
     </div>
 
@@ -68,7 +67,7 @@
         <StaffView :embedded="true" ref="staffViewRef" @updated="fetchStaff" />
       </div>
 
-      <!-- ── Reset Tab ── -->
+      <!-- ── Reset Tab (admin only) ── -->
       <div v-if="activeTab === 'reset'">
         <div class="card card-body">
           <h3 class="reset-heading">⚠️ 데이터 초기화</h3>
@@ -89,24 +88,6 @@
           <h3 class="settings-heading">⚙️ 설정</h3>
 
           <div class="settings-group">
-            <label class="form-label">관리자 모드</label>
-            <div v-if="!adminMode" class="mt-16">
-              <div class="password-form">
-                <input v-model="adminPassword" type="password" class="form-control password-input" placeholder="비밀번호를 입력하세요" @keyup.enter="activateAdminMode" />
-                <button class="btn btn-primary" @click="activateAdminMode">관리자 모드 활성화</button>
-              </div>
-              <p class="text-sm text-muted">관리자 모드를 활성화하면 초기화 기능을 사용할 수 있습니다.</p>
-            </div>
-            <div v-else>
-              <div class="admin-status-row">
-                <span class="badge badge-red">활성화됨</span>
-                <button class="btn btn-ghost btn-sm" @click="deactivateAdminMode">비활성화</button>
-              </div>
-              <p class="text-sm text-muted">관리자 모드가 활성화되어 초기화 기능을 사용할 수 있습니다.</p>
-            </div>
-          </div>
-
-          <div v-if="adminMode" class="settings-group">
             <label class="form-label">과제 적용 대상 관리</label>
             <div class="target-chips mt-16">
               <span v-for="t in taskTargets" :key="t" class="target-chip">
@@ -120,22 +101,6 @@
             </div>
           </div>
 
-          <div class="settings-group">
-            <label class="form-label">질문자 목록 관리 <span class="text-muted text-sm" style="font-weight:400">(파트장, 그룹장 등)</span></label>
-            <p class="text-sm text-muted" style="margin:4px 0 12px">Q&amp;A 질문 작성 시 드롭다운으로 선택할 수 있는 질문자 목록입니다.</p>
-            <div class="target-chips mt-16">
-              <span v-for="q in questioners" :key="q" class="target-chip">
-                {{ q }}
-                <button class="target-chip-del" @click="removeQuestioner(q)" :data-tooltip="`'${q}' 삭제`">✕</button>
-              </span>
-              <span v-if="questioners.length === 0" class="text-sm text-muted">등록된 질문자가 없습니다.</span>
-            </div>
-            <div class="target-add-form mt-16">
-              <input v-model="newQuestioner" class="form-control" placeholder="이름 입력 (예: 홍길동 파트장)" @keyup.enter="addQuestioner" />
-              <button class="btn btn-primary btn-sm" @click="addQuestioner" :disabled="!newQuestioner.trim() || questioners.includes(newQuestioner.trim())">추가</button>
-            </div>
-          </div>
-
           <div class="form-group">
             <label class="form-label">정보</label>
             <div class="info-list text-sm text-muted">
@@ -143,6 +108,50 @@
               <div class="info-item">개발자: Work Management Team</div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- ── Users Tab (admin only) ── -->
+      <div v-if="activeTab === 'users'">
+        <div class="card card-body">
+          <h3 class="settings-heading">👤 사용자 관리</h3>
+          <div v-if="usersLoading" class="text-muted text-sm">불러오는 중...</div>
+          <table v-else class="users-table">
+            <thead>
+              <tr>
+                <th>아이디</th>
+                <th>이름</th>
+                <th>역할</th>
+                <th>가입일</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="u in userList" :key="u.username">
+                <td class="user-id">{{ u.username }}</td>
+                <td>{{ u.name }}</td>
+                <td>
+                  <select :value="u.role" @change="changeRole(u.username, $event.target.value)" class="role-select">
+                    <option value="member">파트원</option>
+                    <option value="leader">그룹장</option>
+                    <option value="admin">파트장(관리자)</option>
+                  </select>
+                </td>
+                <td class="text-muted text-sm">{{ u.created_at ? u.created_at.slice(0,10) : '-' }}</td>
+                <td>
+                  <button
+                    class="btn btn-danger btn-xs"
+                    @click="deleteUser(u.username)"
+                    :disabled="u.username === auth.user?.username"
+                    data-tooltip="사용자 삭제"
+                  >삭제</button>
+                </td>
+              </tr>
+              <tr v-if="userList.length === 0">
+                <td colspan="5" class="text-muted text-sm" style="text-align:center;padding:20px">등록된 사용자가 없습니다</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -160,19 +169,22 @@ import ObjectiveTab from '../components/admin/ObjectiveTab.vue'
 import TaskTab from '../components/admin/TaskTab.vue'
 import { useToast } from '../composables/useToast.js'
 import { parseIds } from '../utils/parseIds.js'
-import { ADMIN_PASSWORD } from '../config.js'
+import { useAuthStore } from '../stores/auth.js'
 
 const route = useRoute()
-const adminMode = ref(false)
+const auth = useAuthStore()
 
 const tabs = computed(() => {
   const baseTabs = [
     { key: 'objective', label: '📊 목표' },
     { key: 'task', label: '📋 과제' },
     { key: 'staff', label: '👥 인력' },
+    { key: 'settings', label: '⚙️ 설정' },
   ]
-  if (adminMode.value) baseTabs.push({ key: 'reset', label: '🗑 초기화' })
-  baseTabs.push({ key: 'settings', label: '⚙️ 설정' })
+  if (auth.isAdmin) {
+    baseTabs.push({ key: 'users', label: '👤 사용자 관리' })
+    baseTabs.push({ key: 'reset', label: '🗑 초기화' })
+  }
   return baseTabs
 })
 
@@ -190,8 +202,10 @@ const reusableTaskIds = ref([])
 const staffViewRef = ref(null)
 const taskTargets = ref(['MX', 'VD', 'DA', '공통'])
 const newTarget = ref('')
-const questioners = ref([])
-const newQuestioner = ref('')
+
+// ── 사용자 관리 ──
+const userList = ref([])
+const usersLoading = ref(false)
 
 const staffStats = computed(() => {
   const objCounts = {}
@@ -238,17 +252,19 @@ async function fetchSettings() {
   try {
     const { data } = await axios.get('/api/settings')
     if (Array.isArray(data.task_targets)) taskTargets.value = data.task_targets
-    if (Array.isArray(data.questioners)) questioners.value = data.questioners
-  } catch {
-    // 기본값 유지
-  }
+  } catch { /* 기본값 유지 */ }
+}
+
+async function fetchUsers() {
+  usersLoading.value = true
+  try {
+    const { data } = await axios.get('/api/auth/users')
+    userList.value = data
+  } finally { usersLoading.value = false }
 }
 
 async function saveSettings() {
-  await axios.put('/api/settings', {
-    task_targets: taskTargets.value,
-    questioners: questioners.value,
-  })
+  await axios.put('/api/settings', { task_targets: taskTargets.value })
 }
 
 async function addTarget() {
@@ -266,19 +282,27 @@ async function removeTarget(t) {
   showToast(`'${t}' 삭제되었습니다`)
 }
 
-async function addQuestioner() {
-  const val = newQuestioner.value.trim()
-  if (!val || questioners.value.includes(val)) return
-  questioners.value.push(val)
-  newQuestioner.value = ''
-  await saveSettings()
-  showToast(`'${val}' 추가되었습니다`)
+async function changeRole(username, role) {
+  try {
+    await axios.put(`/api/auth/users/${username}/role`, { role })
+    const u = userList.value.find(x => x.username === username)
+    if (u) u.role = role
+    showToast('역할이 변경되었습니다')
+  } catch (e) {
+    showToast('역할 변경 실패: ' + (e.response?.data?.detail || e.message))
+    await fetchUsers()
+  }
 }
 
-async function removeQuestioner(q) {
-  questioners.value = questioners.value.filter(x => x !== q)
-  await saveSettings()
-  showToast(`'${q}' 삭제되었습니다`)
+async function deleteUser(username) {
+  if (!confirm(`'${username}' 사용자를 삭제하시겠습니까?`)) return
+  try {
+    await axios.delete(`/api/auth/users/${username}`)
+    userList.value = userList.value.filter(u => u.username !== username)
+    showToast('삭제되었습니다')
+  } catch (e) {
+    showToast('삭제 실패: ' + (e.response?.data?.detail || e.message))
+  }
 }
 
 async function fetchAll() {
@@ -286,36 +310,6 @@ async function fetchAll() {
 }
 
 function exportCsv(type) { window.open(`/api/admin/export/${type}`, '_blank') }
-
-const adminPassword = ref('')
-
-function toggleAdminMode() {
-  adminMode.value = !adminMode.value
-  if (adminMode.value) {
-    localStorage.setItem('adminMode', 'true')
-    showToast('관리자 모드가 활성화되었습니다')
-  } else {
-    localStorage.removeItem('adminMode')
-    showToast('관리자 모드가 비활성화되었습니다')
-  }
-}
-
-function activateAdminMode() {
-  if (adminPassword.value === ADMIN_PASSWORD) {
-    adminMode.value = true
-    localStorage.setItem('adminMode', 'true')
-    showToast('관리자 모드가 활성화되었습니다')
-    adminPassword.value = ''
-  } else {
-    showToast('비밀번호가 올바르지 않습니다')
-  }
-}
-
-function deactivateAdminMode() {
-  adminMode.value = false
-  localStorage.removeItem('adminMode')
-  showToast('관리자 모드가 비활성화되었습니다')
-}
 
 async function resetData(target) {
   const labels = { objectives: '목표', tasks: '과제', staff: '인력', progress: '진행도', all: '모든' }
@@ -326,9 +320,9 @@ async function resetData(target) {
 }
 
 onMounted(async () => {
-  adminMode.value = localStorage.getItem('adminMode') === 'true'
   if (route.query.tab) activeTab.value = route.query.tab
   await Promise.all([fetchAll(), fetchSettings()])
+  if (auth.isAdmin) fetchUsers()
 })
 </script>
 
@@ -341,8 +335,6 @@ onMounted(async () => {
 
 .settings-heading { margin-bottom: 24px; }
 .settings-group { margin-bottom: 32px; }
-.password-form { margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; }
-.admin-status-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .info-list { margin-top: 8px; }
 .info-item { margin-top: 4px; }
 
@@ -363,4 +355,31 @@ onMounted(async () => {
 .target-chip-del:hover { background: var(--primary); color: #fff; }
 .target-add-form { display: flex; gap: 8px; align-items: center; }
 .target-add-form .form-control { max-width: 200px; }
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.users-table th, .users-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--outline);
+  text-align: left;
+}
+.users-table th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--gray-50);
+}
+.user-id { font-family: monospace; color: var(--text-secondary); }
+.role-select {
+  padding: 4px 8px;
+  border: 1px solid var(--outline);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--background);
+  color: var(--text);
+  cursor: pointer;
+}
 </style>

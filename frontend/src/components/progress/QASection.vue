@@ -11,13 +11,6 @@
         <span class="badge badge-orange">Q</span>
         <div class="qa-content">
           <template v-if="editingQuestionId === qa.id">
-            <!-- 질문자 수정 (필수) -->
-            <div v-if="questioners.length > 0" class="target-row">
-              <span class="target-label">질문자 <span style="color:var(--danger)">*</span></span>
-              <select v-model="editingQuestioner" class="form-control" style="max-width:200px">
-                <option v-for="q in questioners" :key="q" :value="q">{{ q }}</option>
-              </select>
-            </div>
             <!-- 대상자 수정 -->
             <div class="target-row">
               <span class="target-label">질문 대상</span>
@@ -52,8 +45,8 @@
           <button class="btn btn-ghost btn-xs" @click="copyLink('question', qa.id)" data-tooltip="링크 복사 — 메신저 공유용">
             <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">link</span>
           </button>
-          <button v-if="!readonlyQuestion" class="btn btn-ghost btn-xs" @click="startEditQuestion(qa)" data-tooltip="의견/질문 수정">수정</button>
-          <button v-if="!readonlyQuestion" class="btn btn-danger btn-xs" @click="deleteQuestion(qa.id)" data-tooltip="의견/질문 및 모든 답변 삭제">삭제</button>
+          <button v-if="!readonlyQuestion && auth.isLeader" class="btn btn-ghost btn-xs" @click="startEditQuestion(qa)" data-tooltip="의견/질문 수정">수정</button>
+          <button v-if="!readonlyQuestion && auth.isAdmin" class="btn btn-danger btn-xs" @click="deleteQuestion(qa.id)" data-tooltip="의견/질문 및 모든 답변 삭제">삭제</button>
         </div>
       </div>
 
@@ -64,7 +57,7 @@
           <span class="text-muted text-sm">답변 대기중</span>
         </div>
         <div class="qa-actions">
-          <button class="btn btn-ghost btn-xs" @click="startAddAnswer(qa.id)" data-tooltip="이 질문에 답변 작성">답변 달기</button>
+          <button v-if="!readonlyQuestion" class="btn btn-ghost btn-xs" @click="startAddAnswer(qa.id)" data-tooltip="이 질문에 답변 작성">답변 달기</button>
         </div>
       </div>
 
@@ -75,13 +68,9 @@
           <template v-if="editingAnswerId === ans.id">
             <div style="flex:1">
               <TiptapEditor v-model="editingAnswerText" height="160px" @image-uploaded="url => editAnswerUploads.push(url)" />
-              <select v-model="editingAnswerBy" class="form-control mt-8">
-                <option value="">작성자 선택</option>
-                <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
-              </select>
               <div class="flex gap-4 mt-8" style="justify-content:flex-end">
                 <button class="btn btn-ghost btn-xs" @click="cancelEditAnswer">취소</button>
-                <button class="btn btn-primary btn-xs" @click="updateAnswer(ans.id)" :disabled="!hasContent(editingAnswerText) || !editingAnswerBy">저장</button>
+                <button class="btn btn-primary btn-xs" @click="updateAnswer(ans.id)" :disabled="!hasContent(editingAnswerText)">저장</button>
               </div>
             </div>
           </template>
@@ -95,8 +84,8 @@
           </template>
         </div>
         <div v-if="editingAnswerId !== ans.id" class="qa-actions">
-          <button class="btn btn-ghost btn-xs" @click="startEditAnswer(ans)" data-tooltip="답변 수정">수정</button>
-          <button class="btn btn-danger btn-xs" @click="deleteAnswer(ans.id, qa.id)" data-tooltip="답변 삭제">삭제</button>
+          <button v-if="!readonlyQuestion" class="btn btn-ghost btn-xs" @click="startEditAnswer(ans)" data-tooltip="답변 수정">수정</button>
+          <button v-if="!readonlyQuestion" class="btn btn-danger btn-xs" @click="deleteAnswer(ans.id, qa.id)" data-tooltip="답변 삭제">삭제</button>
         </div>
       </div>
 
@@ -105,32 +94,21 @@
         <span class="badge badge-green">A</span>
         <div style="flex:1">
           <TiptapEditor v-model="newAnswerText" height="160px" @image-uploaded="url => addAnswerUploads.push(url)" />
-          <select v-model="newAnswerBy" class="form-control mt-8">
-            <option value="">작성자 선택</option>
-            <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
-          </select>
           <div class="flex gap-4 mt-8" style="justify-content:flex-end">
             <button class="btn btn-ghost btn-xs" @click="cancelAddAnswer">취소</button>
-            <button class="btn btn-primary btn-xs" @click="addAnswer(qa.id)" :disabled="!hasContent(newAnswerText) || !newAnswerBy">저장</button>
+            <button class="btn btn-primary btn-xs" @click="addAnswer(qa.id)" :disabled="!hasContent(newAnswerText)">저장</button>
           </div>
         </div>
       </div>
 
       <!-- 답변 추가 버튼 (기존 답변이 있을 때) -->
-      <div v-if="qa.answers.length > 0 && addingAnswerToId !== qa.id" style="padding-left:8px;margin-top:4px">
+      <div v-if="qa.answers.length > 0 && addingAnswerToId !== qa.id && !readonlyQuestion" style="padding-left:8px;margin-top:4px">
         <button class="btn btn-ghost btn-xs" @click="startAddAnswer(qa.id)" data-tooltip="기존 답변에 추가로 답변 작성">+ 답변 추가</button>
       </div>
     </div>
 
     <!-- 질문 추가 -->
     <div v-if="addingQuestion && !readonlyQuestion" class="mt-16">
-      <!-- 질문자 선택 (필수) -->
-      <div v-if="questioners.length > 0" class="target-row">
-        <span class="target-label">질문자 <span style="color:var(--danger)">*</span></span>
-        <select v-model="newQuestioner" class="form-control" style="max-width:200px">
-          <option v-for="q in questioners" :key="q" :value="q">{{ q }}</option>
-        </select>
-      </div>
       <!-- 대상자 선택 -->
       <div class="target-row">
         <span class="target-label">질문 대상</span>
@@ -146,63 +124,39 @@
       <TiptapEditor v-model="newQuestionText" height="160px" @image-uploaded="url => addQuestionUploads.push(url)" />
       <div class="flex gap-8 mt-8" style="justify-content:flex-end">
         <button class="btn btn-ghost btn-sm" @click="cancelAddQuestion">취소</button>
-        <button class="btn btn-primary btn-sm" @click="addQuestion" :disabled="!hasContent(newQuestionText) || (questioners.length > 0 && !newQuestioner)">등록</button>
+        <button class="btn btn-primary btn-sm" @click="addQuestion" :disabled="!hasContent(newQuestionText)">등록</button>
       </div>
     </div>
-    <div v-else-if="!readonlyQuestion" class="mt-8">
+    <div v-else-if="!readonlyQuestion && auth.isLeader" class="mt-8">
       <button class="btn btn-ghost btn-sm" @click="openAddQuestion" data-tooltip="이 과제에 의견/질문 등록">+ 의견/질문 추가</button>
     </div>
 
   </div>
 
   <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
-
-  <!-- 비밀번호 확인 모달 -->
-  <Teleport to="body">
-    <div v-if="pwModal.open" class="pw-overlay" @click.self="closePwModal">
-      <div class="pw-dialog">
-        <div class="pw-title">관리자 암호 확인</div>
-        <p class="pw-desc">의견/질문과 모든 답변이 삭제됩니다.<br>관리자 암호를 입력해주세요.</p>
-        <input
-          ref="pwInputRef"
-          v-model="pwModal.value"
-          type="password"
-          class="pw-input"
-          placeholder="암호 입력"
-          @keyup.enter="confirmDelete"
-          @keyup.esc="closePwModal"
-        />
-        <div v-if="pwModal.error" class="pw-error">{{ pwModal.error }}</div>
-        <div class="pw-actions">
-          <button class="btn btn-ghost btn-sm" @click="closePwModal">취소</button>
-          <button class="btn btn-danger btn-sm" @click="confirmDelete" :disabled="!pwModal.value">삭제</button>
-        </div>
-      </div>
-    </div>
-  </Teleport>
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref } from 'vue'
 import axios from 'axios'
 import TiptapPreview from '../TiptapPreview.vue'
 import TiptapEditor from '../TiptapEditor.vue'
 import { useToast } from '../../composables/useToast.js'
 import { hasContent } from '../../utils/content.js'
-import { ADMIN_PASSWORD } from '../../config.js'
+import { useAuthStore } from '../../stores/auth.js'
 import { copyToClipboard } from '../../utils/clipboard.js'
 import { deleteOrphanedImages, deleteAllImages, deleteUrls } from '../../composables/useImageCleanup.js'
 
 const props = defineProps({
   questions:       { type: Array,   default: () => [] },
   staffList:       { type: Array,   default: () => [] },
-  questioners:     { type: Array,   default: () => [] },
   taskId:          { type: String,  required: true },
   week:            { type: String,  required: true },
   readonlyQuestion:{ type: Boolean, default: false },
 })
 const emit = defineEmits(['update:questions'])
 const { toastMsg, showToast, toastError } = useToast()
+const auth = useAuthStore()
 
 // ── 링크 복사 ──
 async function copyLink(type, id) {
@@ -222,17 +176,15 @@ function toggleTarget(arr, name) {
 const addingQuestion = ref(false)
 const newQuestionText = ref('')
 const newTargets = ref([])
-const newQuestioner = ref('')
 const addQuestionUploads = ref([])
 
 function openAddQuestion() {
-  newQuestioner.value = props.questioners[0] || ''
   addQuestionUploads.value = []
   addingQuestion.value = true
 }
 
 function resetAddQuestionForm() {
-  addingQuestion.value = false; newQuestionText.value = ''; newTargets.value = []; newQuestioner.value = ''; addQuestionUploads.value = []
+  addingQuestion.value = false; newQuestionText.value = ''; newTargets.value = []; addQuestionUploads.value = []
 }
 function cancelAddQuestion() {
   deleteUrls(addQuestionUploads.value)
@@ -246,7 +198,7 @@ async function addQuestion() {
       task_id: props.taskId, week: props.week,
       question: newQuestionText.value.trim(),
       targets: [...newTargets.value],
-      questioner: newQuestioner.value || '',
+      questioner: auth.user?.name || '',
     })
     await deleteUrls(addQuestionUploads.value.filter(u => !newQuestionText.value.includes(u)))
     emit('update:questions', [...props.questions, data])
@@ -259,18 +211,16 @@ async function addQuestion() {
 const editingQuestionId = ref('')
 const editingQuestionText = ref('')
 const editingTargets = ref([])
-const editingQuestioner = ref('')
 const editQuestionUploads = ref([])
 
 function startEditQuestion(qa) {
   editingQuestionId.value = qa.id
   editingQuestionText.value = qa.question
   editingTargets.value = [...(qa.targets || [])]
-  editingQuestioner.value = qa.questioner || props.questioners[0] || ''
   editQuestionUploads.value = []
 }
 function resetEditQuestionForm() {
-  editingQuestionId.value = ''; editingQuestionText.value = ''; editingTargets.value = []; editingQuestioner.value = ''; editQuestionUploads.value = []
+  editingQuestionId.value = ''; editingQuestionText.value = ''; editingTargets.value = []; editQuestionUploads.value = []
 }
 function cancelEditQuestion() {
   deleteUrls(editQuestionUploads.value)
@@ -284,7 +234,6 @@ async function updateQuestion(questionId) {
     const { data } = await axios.put(`/api/qna/questions/${questionId}`, {
       question: editingQuestionText.value.trim(),
       targets: [...editingTargets.value],
-      questioner: editingQuestioner.value || '',
     })
     await deleteOrphanedImages(oldQ?.question, editingQuestionText.value)
     await deleteUrls(editQuestionUploads.value.filter(u => !editingQuestionText.value.includes(u)))
@@ -294,38 +243,17 @@ async function updateQuestion(questionId) {
   } catch (e) { toastError(e, '의견/질문 수정 실패') }
 }
 
-// ── 질문 삭제 (비밀번호 확인) ──
-const pwInputRef = ref(null)
-const pwModal = ref({ open: false, questionId: '', value: '', error: '' })
-
-function deleteQuestion(questionId) {
-  pwModal.value = { open: true, questionId, value: '', error: '' }
-  nextTick(() => pwInputRef.value?.focus())
-}
-
-function closePwModal() {
-  pwModal.value = { open: false, questionId: '', value: '', error: '' }
-}
-
-async function confirmDelete() {
-  if (!pwModal.value.value) return
-  if (pwModal.value.value !== ADMIN_PASSWORD) {
-    pwModal.value.error = '암호가 올바르지 않습니다'
-    pwModal.value.value = ''
-    nextTick(() => pwInputRef.value?.focus())
-    return
-  }
+// ── 질문 삭제 ──
+async function deleteQuestion(questionId) {
+  if (!confirm('의견/질문과 모든 답변이 삭제됩니다. 계속하시겠습니까?')) return
   try {
-    const target = props.questions.find(q => q.id === pwModal.value.questionId)
-    await axios.delete(`/api/qna/questions/${pwModal.value.questionId}`, {
-      headers: { 'X-Admin-Password': ADMIN_PASSWORD },
-    })
+    const target = props.questions.find(q => q.id === questionId)
+    await axios.delete(`/api/qna/questions/${questionId}`)
     if (target) {
       const allTexts = [target.question, ...(target.answers || []).map(a => a.answer)]
       await deleteAllImages(...allTexts)
     }
-    emit('update:questions', props.questions.filter(q => q.id !== pwModal.value.questionId))
-    closePwModal()
+    emit('update:questions', props.questions.filter(q => q.id !== questionId))
     showToast('삭제되었습니다')
   } catch (e) { toastError(e, '의견/질문 삭제 실패') }
 }
@@ -333,16 +261,15 @@ async function confirmDelete() {
 // ── 답변 ──
 const addingAnswerToId = ref('')
 const newAnswerText = ref('')
-const newAnswerBy = ref('')
 const addAnswerUploads = ref([])
 const editingAnswerId = ref('')
 const editingAnswerText = ref('')
 const editingAnswerBy = ref('')
 const editAnswerUploads = ref([])
 
-function startAddAnswer(questionId) { addingAnswerToId.value = questionId; newAnswerText.value = ''; newAnswerBy.value = ''; addAnswerUploads.value = [] }
+function startAddAnswer(questionId) { addingAnswerToId.value = questionId; newAnswerText.value = ''; addAnswerUploads.value = [] }
 function resetAddAnswerForm() {
-  addingAnswerToId.value = ''; newAnswerText.value = ''; newAnswerBy.value = ''; addAnswerUploads.value = []
+  addingAnswerToId.value = ''; newAnswerText.value = ''; addAnswerUploads.value = []
 }
 function cancelAddAnswer() {
   deleteUrls(addAnswerUploads.value)
@@ -358,10 +285,12 @@ function cancelEditAnswer() {
 }
 
 async function addAnswer(questionId) {
-  if (!hasContent(newAnswerText.value) || !newAnswerBy.value) return
+  if (!hasContent(newAnswerText.value)) return
   try {
     const { data } = await axios.post('/api/qna/answers', {
-      question_id: questionId, answer: newAnswerText.value.trim(), answer_by: newAnswerBy.value,
+      question_id: questionId,
+      answer: newAnswerText.value.trim(),
+      answer_by: auth.user?.name || '',
     })
     await deleteUrls(addAnswerUploads.value.filter(u => !newAnswerText.value.includes(u)))
     emit('update:questions', props.questions.map(q =>
@@ -373,11 +302,12 @@ async function addAnswer(questionId) {
 }
 
 async function updateAnswer(answerId) {
-  if (!hasContent(editingAnswerText.value) || !editingAnswerBy.value) return
+  if (!hasContent(editingAnswerText.value)) return
   try {
     const oldAnswer = props.questions.flatMap(q => q.answers || []).find(a => a.id === answerId)
     const { data } = await axios.put(`/api/qna/answers/${answerId}`, {
-      answer: editingAnswerText.value.trim(), answer_by: editingAnswerBy.value,
+      answer: editingAnswerText.value.trim(),
+      answer_by: editingAnswerBy.value,
     })
     await deleteOrphanedImages(oldAnswer?.answer, editingAnswerText.value)
     await deleteUrls(editAnswerUploads.value.filter(u => !editingAnswerText.value.includes(u)))
@@ -478,25 +408,4 @@ async function deleteAnswer(answerId, questionId) {
   gap: 4px;
   margin-bottom: 4px;
 }
-
-/* 비밀번호 모달 */
-.pw-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-  display: flex; align-items: center; justify-content: center; z-index: 9999;
-}
-.pw-dialog {
-  background: var(--surface); border-radius: 10px; padding: 24px 28px;
-  width: 320px; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-  display: flex; flex-direction: column; gap: 12px;
-}
-.pw-title { font-size: 15px; font-weight: 700; color: var(--text); }
-.pw-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin: 0; }
-.pw-input {
-  width: 100%; padding: 8px 10px; border: 1px solid var(--outline);
-  border-radius: 6px; font-size: 14px; background: var(--background);
-  color: var(--text); outline: none; box-sizing: border-box;
-}
-.pw-input:focus { border-color: var(--primary); }
-.pw-error { font-size: 12px; color: var(--danger); }
-.pw-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 </style>

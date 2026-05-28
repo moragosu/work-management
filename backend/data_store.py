@@ -6,6 +6,8 @@ data_store.py — SQLite 기반 데이터 저장소
 import json
 import sqlite3
 import os
+import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -119,6 +121,13 @@ CREATE TABLE IF NOT EXISTS notifications (
     is_read    INTEGER NOT NULL DEFAULT 0,
     created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS users (
+    username      TEXT PRIMARY KEY,
+    name          TEXT NOT NULL DEFAULT '',
+    password_hash TEXT NOT NULL DEFAULT '',
+    role          TEXT NOT NULL DEFAULT 'member',
+    created_at    TEXT
+);
 """
 
 # ── JSON 직렬화 컬럼 목록 (테이블별) ─────────────────────────────────────────
@@ -190,6 +199,36 @@ def _resolve(filename: str):
         "confluence_links.json": ("confluence_links","links"),
     }
     return MAP.get(filename)
+
+
+# ── 알림·사용자 헬퍼 ──────────────────────────────────────────────────────────
+
+def insert_notification(recipient: str, ntype: str, title: str, message: str, link: str) -> None:
+    """알림 1건 삽입. recipient가 비어있으면 무시."""
+    if not recipient:
+        return
+    nid = f"N{uuid.uuid4().hex[:8].upper()}"
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT INTO notifications (id,recipient,type,title,message,link,is_read,created_at) VALUES (?,?,?,?,?,?,0,?)",
+            (nid, recipient, ntype, title, message, link, datetime.now().isoformat()),
+        )
+
+
+def get_username_by_name(name: str) -> str:
+    """표시 이름으로 username 조회. 없으면 빈 문자열 반환."""
+    if not name:
+        return ""
+    with get_conn() as conn:
+        row = conn.execute("SELECT username FROM users WHERE name=?", (name,)).fetchone()
+    return row["username"] if row else ""
+
+
+def get_all_usernames() -> list:
+    """모든 사용자 username 반환."""
+    with get_conn() as conn:
+        rows = conn.execute("SELECT username FROM users").fetchall()
+    return [r["username"] for r in rows]
 
 
 # ── load ─────────────────────────────────────────────────────────────────────

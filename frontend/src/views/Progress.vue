@@ -182,7 +182,7 @@
                     <QASection
                       :questions="getLeftQuestionsForTask(st.id)"
                       :staff-list="staffList"
-                      :questioners="questioners"
+                      
                       :task-id="st.id"
                       :week="leftWeek"
                       @update:questions="qs => onLeftQuestionsUpdate(st.id, qs)"
@@ -224,7 +224,7 @@
                 <QASection
                   :questions="getLeftQuestionsForTask(task.id)"
                   :staff-list="staffList"
-                  :questioners="questioners"
+                  
                   :task-id="task.id"
                   :week="leftWeek"
                   @update:questions="qs => onLeftQuestionsUpdate(task.id, qs)"
@@ -381,7 +381,7 @@
                     <QASection
                       :questions="getQuestionsForTask(st.id)"
                       :staff-list="staffList"
-                      :questioners="questioners"
+                      
                       :task-id="st.id"
                       :week="selectedWeek"
                       @update:questions="qs => onQuestionsUpdate(st.id, qs)"
@@ -433,7 +433,7 @@
                 <QASection
                   :questions="getQuestionsForTask(task.id)"
                   :staff-list="staffList"
-                  :questioners="questioners"
+                  
                   :task-id="task.id"
                   :week="selectedWeek"
                   @update:questions="qs => onQuestionsUpdate(task.id, qs)"
@@ -493,7 +493,6 @@ const leftWeek = computed(() => addWeeks(selectedWeek.value, -1))
 const qnaList = ref([])
 const linkMap = ref({})
 const issueMap = ref({})
-const questioners = ref([])
 const linkInputs = ref({})
 const editingLinkId = ref({})
 const linkHelpOpen = ref(new Set())
@@ -794,7 +793,6 @@ async function fetchAll() {
     tasks.value = tRes.data
     objectives.value = oRes.data
     staffList.value = sRes.data
-    if (Array.isArray(stRes.data.questioners)) questioners.value = stRes.data.questioners
     // 소과제 전체 기본 펼침
     const allSubIds = new Set()
     tRes.data.forEach(t => (t.sub_tasks || []).forEach(st => allSubIds.add(st.id)))
