@@ -50,14 +50,14 @@ def main():
                 print("취소했습니다.")
                 sys.exit(0)
             conn.execute(
-                "UPDATE users SET name=?, password_hash=?, role='admin' WHERE username=?",
+                "UPDATE users SET name=?, password_hash=?, is_admin=1 WHERE username=?",
                 (name, password_hash, username),
             )
-            print(f"✅ '{username}' 계정을 admin으로 업데이트했습니다.")
+            print(f"✅ '{username}' 계정에 관리자 권한을 부여했습니다.")
         else:
             conn.execute(
-                "INSERT INTO users (username, name, password_hash, role, created_at) VALUES (?,?,?,?,?)",
-                (username, name, password_hash, "admin", datetime.now().isoformat()),
+                "INSERT INTO users (username, name, password_hash, role, is_admin, created_at) VALUES (?,?,?,?,?,?)",
+                (username, name, password_hash, "member", 1, datetime.now().isoformat()),
             )
             print(f"✅ admin 계정 '{username}' 생성 완료.")
         conn.commit()

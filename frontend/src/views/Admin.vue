@@ -121,7 +121,8 @@
               <tr>
                 <th>아이디</th>
                 <th>이름</th>
-                <th>역할</th>
+                <th>직책</th>
+                <th>관리자</th>
                 <th>가입일</th>
                 <th></th>
               </tr>
@@ -135,8 +136,15 @@
                     <option value="member">파트원</option>
                     <option value="group_leader">그룹장</option>
                     <option value="part_leader">파트장</option>
-                    <option value="admin">관리자</option>
                   </select>
+                </td>
+                <td>
+                  <input
+                    type="checkbox"
+                    :checked="!!u.is_admin"
+                    :disabled="u.username === auth.user?.username"
+                    @change="toggleAdmin(u.username, $event.target.checked)"
+                  />
                 </td>
                 <td class="text-muted text-sm">{{ u.created_at ? u.created_at.slice(0,10) : '-' }}</td>
                 <td>
@@ -288,9 +296,21 @@ async function changeRole(username, role) {
     await axios.put(`/api/auth/users/${username}/role`, { role })
     const u = userList.value.find(x => x.username === username)
     if (u) u.role = role
-    showToast('역할이 변경되었습니다')
+    showToast('직책이 변경되었습니다')
   } catch (e) {
-    showToast('역할 변경 실패: ' + (e.response?.data?.detail || e.message))
+    showToast('직책 변경 실패: ' + (e.response?.data?.detail || e.message))
+    await fetchUsers()
+  }
+}
+
+async function toggleAdmin(username, is_admin) {
+  try {
+    await axios.put(`/api/auth/users/${username}/admin`, { is_admin })
+    const u = userList.value.find(x => x.username === username)
+    if (u) u.is_admin = is_admin ? 1 : 0
+    showToast(is_admin ? '관리자 권한이 부여되었습니다' : '관리자 권한이 해제되었습니다')
+  } catch (e) {
+    showToast('권한 변경 실패: ' + (e.response?.data?.detail || e.message))
     await fetchUsers()
   }
 }

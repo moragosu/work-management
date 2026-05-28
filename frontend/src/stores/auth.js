@@ -7,8 +7,8 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || '')
 
   const isLoggedIn = computed(() => !!token.value && !!user.value)
-  const isAdmin = computed(() => user.value?.role === 'admin')
-  const isLeader = computed(() => ['group_leader', 'part_leader', 'admin'].includes(user.value?.role))
+  const isAdmin = computed(() => !!user.value?.is_admin)
+  const isLeader = computed(() => ['group_leader', 'part_leader'].includes(user.value?.role) || !!user.value?.is_admin)
 
   function _setAuth(t, u) {
     token.value = t
