@@ -147,7 +147,12 @@
                   />
                 </td>
                 <td class="text-muted text-sm">{{ u.created_at ? u.created_at.slice(0,10) : '-' }}</td>
-                <td>
+                <td style="display:flex;gap:4px">
+                  <button
+                    class="btn btn-ghost btn-xs"
+                    @click="resetPassword(u.username, u.name)"
+                    data-tooltip="임시 비밀번호 발급"
+                  >비번초기화</button>
                   <button
                     class="btn btn-danger btn-xs"
                     @click="deleteUser(u.username)"
@@ -166,6 +171,22 @@
     </div>
 
     <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
+
+    <!-- 임시 비밀번호 모달 -->
+    <div v-if="tempPwModal.show" class="modal-backdrop" @click.self="tempPwModal.show = false">
+      <div class="modal-card">
+        <h3 style="margin:0 0 8px">임시 비밀번호 발급</h3>
+        <p style="font-size:13px;color:var(--text-muted);margin:0 0 16px">
+          <strong>{{ tempPwModal.name }}</strong> 님의 비밀번호가 초기화되었습니다.<br>
+          아래 임시 비밀번호를 전달하세요. 로그인 후 변경이 강제됩니다.
+        </p>
+        <div class="temp-pw-box">{{ tempPwModal.password }}</div>
+        <button class="btn btn-primary" style="width:100%;margin-top:16px" @click="copyTempPw">
+          {{ copied ? '복사됨 ✓' : '클립보드에 복사' }}
+        </button>
+        <button class="btn btn-ghost" style="width:100%;margin-top:8px" @click="tempPwModal.show = false">닫기</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -214,6 +235,8 @@ const newTarget = ref('')
 
 // ── 사용자 관리 ──
 const userList = ref([])
+const tempPwModal = ref({ show: false, name: '', password: '' })
+const copied = ref(false)
 const usersLoading = ref(false)
 
 const staffStats = computed(() => {
@@ -301,6 +324,22 @@ async function changeRole(username, role) {
     showToast('직책 변경 실패: ' + (e.response?.data?.detail || e.message))
     await fetchUsers()
   }
+}
+
+async function resetPassword(username, name) {
+  if (!confirm(`'${name}' 님의 비밀번호를 초기화하시겠습니까?`)) return
+  try {
+    const { data } = await axios.post(`/api/auth/users/${username}/reset-password`)
+    copied.value = false
+    tempPwModal.value = { show: true, name, password: data.temp_password }
+  } catch (e) {
+    showToast('초기화 실패: ' + (e.response?.data?.detail || e.message))
+  }
+}
+
+function copyTempPw() {
+  navigator.clipboard.writeText(tempPwModal.value.password)
+  copied.value = true
 }
 
 async function toggleAdmin(username, is_admin) {
@@ -402,5 +441,30 @@ onMounted(async () => {
   background: var(--background);
   color: var(--text);
   cursor: pointer;
+}
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.modal-card {
+  background: var(--surface, #fff);
+  border-radius: 12px;
+  padding: 28px 32px;
+  width: 340px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.temp-pw-box {
+  background: var(--background, #f8fafc);
+  border: 1px solid var(--outline, #e5e7eb);
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-align: center;
+  color: var(--primary, #2563eb);
+  font-family: monospace;
 }
 </style>

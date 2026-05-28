@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from datetime import datetime
+import secrets
+import string
 import data_store
 import auth_utils
 from dependencies import get_current_user, require_admin
@@ -41,7 +43,13 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": {"username": row["username"], "name": row["name"], "role": row["role"], "is_admin": bool(row["is_admin"])},
+        "user": {
+            "username": row["username"],
+            "name": row["name"],
+            "role": row["role"],
+            "is_admin": bool(row["is_admin"]),
+            "force_password_change": bool(row["force_password_change"]),
+        },
     }
 
 
@@ -77,7 +85,7 @@ def change_password(body: ChangePasswordRequest, user: dict = Depends(get_curren
         if not row or not auth_utils.verify_password(body.current_password, row["password_hash"]):
             raise HTTPException(status_code=400, detail="현재 비밀번호가 올바르지 않습니다")
         conn.execute(
-            "UPDATE users SET password_hash=? WHERE username=?",
+            "UPDATE users SET password_hash=?, force_password_change=0 WHERE username=?",
             (auth_utils.hash_password(body.new_password), user["username"]),
         )
     return {"ok": True}
@@ -99,6 +107,21 @@ def update_role(username: str, body: RoleUpdate, _admin: dict = Depends(require_
         if result.rowcount == 0:
             raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
     return {"ok": True}
+
+
+@router.post("/users/{username}/reset-password")
+def reset_password(username: str, _admin: dict = Depends(require_admin)):
+    with data_store.get_conn() as conn:
+        row = conn.execute("SELECT username FROM users WHERE username=?", (username,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
+        alphabet = string.ascii_letters + string.digits
+        temp_pw = ''.join(secrets.choice(alphabet) for _ in range(10))
+        conn.execute(
+            "UPDATE users SET password_hash=?, force_password_change=1 WHERE username=?",
+            (auth_utils.hash_password(temp_pw), username),
+        )
+    return {"temp_password": temp_pw}
 
 
 @router.put("/users/{username}/admin")

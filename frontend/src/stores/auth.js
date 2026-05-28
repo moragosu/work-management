@@ -9,6 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = computed(() => !!token.value && !!user.value)
   const isAdmin = computed(() => !!user.value?.is_admin)
   const isLeader = computed(() => ['group_leader', 'part_leader'].includes(user.value?.role) || !!user.value?.is_admin)
+  const mustChangePassword = computed(() => !!user.value?.force_password_change)
 
   function _setAuth(t, u) {
     token.value = t
@@ -63,5 +64,5 @@ export const useAuthStore = defineStore('auth', () => {
     _clearAuth()
   }
 
-  return { user, token, isLoggedIn, isAdmin, isLeader, login, signup, logout, fetchMe, initAxiosAuth }
+  return { user, token, isLoggedIn, isAdmin, isLeader, mustChangePassword, login, signup, logout, fetchMe, initAxiosAuth }
 })
