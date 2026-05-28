@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date
 import data_store
 from utils.id_generator import short_uuid
+from dependencies import get_current_user
 
 router = APIRouter()
 
@@ -42,7 +43,7 @@ def list_issues(
 
 
 @router.post("", status_code=201)
-def create_issue(body: IssueCreate):
+def create_issue(body: IssueCreate, user: dict = Depends(get_current_user)):
     items = _load()
     today = date.today().isoformat()
     new_item = {
@@ -51,6 +52,7 @@ def create_issue(body: IssueCreate):
         "week": body.week,
         "issue": body.issue,
         "assignee": body.assignee,
+        "created_by": user["username"],
         "created_at": today,
         "updated_at": today,
     }
@@ -80,10 +82,12 @@ def update_issue(issue_id: str, body: IssueUpdate):
 
 
 @router.delete("/{issue_id}")
-def delete_issue(issue_id: str):
+def delete_issue(issue_id: str, user: dict = Depends(get_current_user)):
     items = _load()
-    new_items = [i for i in items if i["id"] != issue_id]
-    if len(new_items) == len(items):
+    target = next((i for i in items if i["id"] == issue_id), None)
+    if not target:
         raise HTTPException(status_code=404, detail="Issue not found")
-    _save(new_items)
+    if user["role"] != "admin" and target.get("created_by") != user["username"]:
+        raise HTTPException(status_code=403, detail="본인이 작성한 이슈만 삭제할 수 있습니다")
+    _save([i for i in items if i["id"] != issue_id])
     return {"deleted": issue_id}

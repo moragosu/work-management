@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS questions (
     question   TEXT NOT NULL DEFAULT '',
     targets    TEXT NOT NULL DEFAULT '[]',
     questioner TEXT NOT NULL DEFAULT '',
+    created_by TEXT NOT NULL DEFAULT '',
     created_at TEXT
 );
 CREATE TABLE IF NOT EXISTS answers (
@@ -85,6 +86,7 @@ CREATE TABLE IF NOT EXISTS issues (
     week       TEXT NOT NULL DEFAULT '',
     issue      TEXT NOT NULL DEFAULT '',
     assignee   TEXT NOT NULL DEFAULT '',
+    created_by TEXT NOT NULL DEFAULT '',
     created_at TEXT,
     updated_at TEXT
 );
@@ -159,6 +161,17 @@ def init_db() -> None:
     """앱 시작 시 테이블 초기화 (없으면 생성)."""
     with get_conn() as conn:
         conn.executescript(SCHEMA)
+        # 기존 컬럼 마이그레이션 (이미 존재하면 무시)
+        for sql in [
+            "ALTER TABLE issues ADD COLUMN created_by TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE questions ADD COLUMN created_by TEXT NOT NULL DEFAULT ''",
+        ]:
+            try:
+                conn.execute(sql)
+            except sqlite3.OperationalError:
+                pass
+        # 기존 'leader' role → 'group_leader' 로 변환
+        conn.execute("UPDATE users SET role='group_leader' WHERE role='leader'")
 
 
 # ── 행 변환 헬퍼 ─────────────────────────────────────────────────────────────

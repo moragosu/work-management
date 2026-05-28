@@ -18,7 +18,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
 
 
 def require_leader(user: dict = Depends(get_current_user)) -> dict:
-    if user["role"] not in ("leader", "admin"):
+    if user["role"] not in ("group_leader", "part_leader", "admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="리더 이상 권한이 필요합니다")
     return user
 

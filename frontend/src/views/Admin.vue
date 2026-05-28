@@ -133,8 +133,9 @@
                 <td>
                   <select :value="u.role" @change="changeRole(u.username, $event.target.value)" class="role-select">
                     <option value="member">파트원</option>
-                    <option value="leader">그룹장</option>
-                    <option value="admin">파트장(관리자)</option>
+                    <option value="group_leader">그룹장</option>
+                    <option value="part_leader">파트장</option>
+                    <option value="admin">관리자</option>
                   </select>
                 </td>
                 <td class="text-muted text-sm">{{ u.created_at ? u.created_at.slice(0,10) : '-' }}</td>

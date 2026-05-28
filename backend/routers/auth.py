@@ -88,7 +88,7 @@ def list_users(_admin: dict = Depends(require_admin)):
 
 @router.put("/users/{username}/role")
 def update_role(username: str, body: RoleUpdate, _admin: dict = Depends(require_admin)):
-    if body.role not in ("member", "leader", "admin"):
+    if body.role not in ("member", "group_leader", "part_leader", "admin"):
         raise HTTPException(status_code=400, detail="유효하지 않은 역할입니다")
     with data_store.get_conn() as conn:
         result = conn.execute("UPDATE users SET role=? WHERE username=?", (body.role, username))

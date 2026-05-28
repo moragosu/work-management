@@ -45,8 +45,8 @@
           <button class="btn btn-ghost btn-xs" @click="copyLink('question', qa.id)" data-tooltip="링크 복사 — 메신저 공유용">
             <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">link</span>
           </button>
-          <button v-if="!readonlyQuestion && auth.isLeader" class="btn btn-ghost btn-xs" @click="startEditQuestion(qa)" data-tooltip="의견/질문 수정">수정</button>
-          <button v-if="!readonlyQuestion && auth.isAdmin" class="btn btn-danger btn-xs" @click="deleteQuestion(qa.id)" data-tooltip="의견/질문 및 모든 답변 삭제">삭제</button>
+          <button v-if="!readonlyQuestion && auth.isLoggedIn && (qa.created_by === auth.user?.username || auth.isAdmin)" class="btn btn-ghost btn-xs" @click="startEditQuestion(qa)" data-tooltip="의견/질문 수정">수정</button>
+          <button v-if="!readonlyQuestion && (qa.created_by === auth.user?.username || auth.isAdmin)" class="btn btn-danger btn-xs" @click="deleteQuestion(qa.id)" data-tooltip="의견/질문 및 모든 답변 삭제">삭제</button>
         </div>
       </div>
 
@@ -127,7 +127,7 @@
         <button class="btn btn-primary btn-sm" @click="addQuestion" :disabled="!hasContent(newQuestionText)">등록</button>
       </div>
     </div>
-    <div v-else-if="!readonlyQuestion && auth.isLeader" class="mt-8">
+    <div v-else-if="!readonlyQuestion && auth.isLoggedIn" class="mt-8">
       <button class="btn btn-ghost btn-sm" @click="openAddQuestion" data-tooltip="이 과제에 의견/질문 등록">+ 의견/질문 추가</button>
     </div>
 

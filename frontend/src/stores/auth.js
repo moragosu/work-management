@@ -8,7 +8,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!token.value && !!user.value)
   const isAdmin = computed(() => user.value?.role === 'admin')
-  const isLeader = computed(() => ['leader', 'admin'].includes(user.value?.role))
+  const isLeader = computed(() => ['group_leader', 'part_leader', 'admin'].includes(user.value?.role))
 
   function _setAuth(t, u) {
     token.value = t
