@@ -128,6 +128,7 @@ CREATE TABLE IF NOT EXISTS users (
     name          TEXT NOT NULL DEFAULT '',
     password_hash TEXT NOT NULL DEFAULT '',
     role          TEXT NOT NULL DEFAULT 'member',
+    is_admin      INTEGER NOT NULL DEFAULT 0,
     created_at    TEXT
 );
 """
@@ -165,13 +166,16 @@ def init_db() -> None:
         for sql in [
             "ALTER TABLE issues ADD COLUMN created_by TEXT NOT NULL DEFAULT ''",
             "ALTER TABLE questions ADD COLUMN created_by TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0",
         ]:
             try:
                 conn.execute(sql)
             except sqlite3.OperationalError:
                 pass
-        # 기존 'leader' role → 'group_leader' 로 변환
+        # 기존 role 마이그레이션
         conn.execute("UPDATE users SET role='group_leader' WHERE role='leader'")
+        # 기존 admin role → is_admin=1, role=member 로 분리
+        conn.execute("UPDATE users SET is_admin=1, role='member' WHERE role='admin'")
 
 
 # ── 행 변환 헬퍼 ─────────────────────────────────────────────────────────────

@@ -24,6 +24,10 @@ class RoleUpdate(BaseModel):
     role: str
 
 
+class AdminUpdate(BaseModel):
+    is_admin: bool
+
+
 @router.post("/login")
 def login(form: OAuth2PasswordRequestForm = Depends()):
     with data_store.get_conn() as conn:
@@ -37,7 +41,7 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": {"username": row["username"], "name": row["name"], "role": row["role"]},
+        "user": {"username": row["username"], "name": row["name"], "role": row["role"], "is_admin": bool(row["is_admin"])},
     }
 
 
@@ -50,14 +54,14 @@ def signup(body: SignupRequest):
         if exists:
             raise HTTPException(status_code=409, detail="이미 사용 중인 아이디입니다")
         conn.execute(
-            "INSERT INTO users (username, name, password_hash, role, created_at) VALUES (?,?,?,?,?)",
-            (body.username, body.name, auth_utils.hash_password(body.password), "member", datetime.now().isoformat()),
+            "INSERT INTO users (username, name, password_hash, role, is_admin, created_at) VALUES (?,?,?,?,?,?)",
+            (body.username, body.name, auth_utils.hash_password(body.password), "member", 0, datetime.now().isoformat()),
         )
     token = auth_utils.create_access_token({"sub": body.username})
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": {"username": body.username, "name": body.name, "role": "member"},
+        "user": {"username": body.username, "name": body.name, "role": "member", "is_admin": False},
     }
 
 
@@ -82,16 +86,27 @@ def change_password(body: ChangePasswordRequest, user: dict = Depends(get_curren
 @router.get("/users")
 def list_users(_admin: dict = Depends(require_admin)):
     with data_store.get_conn() as conn:
-        rows = conn.execute("SELECT username, name, role, created_at FROM users ORDER BY created_at").fetchall()
+        rows = conn.execute("SELECT username, name, role, is_admin, created_at FROM users ORDER BY created_at").fetchall()
     return [dict(r) for r in rows]
 
 
 @router.put("/users/{username}/role")
 def update_role(username: str, body: RoleUpdate, _admin: dict = Depends(require_admin)):
-    if body.role not in ("member", "group_leader", "part_leader", "admin"):
-        raise HTTPException(status_code=400, detail="유효하지 않은 역할입니다")
+    if body.role not in ("member", "group_leader", "part_leader"):
+        raise HTTPException(status_code=400, detail="유효하지 않은 직책입니다")
     with data_store.get_conn() as conn:
         result = conn.execute("UPDATE users SET role=? WHERE username=?", (body.role, username))
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
+    return {"ok": True}
+
+
+@router.put("/users/{username}/admin")
+def update_admin(username: str, body: AdminUpdate, admin: dict = Depends(require_admin)):
+    if username == admin["username"] and not body.is_admin:
+        raise HTTPException(status_code=400, detail="자신의 관리자 권한은 해제할 수 없습니다")
+    with data_store.get_conn() as conn:
+        result = conn.execute("UPDATE users SET is_admin=? WHERE username=?", (1 if body.is_admin else 0, username))
         if result.rowcount == 0:
             raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
     return {"ok": True}
