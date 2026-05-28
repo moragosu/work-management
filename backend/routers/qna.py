@@ -4,7 +4,7 @@ from typing import Optional
 from datetime import date, datetime
 import data_store
 from utils.id_generator import short_uuid
-from dependencies import require_leader, require_admin
+from dependencies import get_current_user, require_admin
 
 router = APIRouter()
 
@@ -60,7 +60,7 @@ def list_questions(week: Optional[str] = Query(None), task_id: Optional[str] = Q
 
 
 @router.post("/questions", status_code=201)
-def create_question(body: QuestionCreate, _user: dict = Depends(require_leader)):
+def create_question(body: QuestionCreate, user: dict = Depends(get_current_user)):
     questions, answers = _load()
     new_q = {
         "id": short_uuid("Q"),
@@ -69,6 +69,7 @@ def create_question(body: QuestionCreate, _user: dict = Depends(require_leader))
         "question": body.question,
         "targets": body.targets,
         "questioner": body.questioner or "",
+        "created_by": user["username"],
         "created_at": date.today().isoformat(),
     }
     questions.append(new_q)
@@ -103,8 +104,13 @@ def update_question(question_id: str, body: QuestionUpdate):
 
 
 @router.delete("/questions/{question_id}")
-def delete_question(question_id: str, _user: dict = Depends(require_admin)):
+def delete_question(question_id: str, user: dict = Depends(get_current_user)):
     questions, answers = _load()
+    target = next((q for q in questions if q["id"] == question_id), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="Question not found")
+    if user["role"] != "admin" and target.get("created_by") != user["username"]:
+        raise HTTPException(status_code=403, detail="본인이 작성한 질문만 삭제할 수 있습니다")
     questions = [q for q in questions if q["id"] != question_id]
     answers = [a for a in answers if a["question_id"] != question_id]
     _save(questions, answers)
