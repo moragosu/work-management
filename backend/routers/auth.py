@@ -32,7 +32,7 @@ class AdminUpdate(BaseModel):
 def login(form: OAuth2PasswordRequestForm = Depends()):
     with data_store.get_conn() as conn:
         row = conn.execute(
-            "SELECT username, name, role, password_hash FROM users WHERE username=?",
+            "SELECT username, name, role, is_admin, password_hash FROM users WHERE username=?",
             (form.username,)
         ).fetchone()
     if not row or not auth_utils.verify_password(form.password, row["password_hash"]):
