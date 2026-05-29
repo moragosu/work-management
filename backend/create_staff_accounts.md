@@ -24,9 +24,13 @@
 ## 개발 환경 (로컬 PC)
 
 ```bash
-# 프로젝트 루트에서 실행
 cd backend
+
+# 신규 계정 생성
 uv run python create_staff_accounts.py
+
+# 이미 존재하는 계정도 비밀번호 초기화 + 변경 강제
+uv run python create_staff_accounts.py --force
 ```
 
 > `DATA_DIR`을 별도로 지정하지 않으면 `../data`를 자동으로 사용한다.
@@ -46,9 +50,15 @@ scp backend/staff_accounts.json user@서버IP:/var/www/okr-app/backend/
 **2단계 — 스크립트 실행** (서버에서)
 
 ```bash
+# 신규 계정 생성
 sudo DATA_DIR=/var/www/okr-app/data \
   /var/www/okr-app/backend/.venv/bin/python \
   /var/www/okr-app/backend/create_staff_accounts.py
+
+# 기존 계정도 초기화
+sudo DATA_DIR=/var/www/okr-app/data \
+  /var/www/okr-app/backend/.venv/bin/python \
+  /var/www/okr-app/backend/create_staff_accounts.py --force
 ```
 
 ---

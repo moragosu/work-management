@@ -11,6 +11,7 @@ import json
 import os
 import sqlite3
 import sys
+import argparse
 from datetime import datetime
 from pathlib import Path
 
@@ -22,6 +23,11 @@ MAPPING_FILE = Path(__file__).parent / "staff_accounts.json"
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--force", action="store_true",
+                        help="이미 존재하는 계정도 비밀번호와 force_password_change=1로 업데이트")
+    args = parser.parse_args()
+
     if not DB_PATH.exists():
         print(f"DB 파일을 찾을 수 없습니다: {DB_PATH}")
         print("서버를 한 번 실행해 DB를 초기화한 뒤 다시 시도하세요.")
@@ -58,6 +64,7 @@ def main():
     conn.row_factory = sqlite3.Row
     try:
         created = []
+        updated = []
         skipped = []
 
         for entry in staff_list:
@@ -69,7 +76,14 @@ def main():
             ).fetchone()
 
             if existing:
-                skipped.append(f"{name} ({username}) — 이미 존재: {existing['username']}")
+                if args.force:
+                    conn.execute(
+                        "UPDATE users SET password_hash=?, force_password_change=1 WHERE username=?",
+                        (password_hash, existing["username"]),
+                    )
+                    updated.append(f"{name} ({existing['username']})")
+                else:
+                    skipped.append(f"{name} ({username}) — 이미 존재: {existing['username']}")
                 continue
 
             conn.execute(
@@ -89,12 +103,16 @@ def main():
         print(f"✅ 생성 완료 ({len(created)}명):")
         for line in created:
             print(f"   {line}")
+    if updated:
+        print(f"\n🔄 업데이트 완료 ({len(updated)}명) — 비밀번호 초기화 + 변경 강제:")
+        for line in updated:
+            print(f"   {line}")
     if skipped:
         print(f"\n⏭  건너뜀 ({len(skipped)}명):")
         for line in skipped:
             print(f"   {line}")
-    if not created:
-        print("새로 생성된 계정이 없습니다.")
+    if not created and not updated:
+        print("변경된 계정이 없습니다. 기존 계정을 초기화하려면 --force 옵션을 사용하세요.")
 
 
 if __name__ == "__main__":
