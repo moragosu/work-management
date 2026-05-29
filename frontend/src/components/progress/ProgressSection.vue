@@ -41,17 +41,10 @@
 
     <!-- 이슈 추가 폼 -->
     <div v-if="adding" class="issue-item">
-      <div class="form-group">
-        <label class="form-label">등록자</label>
-        <select v-model="newAssignee" class="form-control">
-          <option value="">선택</option>
-          <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
-        </select>
-      </div>
       <TiptapEditor v-model="newText" height="140px" @image-uploaded="onAddImageUploaded" />
       <div class="flex gap-8 mt-8" style="justify-content:flex-end">
         <button class="btn btn-ghost btn-sm" @click="cancelAdd">취소</button>
-        <button class="btn btn-primary btn-sm" @click="addIssue" :disabled="!hasContent(newText) || !newAssignee">저장</button>
+        <button class="btn btn-primary btn-sm" @click="addIssue" :disabled="!hasContent(newText)">저장</button>
       </div>
     </div>
 
@@ -70,6 +63,7 @@ import { useToast } from '../../composables/useToast.js'
 import { hasContent } from '../../utils/content.js'
 import { copyToClipboard } from '../../utils/clipboard.js'
 import { deleteOrphanedImages, deleteAllImages, deleteUrls } from '../../composables/useImageCleanup.js'
+import { useAuthStore } from '../../stores/auth.js'
 
 const props = defineProps({
   issues:   { type: Array,  default: () => [] },
@@ -80,6 +74,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:issues'])
 const { toastMsg, showToast, toastError } = useToast()
+const auth = useAuthStore()
 
 // ── 링크 복사 ──
 async function copyLink(iss) {
@@ -91,13 +86,12 @@ async function copyLink(iss) {
 // ── 추가 ──
 const adding      = ref(false)
 const newText     = ref('')
-const newAssignee = ref('')
 const addUploads  = ref([])
 
 function openAdd() { adding.value = true; addUploads.value = [] }
 function onAddImageUploaded(url) { addUploads.value.push(url) }
 function resetAddForm() {
-  adding.value = false; newText.value = ''; newAssignee.value = ''; addUploads.value = []
+  adding.value = false; newText.value = ''; addUploads.value = []
 }
 function cancelAdd() {
   deleteUrls(addUploads.value)
@@ -105,13 +99,13 @@ function cancelAdd() {
 }
 
 async function addIssue() {
-  if (!hasContent(newText.value) || !newAssignee.value) return
+  if (!hasContent(newText.value)) return
   try {
     const { data } = await axios.post('/api/issues', {
       task_id: props.taskId,
       week: props.week,
       issue: newText.value.trim(),
-      assignee: newAssignee.value,
+      assignee: auth.user?.name || '',
     })
     await deleteUrls(addUploads.value.filter(u => !newText.value.includes(u)))
     emit('update:issues', [...props.issues, data])
