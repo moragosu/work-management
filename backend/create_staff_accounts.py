@@ -73,8 +73,8 @@ def main():
                 continue
 
             conn.execute(
-                "INSERT INTO users (username, name, password_hash, role, created_at) VALUES (?,?,?,?,?)",
-                (username, name, password_hash, "member", datetime.now().isoformat()),
+                "INSERT INTO users (username, name, password_hash, role, force_password_change, created_at) VALUES (?,?,?,?,?,?)",
+                (username, name, password_hash, "member", 1, datetime.now().isoformat()),
             )
             created.append(f"{name} ({username})")
 
