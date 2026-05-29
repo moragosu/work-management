@@ -175,6 +175,7 @@
                     <ProgressSection
                       :issues="leftIssueMap[st.id] || []"
                       :staff-list="staffList"
+                      :member-list="memberList"
                       :task-id="st.id"
                       :week="leftWeek"
                       @update:issues="iss => onLeftIssuesUpdate(st.id, iss)"
@@ -182,7 +183,7 @@
                     <QASection
                       :questions="getLeftQuestionsForTask(st.id)"
                       :staff-list="staffList"
-                      
+                      :member-list="memberList"
                       :task-id="st.id"
                       :week="leftWeek"
                       @update:questions="qs => onLeftQuestionsUpdate(st.id, qs)"
@@ -217,6 +218,7 @@
                 <ProgressSection
                   :issues="leftIssueMap[task.id] || []"
                   :staff-list="staffList"
+                  :member-list="memberList"
                   :task-id="task.id"
                   :week="leftWeek"
                   @update:issues="iss => onLeftIssuesUpdate(task.id, iss)"
@@ -224,7 +226,7 @@
                 <QASection
                   :questions="getLeftQuestionsForTask(task.id)"
                   :staff-list="staffList"
-                  
+                  :member-list="memberList"
                   :task-id="task.id"
                   :week="leftWeek"
                   @update:questions="qs => onLeftQuestionsUpdate(task.id, qs)"
@@ -373,6 +375,7 @@
                     <ProgressSection
                       :issues="issueMap[st.id] || []"
                       :staff-list="staffList"
+                      :member-list="memberList"
                       :task-id="st.id"
                       :week="selectedWeek"
                       @update:issues="iss => onIssuesUpdate(st.id, iss)"
@@ -381,7 +384,7 @@
                     <QASection
                       :questions="getQuestionsForTask(st.id)"
                       :staff-list="staffList"
-                      
+                      :member-list="memberList"
                       :task-id="st.id"
                       :week="selectedWeek"
                       @update:questions="qs => onQuestionsUpdate(st.id, qs)"
@@ -425,6 +428,7 @@
                 <ProgressSection
                   :issues="issueMap[task.id] || []"
                   :staff-list="staffList"
+                  :member-list="memberList"
                   :task-id="task.id"
                   :week="selectedWeek"
                   @update:issues="iss => onIssuesUpdate(task.id, iss)"
@@ -433,7 +437,7 @@
                 <QASection
                   :questions="getQuestionsForTask(task.id)"
                   :staff-list="staffList"
-                  
+                  :member-list="memberList"
                   :task-id="task.id"
                   :week="selectedWeek"
                   @update:questions="qs => onQuestionsUpdate(task.id, qs)"
@@ -466,6 +470,7 @@ const route = useRoute()
 const tasks = ref([])
 const objectives = ref([])
 const staffList = ref([])
+const memberList = ref([])
 const loading = ref(false)
 const { toastMsg, showToast, toastError } = useToast()
 
@@ -786,13 +791,15 @@ async function handleFocusQuery() {
 async function fetchAll() {
   loading.value = true
   try {
-    const [tRes, oRes, sRes, stRes] = await Promise.all([
+    const [tRes, oRes, sRes, stRes, mRes] = await Promise.all([
       axios.get('/api/tasks'), axios.get('/api/okrs'), axios.get('/api/staff'),
       axios.get('/api/settings').catch(() => ({ data: {} })),
+      axios.get('/api/auth/members').catch(() => ({ data: [] })),
     ])
     tasks.value = tRes.data
     objectives.value = oRes.data
     staffList.value = sRes.data
+    memberList.value = mRes.data
     // 소과제 전체 기본 펼침
     const allSubIds = new Set()
     tRes.data.forEach(t => (t.sub_tasks || []).forEach(st => allSubIds.add(st.id)))

@@ -16,9 +16,9 @@
               <span class="target-label">질문 대상</span>
               <div class="target-chips">
                 <button
-                  v-for="s in staffList" :key="s.id"
+                  v-for="s in targetList" :key="s.name"
                   class="target-chip"
-                  :class="{ active: editingTargets.includes(s.name) }"
+                  :class="[{ active: editingTargets.includes(s.name) }, roleClass(s.role)]"
                   @click="toggleTarget(editingTargets, s.name)"
                 >{{ s.name }}</button>
               </div>
@@ -114,9 +114,9 @@
         <span class="target-label">질문 대상</span>
         <div class="target-chips">
           <button
-            v-for="s in staffList" :key="s.id"
+            v-for="s in targetList" :key="s.name"
             class="target-chip"
-            :class="{ active: newTargets.includes(s.name) }"
+            :class="[{ active: newTargets.includes(s.name) }, roleClass(s.role)]"
             @click="toggleTarget(newTargets, s.name)"
           >{{ s.name }}</button>
         </div>
@@ -137,7 +137,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import axios from 'axios'
 import TiptapPreview from '../TiptapPreview.vue'
 import TiptapEditor from '../TiptapEditor.vue'
@@ -150,10 +150,21 @@ import { deleteOrphanedImages, deleteAllImages, deleteUrls } from '../../composa
 const props = defineProps({
   questions:       { type: Array,   default: () => [] },
   staffList:       { type: Array,   default: () => [] },
+  memberList:      { type: Array,   default: () => [] },
   taskId:          { type: String,  required: true },
   week:            { type: String,  required: true },
   readonlyQuestion:{ type: Boolean, default: false },
 })
+
+const targetList = computed(() =>
+  props.memberList.length > 0 ? props.memberList : props.staffList.map(s => ({ name: s.name, role: 'member' }))
+)
+
+function roleClass(role) {
+  if (role === 'group_leader') return 'role-group-leader'
+  if (role === 'part_leader') return 'role-part-leader'
+  return ''
+}
 const emit = defineEmits(['update:questions'])
 const { toastMsg, showToast, toastError } = useToast()
 const auth = useAuthStore()
@@ -401,6 +412,24 @@ async function deleteAnswer(answerId, questionId) {
   color: var(--primary);
   border-color: var(--primary);
   font-weight: 600;
+}
+.target-chip.role-part-leader {
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+.target-chip.role-part-leader.active {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #2563eb;
+}
+.target-chip.role-group-leader {
+  border-color: #a855f7;
+  color: #7c3aed;
+}
+.target-chip.role-group-leader.active {
+  background: #ede9fe;
+  color: #6d28d9;
+  border-color: #7c3aed;
 }
 .question-targets {
   display: flex;

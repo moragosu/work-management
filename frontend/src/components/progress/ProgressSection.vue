@@ -12,7 +12,15 @@
           <label class="form-label">등록자</label>
           <select v-model="editAssignee" class="form-control">
             <option value="">선택</option>
-            <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
+            <optgroup label="그룹장">
+              <option v-for="s in assigneeList.filter(m => m.role === 'group_leader')" :key="s.name" :value="s.name">{{ s.name }}</option>
+            </optgroup>
+            <optgroup label="파트장">
+              <option v-for="s in assigneeList.filter(m => m.role === 'part_leader')" :key="s.name" :value="s.name">{{ s.name }}</option>
+            </optgroup>
+            <optgroup label="파트원">
+              <option v-for="s in assigneeList.filter(m => m.role === 'member')" :key="s.name" :value="s.name">{{ s.name }}</option>
+            </optgroup>
           </select>
         </div>
         <TiptapEditor v-model="editText" height="140px" @image-uploaded="url => editUploads.push(url)" />
@@ -57,6 +65,7 @@
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'
+import { computed } from 'vue'
 import TiptapPreview from '../TiptapPreview.vue'
 import TiptapEditor from '../TiptapEditor.vue'
 import { useToast } from '../../composables/useToast.js'
@@ -66,12 +75,18 @@ import { deleteOrphanedImages, deleteAllImages, deleteUrls } from '../../composa
 import { useAuthStore } from '../../stores/auth.js'
 
 const props = defineProps({
-  issues:   { type: Array,  default: () => [] },
-  staffList: { type: Array, default: () => [] },
-  taskId:   { type: String, required: true },
-  week:     { type: String, required: true },
-  readonly: { type: Boolean, default: false },
+  issues:     { type: Array,  default: () => [] },
+  staffList:  { type: Array,  default: () => [] },
+  memberList: { type: Array,  default: () => [] },
+  taskId:     { type: String, required: true },
+  week:       { type: String, required: true },
+  readonly:   { type: Boolean, default: false },
 })
+
+const assigneeList = computed(() =>
+  props.memberList.length > 0 ? props.memberList : props.staffList.map(s => ({ name: s.name, role: 'member' }))
+
+)
 const emit = defineEmits(['update:issues'])
 const { toastMsg, showToast, toastError } = useToast()
 const auth = useAuthStore()

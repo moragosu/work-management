@@ -7,6 +7,7 @@ import string
 import data_store
 import auth_utils
 from dependencies import get_current_user, require_admin
+from utils.id_generator import short_uuid
 
 router = APIRouter()
 
@@ -65,6 +66,10 @@ def signup(body: SignupRequest):
             "INSERT INTO users (username, name, password_hash, role, is_admin, created_at) VALUES (?,?,?,?,?,?)",
             (body.username, body.name, auth_utils.hash_password(body.password), "member", 0, datetime.now().isoformat()),
         )
+        conn.execute(
+            "INSERT OR IGNORE INTO staff (id, name, role, main_skills, sub_skills, learning, desired_field, okrs, selected_tasks, task_ids) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (short_uuid("S"), body.name, "", "", "", "", "", "", "", "[]"),
+        )
     token = auth_utils.create_access_token({"sub": body.username})
     return {
         "access_token": token,
@@ -103,10 +108,32 @@ def update_role(username: str, body: RoleUpdate, _admin: dict = Depends(require_
     if body.role not in ("member", "group_leader", "part_leader"):
         raise HTTPException(status_code=400, detail="유효하지 않은 직책입니다")
     with data_store.get_conn() as conn:
-        result = conn.execute("UPDATE users SET role=? WHERE username=?", (body.role, username))
-        if result.rowcount == 0:
+        row = conn.execute("SELECT name FROM users WHERE username=?", (username,)).fetchone()
+        if not row:
             raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
+        conn.execute("UPDATE users SET role=? WHERE username=?", (body.role, username))
+        if body.role == "member":
+            # 파트원으로 변경 시 staff 프로필이 없으면 생성
+            existing = conn.execute("SELECT id FROM staff WHERE name=?", (row["name"],)).fetchone()
+            if not existing:
+                conn.execute(
+                    "INSERT INTO staff (id, name, role, main_skills, sub_skills, learning, desired_field, okrs, selected_tasks, task_ids) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    (short_uuid("S"), row["name"], "", "", "", "", "", "", "", "[]"),
+                )
+        else:
+            # 파트장/그룹장으로 변경 시 staff 프로필 삭제
+            conn.execute("DELETE FROM staff WHERE name=?", (row["name"],))
     return {"ok": True}
+
+
+@router.get("/members")
+def list_members(user: dict = Depends(get_current_user)):
+    """로그인한 모든 사용자가 조회 가능한 전체 구성원 목록 (이름 + 역할)."""
+    with data_store.get_conn() as conn:
+        rows = conn.execute(
+            "SELECT name, role FROM users ORDER BY CASE role WHEN 'group_leader' THEN 0 WHEN 'part_leader' THEN 1 ELSE 2 END, name"
+        ).fetchall()
+    return [dict(r) for r in rows]
 
 
 @router.post("/users/{username}/reset-password")
