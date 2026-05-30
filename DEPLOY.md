@@ -1,160 +1,99 @@
-# 사내 배포 매뉴얼
+# 배포 매뉴얼
 
-> 현재 사내 운영 버전: `2949398`  
-> 최신 개발 브랜치: `feat/login-notification`
+## 사내 서버 구조
 
----
-
-## 개요
-
-이 매뉴얼은 개발 서버(로컬 또는 개발 PC)의 변경사항을 사내 운영 서버에 적용하는 절차를 설명합니다.
+| 경로 | 용도 |
+|------|------|
+| `~/work-management/` | 코드 저장소. git pull, dev 서버 실행 |
+| `/var/www/okr-app/` | 운영 배포 경로. 실제 서비스가 여기서 동작 |
 
 ---
 
-## 1단계 — 개발 PC: 원격 push
-
-변경사항이 커밋되어 있는 상태에서 원격 저장소로 push합니다.
+## 업데이트 배포 (코드 변경 후)
 
 ```bash
-git push origin feat/login-notification
-```
-
----
-
-## 2단계 — 사내 서버: 코드 업데이트
-
-사내 서버에 SSH로 접속한 뒤 프로젝트 디렉토리로 이동합니다.
-
-```bash
-cd /path/to/okr-app   # 실제 배포 경로로 변경
-git fetch origin
-git checkout feat/login-notification
+# 1. 사내 서버의 저장소를 최신 코드로 업데이트
+cd ~/work-management
 git pull origin feat/login-notification
-```
 
----
-
-## 3단계 — 사내 서버: 백엔드 의존성 설치
-
-패키지가 변경된 경우 실행합니다. 변경이 없으면 생략해도 됩니다.
-
-```bash
-cd backend
-uv sync --python 3.12
-cd ..
-```
-
----
-
-## 4단계 — 최초 배포 시: 관리자 계정 생성
-
-> **최초 1회만 실행합니다.** 이미 계정이 있는 경우 건너뜁니다.
-
-로그인 없이는 시스템을 사용할 수 없으므로, **서버 기동 전** 관리자 계정을 먼저 생성합니다.
-
-```bash
-cd backend
-DATA_DIR=../data uv run python create_admin.py
-```
-
-프롬프트에서 사용자명·이름·비밀번호를 입력합니다.
-
-### 파트원 계정 일괄 생성 (선택)
-
-`backend/staff_accounts.json`을 편집한 뒤 실행합니다.
-
-```bash
-DATA_DIR=../data uv run python create_staff_accounts.py
-```
-
-`--force` 옵션을 추가하면 기존 계정을 초기화(임시 비밀번호 재설정)합니다.
-
-```bash
-DATA_DIR=../data uv run python create_staff_accounts.py --force
-```
-
-> 신규 계정은 첫 로그인 시 비밀번호 변경을 강제합니다. 파트원들에게 사전 안내하세요.
-
----
-
-## 5단계 — 배포 실행
-
-프로젝트 루트에서 배포 스크립트를 실행합니다.
-
-```bash
-cd ..   # 프로젝트 루트로 이동
+# 2. 운영 환경에 배포
 sudo bash deploy.sh
 ```
 
-`deploy.sh`는 다음을 순서대로 처리합니다.
+`deploy.sh`가 `~/work-management/`의 코드를 `/var/www/okr-app/`으로 복사하고,
+의존성 설치 → 프론트엔드 빌드 → 서비스 재시작까지 자동으로 처리합니다.
 
-1. 프론트엔드 빌드 (`npm run build`)
-2. Gunicorn 프로세스 재시작
-3. Nginx 리로드
-
-> `dist/` 디렉토리가 이미 커밋에 포함된 경우 빌드 단계를 건너뛸 수 있습니다. `deploy.sh` 내부 로직을 확인하세요.
+완료 후 터미널에 출력된 접속 주소로 확인합니다.
 
 ---
 
-## 6단계 — 배포 확인
+## 최초 배포 시: 관리자 계정 생성
 
-브라우저에서 사내 서버 주소에 접속하여 정상 동작을 확인합니다.
+> **최초 1회만 실행합니다.** 계정이 이미 있으면 건너뜁니다.
 
-- 로그인 화면 표시 여부
-- 관리자 계정으로 로그인 성공 여부
-- 주간 진행 현황 및 관리 도구 접근 여부
-
----
-
-## 데이터베이스 마이그레이션 안내
-
-서버 기동 시 `init_db()`가 자동으로 스키마를 업데이트합니다. 별도 마이그레이션 명령은 필요 없습니다.
-
-신규 추가되는 테이블:
-
-| 테이블 | 용도 |
-|--------|------|
-| `users` | 로그인 계정 관리 |
-| `notifications` | 알림 |
-| `answer_replies` | Q&A 답글 |
-| `issue_comments` | 이슈 댓글 |
-
-기존 이슈·Q&A·컨플루언스 데이터는 그대로 유지됩니다.
-
----
-
-## 서비스 관리 명령어
+`sudo bash deploy.sh` 실행 후, 운영 경로에서 계정 생성 스크립트를 실행합니다.
 
 ```bash
-# 서비스 상태 확인
+cd /var/www/okr-app/backend
+DATA_DIR=/var/www/okr-app/data .venv/bin/python create_admin.py
+```
+
+프롬프트에서 사용자명·이름·비밀번호를 입력하면 관리자 계정이 생성됩니다.
+
+### 파트원 계정 일괄 생성 (선택)
+
+`~/work-management/backend/staff_accounts.json`을 편집한 뒤 배포하면
+`/var/www/okr-app/backend/staff_accounts.json`에 반영됩니다. 그 후 실행합니다.
+
+```bash
+cd /var/www/okr-app/backend
+DATA_DIR=/var/www/okr-app/data .venv/bin/python create_staff_accounts.py
+```
+
+> 생성된 계정은 첫 로그인 시 비밀번호 변경이 강제됩니다.
+
+---
+
+## 개발 서버 실행 (테스트용)
+
+운영 서버에 반영하기 전에 사내 서버에서 직접 동작을 확인하고 싶을 때 사용합니다.
+
+```bash
+cd ~/work-management
+bash dev.sh
+```
+
+- 백엔드: `http://localhost:8001`
+- 프론트엔드: `http://localhost:5174`
+
+> 개발 서버는 `~/work-management/data/`를 데이터 경로로 사용합니다.  
+> 운영 데이터(`/var/www/okr-app/data/`)와 **완전히 분리**되어 있으므로 운영 데이터에 영향을 주지 않습니다.
+
+---
+
+## 참고
+
+### 서비스 관리
+
+```bash
+# 운영 서비스 상태 확인
 sudo systemctl status okr-app
 
-# 서비스 재시작
+# 운영 서비스 재시작
 sudo systemctl restart okr-app
 
-# 로그 확인
+# 실시간 로그
 sudo journalctl -u okr-app -f
 ```
 
----
+### 기본 설정값
 
-## 문제 해결
+| 항목 | 값 |
+|------|----|
+| 운영 포트 | `8080` (변경 시: `sudo bash deploy.sh 9090`) |
+| 운영 데이터 경로 | `/var/www/okr-app/data/` |
+| DB 파일 | `/var/www/okr-app/data/app.db` |
 
-### 로그인이 안 될 때
+### DB 마이그레이션
 
-관리자 계정이 생성되지 않은 경우입니다. [4단계](#4단계--최초-배포-시-관리자-계정-생성)를 실행합니다.
-
-### 의존성 오류 발생 시
-
-```bash
-cd backend
-uv sync --python 3.12 --reinstall
-```
-
-### 포트 충돌 시
-
-`deploy.sh`에 포트 인자를 전달합니다.
-
-```bash
-sudo bash deploy.sh 8080
-```
+서비스 시작 시 자동으로 처리됩니다. 별도 명령 불필요.
