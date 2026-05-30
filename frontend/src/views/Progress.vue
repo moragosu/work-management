@@ -451,7 +451,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { useToast } from '../composables/useToast.js'
@@ -808,6 +808,17 @@ async function fetchAll() {
 }
 
 onMounted(fetchAll)
+
+// 알림 클릭 등으로 같은 페이지에서 쿼리 파라미터가 바뀌면 week·focus 처리
+watch(() => route.query, async (q, prev) => {
+  if (q.week && q.week !== prev?.week) {
+    selectedWeek.value = q.week
+    await onWeekChange()
+  }
+  if (q.focusQuestion !== prev?.focusQuestion || q.focusIssueId !== prev?.focusIssueId) {
+    await handleFocusQuery()
+  }
+})
 </script>
 
 <style scoped>

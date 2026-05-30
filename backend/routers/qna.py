@@ -82,7 +82,7 @@ def create_question(body: QuestionCreate, user: dict = Depends(get_current_user)
             recipient, "question_tagged",
             "새 질문이 등록되었습니다",
             f"{body.questioner or '질문자'}: {preview}",
-            f"/progress?week={body.week}#qa-{new_q['id']}",
+            f"/progress?week={body.week}&focusQuestion={new_q['id']}",
         )
     return {**new_q, "answers": []}
 
@@ -141,7 +141,7 @@ def create_answer(body: AnswerCreate):
             recipient, "answer_received",
             "답변이 달렸습니다",
             f"{body.answer_by}님이 답변을 등록했습니다",
-            f"/progress?week={target_q.get('week', '')}#qa-{body.question_id}",
+            f"/progress?week={target_q.get('week', '')}&focusQuestion={body.question_id}",
         )
     return new_a
 

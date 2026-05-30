@@ -64,7 +64,7 @@ def create_issue(body: IssueCreate, user: dict = Depends(get_current_user)):
         recipient, "issue_assigned",
         "담당 과제에 이슈가 등록되었습니다",
         body.issue[:50],
-        f"/progress?week={body.week}#issue-{new_item['id']}",
+        f"/progress?week={body.week}&focusIssueId={new_item['id']}",
     )
     return new_item
 
