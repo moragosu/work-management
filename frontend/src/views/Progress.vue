@@ -10,7 +10,7 @@
     <div class="page-body">
       <!-- 주차 선택 + 인력 필터 -->
       <div class="filter-bar" style="flex-direction:column;align-items:flex-start;gap:10px">
-        <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <div class="week-nav" :class="{ 'week-nav-current': selectedWeek === getCurrentWeek() }">
             <button class="week-nav-btn" @click="prevWeek" :disabled="getCurrentWeekIndex() <= 0" data-tooltip="이전 주">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -32,6 +32,11 @@
             @click="goToCurrentWeek"
             data-tooltip="현재 주차로 이동"
           >이번 주</button>
+          <div class="panel-toggle-group">
+            <button :class="['panel-toggle-btn', panelState === 'left' ? 'active' : '']" @click="panelState = 'left'" data-tooltip="지난주만 보기">지난주</button>
+            <button :class="['panel-toggle-btn', panelState === 'split' ? 'active' : '']" @click="panelState = 'split'" data-tooltip="양쪽 모두 보기">둘 다</button>
+            <button :class="['panel-toggle-btn', panelState === 'right' ? 'active' : '']" @click="panelState = 'right'" data-tooltip="이번주만 보기">이번주</button>
+          </div>
         </div>
         <div v-if="staffList.length > 0" class="flex gap-6" style="align-items:center;flex-wrap:wrap">
           <span class="filter-label-sm">인력</span>
@@ -893,6 +898,30 @@ watch(() => route.query, async (q, prev) => {
   border-radius: 6px;
   color: var(--color-primary, #4f8ef7);
   border-color: var(--color-primary, #4f8ef7);
+}
+.panel-toggle-group {
+  display: flex;
+  border: 1px solid var(--outline, #e5e7eb);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.panel-toggle-btn {
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  background: var(--surface, #fff);
+  color: var(--text-secondary, #555);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border-right: 1px solid var(--outline, #e5e7eb);
+}
+.panel-toggle-btn:last-child { border-right: none; }
+.panel-toggle-btn:hover { background: var(--gray-50, #f9fafb); }
+.panel-toggle-btn.active {
+  background: var(--primary, #2563eb);
+  color: #fff;
+  font-weight: 600;
 }
 
 /* ── 인력 칩 ── */
