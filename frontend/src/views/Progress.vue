@@ -54,28 +54,19 @@
 
       <div v-else class="split-container">
 
-        <!-- ══ 지난주 패널 복원 버튼 ══ -->
-        <button
-          v-if="panelState === 'right'"
-          class="panel-restore-btn"
-          @click="panelState = 'split'"
-          title="지난주 패널 펼치기"
-        >
-          <span class="material-symbols-outlined">chevron_right</span>
-        </button>
-
         <!-- ══ 지난주 패널 ══ -->
-        <div v-show="panelState !== 'right'" class="split-panel split-left">
-          <div class="panel-header">
+        <div class="split-panel split-left">
+          <div class="panel-header panel-header-toggle" @click="leftOpen = !leftOpen">
+            <span class="material-symbols-outlined panel-toggle-icon">
+              {{ leftOpen ? 'expand_more' : 'chevron_right' }}
+            </span>
             <span class="panel-title">
               <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">history</span>
               지난주 · {{ leftWeekDisplay }}
             </span>
-            <button class="panel-collapse-btn" @click="panelState = 'right'" title="지난주 패널 접기">
-              <span class="material-symbols-outlined">chevron_left</span>
-            </button>
           </div>
 
+          <div v-show="leftOpen" style="padding:16px">
           <div v-for="task in filteredTasks" :key="'L-' + task.id" class="card mb-16" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
             <div class="card-header" style="flex-wrap:wrap;gap:8px">
               <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
@@ -232,24 +223,15 @@
               </template>
             </div>
           </div>
+          </div><!-- /v-show leftOpen -->
         </div>
 
-        <!-- ══ 이번주 패널 복원 버튼 ══ -->
-        <button
-          v-if="panelState === 'left'"
-          class="panel-restore-btn panel-restore-right"
-          @click="panelState = 'split'"
-          title="이번주 패널 펼치기"
-        >
-          <span class="material-symbols-outlined">chevron_left</span>
-        </button>
-
         <!-- ══ 이번주 패널 ══ -->
-        <div v-show="panelState !== 'left'" class="split-panel split-right">
-          <div class="panel-header">
-            <button class="panel-collapse-btn" @click="panelState = 'left'" title="이번주 패널 접기">
-              <span class="material-symbols-outlined">chevron_right</span>
-            </button>
+        <div class="split-panel split-right">
+          <div class="panel-header panel-header-toggle" @click="rightOpen = !rightOpen">
+            <span class="material-symbols-outlined panel-toggle-icon">
+              {{ rightOpen ? 'expand_more' : 'chevron_right' }}
+            </span>
             <span class="panel-title">
               <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">today</span>
               이번주 · {{ rightWeekDisplay }}
@@ -257,6 +239,7 @@
             </span>
           </div>
 
+          <div v-show="rightOpen" style="padding:16px">
           <div v-for="task in filteredTasks" :key="task.id" :id="'task-' + task.id" class="card mb-16" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
             <div class="card-header" style="flex-wrap:wrap;gap:8px">
               <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
@@ -441,6 +424,7 @@
               </template>
             </div>
           </div>
+          </div><!-- /v-show rightOpen -->
         </div>
 
       </div>
@@ -470,8 +454,9 @@ const qaLeaders = ref([])
 const loading = ref(false)
 const { toastMsg, showToast, toastError } = useToast()
 
-// ── 패널 상태: 'split' | 'left' | 'right' ──
-const panelState = ref('split')
+// ── 패널 열림 상태 ──
+const leftOpen = ref(true)
+const rightOpen = ref(true)
 
 // ── 인력 필터 ──
 const selectedStaff = ref([])
@@ -917,69 +902,53 @@ watch(() => route.query, async (q, prev) => {
 /* ── 분할 화면 ── */
 .split-container {
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 8px;
 }
 .split-panel {
-  flex: 1 1 0;
-  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--outline);
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 .panel-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
+  gap: 8px;
+  padding: 10px 14px;
   background: var(--gray-50, #f9fafb);
-  border: 1px solid var(--outline);
-  border-radius: 8px;
-  margin-bottom: 12px;
+  border-bottom: 1px solid var(--outline);
   font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
+}
+.panel-header-toggle {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
   position: sticky;
   top: 0;
   z-index: 10;
+}
+.panel-header-toggle:hover {
+  background: var(--gray-100, #f3f4f6);
+}
+.panel-toggle-icon {
+  font-size: 18px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 0.2s;
 }
 .panel-title {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.panel-collapse-btn {
-  display: flex;
-  align-items: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 4px;
-  border-radius: 4px;
-  transition: background 0.15s, color 0.15s;
-}
-.panel-collapse-btn:hover {
-  background: var(--gray-200, #e5e7eb);
-  color: var(--text-primary);
-}
-.panel-restore-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  flex-shrink: 0;
-  align-self: stretch;
-  min-height: 120px;
-  background: var(--gray-50, #f9fafb);
-  border: 1px solid var(--outline);
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--text-muted);
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-.panel-restore-btn:hover {
-  background: var(--primary-light, #eff6ff);
-  color: var(--primary, #4f8ef7);
-  border-color: var(--primary, #4f8ef7);
+.split-left .panel-header { border-radius: 10px 10px 0 0; }
+.split-right .panel-header { border-radius: 10px 10px 0 0; }
+.split-panel > div:last-child {
+  padding: 16px;
 }
 
 /* ── 컨텐츠 ── */
