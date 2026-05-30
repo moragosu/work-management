@@ -103,6 +103,7 @@
                 </td>
                 <td>
                   <div class="flex gap-8">
+                    <button class="btn btn-ghost btn-xs" @click="router.push(`/tasks/${t.id}/history`)" data-tooltip="주차별 이력 보기">이력</button>
                     <button class="btn btn-ghost btn-xs" @click="openModal(t)" data-tooltip="과제 정보 수정">수정</button>
                     <button class="btn btn-danger btn-xs" @click="deleteTask(t)" data-tooltip="과제 삭제">삭제</button>
                   </div>
@@ -248,7 +249,7 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { useToast } from '../../composables/useToast.js'
 import { getTaskMembers } from '../../utils/staff.js'
@@ -264,6 +265,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['refresh'])
 const route = useRoute()
+const router = useRouter()
 const { toastMsg, showToast, toastError } = useToast()
 
 // ── 통계 ──

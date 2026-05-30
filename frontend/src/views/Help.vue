@@ -41,6 +41,20 @@
 
         <div class="menu-cards">
           <div class="menu-card">
+            <span class="material-symbols-outlined menu-card-icon icon-blue">account_circle</span>
+            <div>
+              <div class="menu-card-title">계정 및 로그인</div>
+              <div class="menu-card-desc">개인 계정으로 로그인 — 역할에 따라 접근 가능한 기능이 달라집니다</div>
+            </div>
+          </div>
+          <div class="menu-card">
+            <span class="material-symbols-outlined menu-card-icon icon-purple">notifications</span>
+            <div>
+              <div class="menu-card-title">알림</div>
+              <div class="menu-card-desc">질문 태그·답변 등록·이슈 배정 등 중요한 이벤트를 상단 알림 벨로 실시간 수신</div>
+            </div>
+          </div>
+          <div class="menu-card">
             <span class="material-symbols-outlined menu-card-icon icon-blue">dashboard</span>
             <div>
               <div class="menu-card-title">대시보드</div>
@@ -65,7 +79,147 @@
       </div>
     </section>
 
-    <!-- ② 대시보드 -->
+    <!-- ② 계정 및 로그인 -->
+    <section id="account" class="help-section card">
+      <div class="card-body">
+        <div class="section-heading">
+          <span class="material-symbols-outlined section-icon-lg">account_circle</span>
+          <h3 class="section-title">계정 및 로그인</h3>
+        </div>
+        <p class="section-desc">시스템을 사용하려면 개인 계정으로 로그인해야 합니다. 계정은 관리자가 미리 생성해 드립니다.</p>
+
+        <!-- 로그인 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">login</span>
+            로그인
+          </div>
+          <ul class="feature-list">
+            <li><strong>사용자 이름</strong>과 <strong>비밀번호</strong>를 입력하고 로그인 버튼을 클릭합니다</li>
+            <li>로그인 상태는 브라우저에 유지되며, <strong>로그아웃</strong>하거나 세션이 만료될 때까지 자동으로 유지됩니다</li>
+            <li>로그아웃은 왼쪽 사이드바 하단의 <strong>로그아웃</strong> 버튼을 클릭합니다</li>
+          </ul>
+          <div class="callout callout-warning">
+            <span class="material-symbols-outlined callout-icon">info</span>
+            <div><strong>첫 로그인 시 비밀번호 변경이 강제됩니다.</strong> 관리자가 설정한 임시 비밀번호로 로그인하면 즉시 비밀번호 변경 화면으로 이동합니다. 새 비밀번호를 설정한 뒤 정상 이용이 가능합니다.</div>
+          </div>
+        </div>
+
+        <!-- 비밀번호 변경 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">lock_reset</span>
+            비밀번호 변경
+          </div>
+          <ul class="feature-list">
+            <li>왼쪽 사이드바 하단의 사용자 이름 옆 <strong>설정</strong> 아이콘을 통해 비밀번호를 변경할 수 있습니다</li>
+            <li>비밀번호를 잊어버린 경우 <strong>관리자에게 문의</strong>하면 임시 비밀번호로 초기화해 드립니다</li>
+          </ul>
+        </div>
+
+        <!-- 역할 체계 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">badge</span>
+            역할 체계
+          </div>
+          <p class="section-desc" style="margin-bottom:12px">계정마다 역할이 부여되며, 역할에 따라 사용할 수 있는 기능이 달라집니다.</p>
+          <div class="role-table">
+            <div class="role-row role-header">
+              <span>역할</span>
+              <span>설명</span>
+              <span>주요 권한</span>
+            </div>
+            <div class="role-row">
+              <span><span class="role-badge role-member">파트원</span></span>
+              <span>일반 파트원</span>
+              <span>이슈 등록·수정, 답변 작성</span>
+            </div>
+            <div class="role-row">
+              <span><span class="role-badge role-leader">그룹장/파트장</span></span>
+              <span>그룹장 또는 파트장</span>
+              <span>이슈·의견/질문 생성 포함 전체 기능</span>
+            </div>
+            <div class="role-row">
+              <span><span class="role-badge role-admin">관리자</span></span>
+              <span>시스템 관리자</span>
+              <span>전체 기능 + 관리 도구 + 계정 관리</span>
+            </div>
+          </div>
+          <div class="callout callout-info" style="margin-top:12px">
+            <span class="material-symbols-outlined callout-icon">info</span>
+            <div><strong>의견/질문 추가</strong>는 그룹장·파트장·관리자만 가능합니다. 일반 파트원은 등록된 질문에 <strong>답변</strong>만 작성할 수 있습니다.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ③ 알림 -->
+    <section id="notify" class="help-section card">
+      <div class="card-body">
+        <div class="section-heading">
+          <span class="material-symbols-outlined section-icon-lg">notifications</span>
+          <h3 class="section-title">알림</h3>
+        </div>
+        <p class="section-desc">질문 태그·답변 등록 등 나와 관련된 이벤트가 발생하면 상단 헤더 우측의 <strong>알림 벨(🔔)</strong>에 배지로 표시됩니다.</p>
+
+        <!-- 알림 종류 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">category</span>
+            알림 종류
+          </div>
+          <div class="notify-table">
+            <div class="notify-row notify-header">
+              <span>종류</span>
+              <span>발생 조건</span>
+            </div>
+            <div class="notify-row">
+              <span><span class="material-symbols-outlined" style="font-size:14px;color:#7c3aed;vertical-align:middle">forum</span> 질문 태그</span>
+              <span>내가 답변 대상자로 지정된 의견/질문이 등록될 때</span>
+            </div>
+            <div class="notify-row">
+              <span><span class="material-symbols-outlined" style="font-size:14px;color:#16a34a;vertical-align:middle">check_circle</span> 답변 등록</span>
+              <span>내가 등록한 의견/질문에 답변이 달릴 때</span>
+            </div>
+            <div class="notify-row">
+              <span><span class="material-symbols-outlined" style="font-size:14px;color:#d97706;vertical-align:middle">warning</span> 이슈 배정</span>
+              <span>나를 담당자로 지정한 이슈가 등록될 때</span>
+            </div>
+            <div class="notify-row">
+              <span><span class="material-symbols-outlined" style="font-size:14px;color:#2563eb;vertical-align:middle">campaign</span> 공지 업데이트</span>
+              <span>관리자가 공지 내용을 변경할 때</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 알림 확인 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">notifications_active</span>
+            알림 확인 및 관리
+          </div>
+          <ul class="feature-list">
+            <li>상단 헤더 우측의 <strong>알림 벨</strong>을 클릭하면 최근 알림 목록이 드롭다운으로 표시됩니다</li>
+            <li>읽지 않은 알림은 파란 점으로 표시되며, 벨 아이콘에 <strong>숫자 배지</strong>로 미읽음 수가 표시됩니다 (최대 99+)</li>
+            <li>알림 항목을 클릭하면 <strong>해당 주차의 해당 위치로 바로 이동</strong>합니다</li>
+            <li>드롭다운 상단의 <strong>"모두 읽음"</strong> 버튼으로 전체 읽음 처리할 수 있습니다</li>
+            <li>개별 알림은 우측 <strong>×</strong> 버튼으로 삭제할 수 있습니다</li>
+            <li>전체 알림 목록은 알림 드롭다운 하단 링크 또는 <strong>/알림</strong> 경로에서 확인할 수 있습니다</li>
+          </ul>
+          <div class="callout callout-warning">
+            <span class="material-symbols-outlined callout-icon">info</span>
+            <div><strong>질문 태그 알림</strong>은 해당 질문에 답변이 없는 동안 삭제되지 않습니다. 답변이 달린 후에야 삭제할 수 있습니다. — 미답변 질문을 놓치지 않기 위한 보호 규칙입니다.</div>
+          </div>
+          <div class="callout callout-tip">
+            <span class="material-symbols-outlined callout-icon">star</span>
+            <div>알림은 <strong>5분마다 자동으로 갱신</strong>됩니다. 답변 등록·이슈 배정 등 이벤트 발생 직후에는 즉시 갱신되어 바로 표시됩니다.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ④ 대시보드 -->
     <section id="dashboard" class="help-section card">
       <div class="card-body">
         <div class="section-heading">
@@ -124,7 +278,7 @@
       </div>
     </section>
 
-    <!-- ③ 주간 진행 현황 -->
+    <!-- ⑤ 주간 진행 현황 -->
     <section id="progress" class="help-section card">
       <div class="card-body">
         <div class="section-heading">
@@ -141,8 +295,8 @@
           </div>
           <ul class="feature-list">
             <li>화면이 <strong>지난주(왼쪽) | 이번주(오른쪽)</strong> 2개 패널로 분할되어 한 화면에서 비교할 수 있습니다</li>
-            <li>각 패널 헤더의 <strong>← / →</strong> 버튼을 클릭하면 해당 패널을 접고 반대쪽 패널을 전체화면으로 확대합니다</li>
-            <li>접힌 패널 옆에 표시되는 세로 줄(복원 버튼)을 클릭하면 다시 2분할 상태로 돌아옵니다</li>
+            <li>각 패널 헤더의 <strong>← / →</strong> 버튼을 클릭하면 해당 패널이 접힙니다 — <strong>같은 버튼을 다시 클릭</strong>하면 2분할 상태로 복원됩니다</li>
+            <li>패널 <strong>헤더 바 전체가 클릭 영역</strong>입니다 — 헤더 어디를 클릭해도 접기/펼치기가 작동합니다</li>
             <li>양쪽 패널 모두 <strong>이슈 등록·수정·삭제</strong>와 <strong>의견/질문 추가·답변</strong> 등 전체 편집이 가능합니다</li>
           </ul>
         </div>
@@ -210,15 +364,15 @@
             <div class="step">
               <div class="step-number">4</div>
               <div class="step-body">
-                <strong>등록자 선택 + 내용 작성</strong>
-                <p>드롭다운에서 <strong>본인 이름을 반드시 선택</strong>하고, 이슈 내용을 작성합니다. 마크다운 형식을 지원합니다.</p>
+                <strong>내용 작성</strong>
+                <p>등록자는 <strong>로그인 계정으로 자동 입력</strong>됩니다. 이슈 내용을 작성합니다. 마크다운 형식을 지원합니다.</p>
               </div>
             </div>
             <div class="step">
               <div class="step-number">5</div>
               <div class="step-body">
                 <strong>저장</strong>
-                <p>등록자와 내용이 모두 입력되어야 저장 버튼이 활성화됩니다.</p>
+                <p>내용이 입력되면 저장 버튼이 활성화됩니다.</p>
               </div>
             </div>
           </div>
@@ -233,6 +387,20 @@
           </div>
         </div>
 
+        <!-- 이슈 댓글 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">comment</span>
+            이슈 댓글 / 대댓글
+          </div>
+          <ul class="feature-list">
+            <li>이슈 하단의 <strong>"+ 댓글"</strong> 버튼으로 댓글을 작성할 수 있습니다 — 이슈 본문과 동일한 <strong>WYSIWYG 에디터</strong>를 사용하며 서식·이미지 첨부가 가능합니다</li>
+            <li>등록된 댓글의 <strong>"↩ 답글"</strong> 버튼을 클릭하면 해당 댓글에 대한 대댓글을 작성할 수 있습니다 (2단계까지 지원)</li>
+            <li>댓글·대댓글 작성자는 <strong>로그인 계정으로 자동 입력</strong>됩니다</li>
+            <li>본인이 작성한 댓글은 <strong>수정·삭제</strong>할 수 있습니다</li>
+          </ul>
+        </div>
+
         <!-- 의견/질문 -->
         <div class="sub-section">
           <div class="sub-section-title">
@@ -240,14 +408,16 @@
             의견/질문 사용법
           </div>
           <ul class="feature-list">
-            <li>과제 카드 하단 <strong>의견/질문 섹션</strong>에서 <strong>"+ 의견/질문 추가"</strong>를 클릭해 질문을 등록합니다</li>
-            <li>질문 작성 전 <strong>질문 대상자를 선택</strong>할 수 있습니다 — 복수 선택 가능하며, 선택하지 않으면 대상자 없이 등록됩니다</li>
+            <li><strong>그룹장·파트장·관리자</strong>만 과제 카드 하단의 <strong>"+ 의견/질문 추가"</strong> 버튼이 표시됩니다</li>
+            <li>질문 작성자는 <strong>로그인 계정으로 자동 입력</strong>됩니다</li>
+            <li>질문 작성 전 <strong>질문 대상자를 선택</strong>할 수 있습니다 — 복수 선택 가능하며, 대상자로 지정된 파트원에게 <strong>알림</strong>이 발송됩니다</li>
             <li>등록된 질문에는 선택한 대상자가 <strong>→ 이름</strong> 형태로 표시됩니다</li>
             <li>답변이 없는 질문에는 <span class="inline-badge badge-green">A</span> 옆에 <strong>"답변 달기"</strong> 버튼이 표시됩니다</li>
-            <li>답변 작성 시 <strong>작성자(본인 이름)를 반드시 선택</strong>해야 저장됩니다</li>
+            <li>답변 작성자는 <strong>로그인 계정으로 자동 입력</strong>됩니다 — 답변 입력도 WYSIWYG 에디터를 사용하며 서식·이미지 첨부가 가능합니다</li>
             <li>하나의 질문에 여러 명이 <strong>"+ 답변 추가"</strong>로 추가 답변을 달 수 있습니다</li>
+            <li>등록된 답변의 <strong>"↩ 답글"</strong> 버튼으로 추가 의견을 달 수 있습니다 — 답글 입력도 에디터를 사용합니다</li>
             <li>질문 우측의 <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">link</span> 버튼을 클릭하면 해당 질문으로 바로 이동하는 <strong>단축 링크</strong>가 복사됩니다 — 메신저로 공유하면 받는 사람이 바로 해당 위치로 이동합니다</li>
-            <li>의견/질문 삭제 시 <span class="highlight-red">해당 의견/질문의 모든 답변도 함께 삭제</span>됩니다 — 삭제 전 <strong>관리자 암호 입력</strong>이 필요합니다</li>
+            <li>의견/질문 삭제 시 <span class="highlight-red">해당 의견/질문의 모든 답변도 함께 삭제</span>됩니다 — 관리자만 삭제 가능합니다</li>
           </ul>
           <div class="callout callout-tip">
             <span class="material-symbols-outlined callout-icon">star</span>
@@ -319,7 +489,7 @@
       </div>
     </section>
 
-    <!-- ④ 에디터 사용법 -->
+    <!-- ⑥ 에디터 사용법 -->
     <section id="markdown" class="help-section card">
       <div class="card-body">
         <div class="section-heading">
@@ -402,7 +572,7 @@
       </div>
     </section>
 
-    <!-- ⑤ 관리 도구 -->
+    <!-- ⑦ 관리 도구 -->
     <section id="admin" class="help-section card">
       <div class="card-body">
         <div class="section-heading">
@@ -510,9 +680,9 @@
             설정 탭
           </div>
           <ul class="feature-list">
-            <li><strong>관리자 모드</strong>: 비밀번호를 입력해 활성화하면 데이터 초기화 탭이 추가됩니다</li>
-            <li>활성화된 관리자 모드는 브라우저를 닫아도 유지됩니다. 해제하려면 "관리자 모드 해제" 버튼을 클릭합니다</li>
-            <li><strong>과제 적용 대상 관리</strong>: 관리자 모드에서만 표시됩니다. 기존 항목을 삭제하거나 새 항목을 추가할 수 있으며, 변경 내용은 과제 등록·수정 모달에 즉시 반영됩니다</li>
+            <li><strong>사용자 계정 관리</strong> (관리자 전용): 파트원 계정의 역할·관리자 권한 변경, 비밀번호 초기화가 가능합니다</li>
+            <li><strong>비밀번호 초기화</strong>: 임시 비밀번호가 자동 생성되며, 해당 계정은 다음 로그인 시 비밀번호 변경이 강제됩니다</li>
+            <li><strong>과제 적용 대상 관리</strong>: 기존 항목을 삭제하거나 새 항목을 추가할 수 있으며, 변경 내용은 과제 등록·수정 모달에 즉시 반영됩니다</li>
           </ul>
           <div class="callout callout-warning">
             <span class="material-symbols-outlined callout-icon">info</span>
@@ -547,12 +717,14 @@
 import { reactive } from 'vue'
 
 const toc = [
-  { id: 'overview',  icon: 'info',      title: '시스템 소개' },
-  { id: 'dashboard', icon: 'dashboard', title: '대시보드' },
-  { id: 'progress',  icon: 'assignment', title: '주간 진행 현황' },
-  { id: 'markdown',  icon: 'edit_note', title: '에디터 사용법' },
-  { id: 'admin',     icon: 'settings',  title: '관리 도구' },
-  { id: 'faq',       icon: 'help',      title: 'FAQ' },
+  { id: 'overview',  icon: 'info',           title: '시스템 소개' },
+  { id: 'account',   icon: 'account_circle',  title: '계정 및 로그인' },
+  { id: 'notify',    icon: 'notifications',   title: '알림' },
+  { id: 'dashboard', icon: 'dashboard',       title: '대시보드' },
+  { id: 'progress',  icon: 'assignment',      title: '주간 진행 현황' },
+  { id: 'markdown',  icon: 'edit_note',       title: '에디터 사용법' },
+  { id: 'admin',     icon: 'settings',        title: '관리 도구' },
+  { id: 'faq',       icon: 'help',            title: 'FAQ' },
 ]
 
 const toolbarGuide = [
@@ -583,6 +755,26 @@ const toolbarGuide = [
 
 const faqs = reactive([
   {
+    q: '비밀번호를 잊어버렸을 때는?',
+    a: '관리자에게 문의하면 임시 비밀번호로 초기화해 드립니다. 임시 비밀번호로 로그인하면 즉시 새 비밀번호 설정 화면으로 이동합니다.',
+    open: false,
+  },
+  {
+    q: '처음 로그인 시 비밀번호 변경 화면으로 이동하는 이유는?',
+    a: '관리자가 생성한 계정은 모두 임시 비밀번호가 설정되어 있으며, 첫 로그인 시 본인만 아는 비밀번호로 변경하도록 강제됩니다. 새 비밀번호를 설정하면 정상 이용이 가능합니다.',
+    open: false,
+  },
+  {
+    q: '"+ 의견/질문 추가" 버튼이 보이지 않는 이유는?',
+    a: '의견/질문 추가는 그룹장·파트장·관리자 역할에게만 표시됩니다. 일반 파트원은 이미 등록된 질문에 답변을 작성할 수 있습니다. 역할 변경이 필요하면 관리자에게 문의하세요.',
+    open: false,
+  },
+  {
+    q: '질문 태그 알림이 삭제되지 않는 이유는?',
+    a: '미답변 상태인 질문의 태그 알림은 보호됩니다 — 답변이 달려야 삭제할 수 있습니다. 담당자가 질문을 놓치지 않도록 하기 위한 규칙입니다. 답변이 작성되면 해당 알림을 삭제할 수 있게 됩니다.',
+    open: false,
+  },
+  {
     q: '이슈나 질문 링크를 메신저로 공유하려면?',
     a: '이슈 또는 질문 우측의 링크(🔗) 버튼을 클릭하면 단축 링크가 클립보드에 복사됩니다. 메신저에 붙여넣어 공유하면 받는 사람이 클릭 시 해당 주차·해당 위치로 바로 이동합니다. 링크 형식은 "http://서버주소/go/{ID}" 형태입니다.',
     open: false,
@@ -598,13 +790,13 @@ const faqs = reactive([
     open: false,
   },
   {
-    q: '다른 사람의 이슈나 답변을 수정할 수 있나요?',
-    a: '접근 제한 기능은 없습니다. 오입력이 발생한 경우 수정 버튼으로 내용을 정정하거나, 담당자에게 요청하세요.',
+    q: '지난주 / 이번주 패널을 다시 2분할로 복원하려면?',
+    a: '접힌 패널의 헤더 바(또는 접기 버튼)를 다시 클릭하면 2분할 상태로 복원됩니다. 접기 버튼이 토글 방식으로 작동하므로, 같은 버튼으로 접기와 펼치기를 반복할 수 있습니다.',
     open: false,
   },
   {
     q: '이슈나 질문을 삭제하면 복구되나요?',
-    a: '삭제된 항목은 복구되지 않습니다. 의견/질문 삭제는 관리자 암호(관리 도구 잠금과 동일한 암호)를 입력해야 진행할 수 있으며, 삭제 시 해당 의견/질문의 모든 답변도 함께 삭제됩니다. 이슈 삭제는 별도 암호 없이 가능합니다.',
+    a: '삭제된 항목은 복구되지 않습니다. 의견/질문 삭제는 관리자만 가능하며, 삭제 시 해당 의견/질문의 모든 답변도 함께 삭제됩니다. 이슈 삭제는 별도 권한 확인 없이 가능합니다.',
     open: false,
   },
   {
@@ -628,28 +820,13 @@ const faqs = reactive([
     open: false,
   },
   {
-    q: '인력 탭에서 특정 파트원만 보고 싶을 때는?',
-    a: '인력 탭 상단의 이름 칩을 클릭하면 해당 파트원만 필터링됩니다. 여러 명을 동시에 선택할 수 있으며, "전체 보기" 버튼으로 필터를 초기화할 수 있습니다.',
-    open: false,
-  },
-  {
     q: '소과제란 무엇이고 어떻게 추가하나요?',
     a: '소과제는 하나의 과제를 세부 작업 단위로 나눈 것입니다. 관리 도구 → 과제 탭에서 수정 모달을 열면 하단에 "소과제 추가" 버튼이 표시됩니다. 소과제 ID는 T1-1, T1-2 형식으로 자동 부여되며, 각 소과제를 파트원의 담당 과제로 지정할 수 있습니다. 주간 진행 현황에서는 소과제별 이슈와 의견/질문을 독립적으로 관리할 수 있습니다.',
     open: false,
   },
   {
-    q: '소과제를 삭제하면 어떻게 되나요?',
-    a: '소과제를 삭제하면 해당 소과제 ID가 파트원의 담당 과제 목록에서 자동으로 제거됩니다. 기존에 해당 소과제로 등록된 이슈 이력은 과제명이 텍스트로 보존됩니다. 모과제를 삭제하면 모든 소과제도 함께 삭제되며, 동일하게 연결된 데이터가 정리됩니다.',
-    open: false,
-  },
-  {
     q: '여러 과제의 적용 대상을 한 번에 바꾸려면?',
     a: '과제 탭에서 행 앞의 체크박스로 과제를 선택하면 상단에 일괄 적용 툴바가 나타납니다. 적용 대상을 선택하고 "일괄 적용" 버튼을 클릭하면 선택된 과제 전체에 동시 적용됩니다. 인력 필터와 함께 사용하면 특정 파트원의 과제만 추려 일괄 적용할 수 있습니다.',
-    open: false,
-  },
-  {
-    q: '적용 대상 항목(MX/VD/DA/공통)을 추가하거나 삭제하려면?',
-    a: '관리 도구 → 설정 탭에서 관리자 모드를 활성화하면 "과제 적용 대상 관리" 섹션이 표시됩니다. 기존 항목을 삭제하거나 새 항목을 추가할 수 있으며, 변경 내용은 즉시 과제 등록·수정 화면에 반영됩니다.',
     open: false,
   },
 ])
@@ -727,6 +904,7 @@ const faqs = reactive([
 .icon-blue { color: var(--primary); }
 .icon-orange { color: var(--warning); }
 .icon-gray { color: var(--text-muted); }
+.icon-purple { color: #7c3aed; }
 .menu-card-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
 .menu-card-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
 
@@ -824,4 +1002,34 @@ const faqs = reactive([
   padding: 0 4px 14px 28px;
   font-size: 13px; color: var(--text-secondary); line-height: 1.75;
 }
+
+/* 역할 테이블 */
+.role-table { border: 1px solid var(--outline); border-radius: 8px; overflow: hidden; }
+.role-row {
+  display: grid; grid-template-columns: 120px 1fr 1fr;
+  padding: 9px 14px; font-size: 12px;
+  border-bottom: 1px solid var(--outline);
+  align-items: center;
+}
+.role-row:last-child { border-bottom: none; }
+.role-header { background: var(--gray-50); font-weight: 600; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.role-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 10px;
+  font-size: 11px; font-weight: 600;
+}
+.role-member { background: #f1f5f9; color: #475569; }
+.role-leader { background: #eff6ff; color: #2563eb; }
+.role-admin  { background: #fef3c7; color: #92400e; }
+
+/* 알림 테이블 */
+.notify-table { border: 1px solid var(--outline); border-radius: 8px; overflow: hidden; }
+.notify-row {
+  display: grid; grid-template-columns: 140px 1fr;
+  padding: 9px 14px; font-size: 12px;
+  border-bottom: 1px solid var(--outline);
+  align-items: center; gap: 8px;
+}
+.notify-row:last-child { border-bottom: none; }
+.notify-header { background: var(--gray-50); font-weight: 600; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
 </style>
