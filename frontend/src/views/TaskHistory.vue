@@ -119,7 +119,7 @@
                 </span>
                 <span class="meta-date">{{ iss.created_at }}</span>
               </div>
-              <div class="item-content tiptap-output" v-html="iss.issue" />
+              <TiptapPreview :modelValue="iss.issue" />
 
               <!-- 이슈 댓글 -->
               <div v-if="iss.comments?.length" class="comments-section">
@@ -129,11 +129,11 @@
                     <strong>{{ c.comment_by }}</strong>
                     <span class="meta-date">{{ c.created_at?.slice(0, 10) }}</span>
                   </div>
-                  <div class="comment-body tiptap-output" v-html="c.comment" />
+                  <TiptapPreview :modelValue="c.comment" />
                   <div v-for="r in c.replies" :key="r.id" class="reply">
                     <span class="material-symbols-outlined" style="font-size:11px;color:var(--text-muted)">subdirectory_arrow_right</span>
                     <strong>{{ r.comment_by }}</strong>
-                    <span class="reply-text tiptap-output" v-html="r.comment" />
+                    <TiptapPreview :modelValue="r.comment" />
                   </div>
                 </div>
               </div>
@@ -158,7 +158,7 @@
                 </span>
                 <span class="meta-date">{{ q.created_at?.slice(0, 10) }}</span>
               </div>
-              <div class="item-content tiptap-output" v-html="q.question" />
+              <TiptapPreview :modelValue="q.question" />
 
               <!-- 답변 없음 -->
               <div v-if="!q.answers?.length" class="no-answer">
@@ -172,11 +172,11 @@
                   <strong>{{ a.answer_by }}</strong>
                   <span class="meta-date">{{ a.created_at?.slice(0, 10) }}</span>
                 </div>
-                <div class="answer-content tiptap-output" v-html="a.answer" />
+                <TiptapPreview :modelValue="a.answer" />
                 <div v-for="r in a.replies" :key="r.id" class="reply">
                   <span class="material-symbols-outlined" style="font-size:11px;color:var(--text-muted)">subdirectory_arrow_right</span>
                   <strong>{{ r.reply_by }}</strong>
-                  <span class="reply-text tiptap-output" v-html="r.reply" />
+                  <TiptapPreview :modelValue="r.reply" />
                 </div>
               </div>
             </div>
@@ -200,6 +200,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { formatWeekLabel, getWeekDateRange } from '../utils/week.js'
+import TiptapPreview from '../components/TiptapPreview.vue'
 
 const route = useRoute()
 const loading = ref(true)
@@ -396,8 +397,6 @@ onMounted(fetchHistory)
 .meta-targets { font-size: 12px; color: var(--primary); }
 .meta-date { font-size: 11px; color: var(--text-muted); margin-left: auto; }
 
-.item-content { font-size: 13px; line-height: 1.7; color: var(--text-primary); }
-
 /* 이슈 댓글 */
 .comments-section {
   display: flex; flex-direction: column; gap: 6px;
@@ -423,16 +422,12 @@ onMounted(fetchHistory)
   display: flex; align-items: center; gap: 6px;
   font-size: 12px; color: var(--text-secondary);
 }
-.answer-content { font-size: 13px; color: var(--text-primary); line-height: 1.7; }
-
 /* 대댓글 */
 .reply {
   display: flex; align-items: baseline; gap: 5px;
   padding-left: 12px;
   font-size: 12px; color: var(--text-secondary);
 }
-.reply-text { line-height: 1.6; }
-
 /* 뱃지 */
 .inline-badge {
   display: inline-flex; align-items: center; justify-content: center;
@@ -442,13 +437,4 @@ onMounted(fetchHistory)
 .badge-answered { background: var(--success-light); color: var(--success); }
 .badge-unanswered { width: auto; padding: 0 6px; background: #fff7ed; color: #c2410c; font-size: 10px; border-radius: 4px; }
 
-/* tiptap 렌더링 공통 */
-.tiptap-output :deep(p) { margin: 0 0 4px; }
-.tiptap-output :deep(ul), .tiptap-output :deep(ol) { padding-left: 18px; margin: 4px 0; }
-.tiptap-output :deep(img) { max-width: 100%; border-radius: 4px; }
-.tiptap-output :deep(code) { background: var(--gray-100); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
-.tiptap-output :deep(pre) { background: var(--gray-100); padding: 8px 12px; border-radius: 6px; overflow-x: auto; font-size: 12px; }
-.tiptap-output :deep(blockquote) { border-left: 3px solid var(--outline); margin: 4px 0; padding-left: 10px; color: var(--text-muted); }
-.tiptap-output :deep(table) { border-collapse: collapse; font-size: 12px; }
-.tiptap-output :deep(td), .tiptap-output :deep(th) { border: 1px solid var(--outline); padding: 4px 8px; }
 </style>
