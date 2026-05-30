@@ -55,9 +55,8 @@ def delete_notification(nid: str, user: dict = Depends(get_current_user)):
         ).fetchone()
         if not notif:
             raise HTTPException(status_code=404, detail="알림을 찾을 수 없습니다")
-        # 파트장·그룹장 대상 question_tagged: 답변 없으면 삭제 불가
-        if (notif["type"] == "question_tagged"
-                and user.get("role") in ("group_leader", "part_leader")):
+        # question_tagged 알림: 해당 질문에 답변이 없으면 삭제 불가
+        if notif["type"] == "question_tagged":
             m = re.search(r'focusQuestion=([^&]+)', notif["link"] or "")
             if m:
                 qid = m.group(1)

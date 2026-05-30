@@ -95,8 +95,12 @@ async function load() {
 }
 
 async function remove(id) {
-  await axios.delete(`/api/notifications/${id}`)
-  items.value = items.value.filter(n => n.id !== id)
+  try {
+    await axios.delete(`/api/notifications/${id}`)
+    items.value = items.value.filter(n => n.id !== id)
+  } catch (e) {
+    alert(e.response?.data?.detail || '삭제할 수 없습니다')
+  }
 }
 
 async function markAllRead() {
