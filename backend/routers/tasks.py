@@ -96,6 +96,81 @@ def get_reusable_task_ids():
     return {"reusable_ids": get_reusable_ids(tasks, "T")}
 
 
+@router.get("/{task_id}/history")
+def get_task_history(task_id: str):
+    tasks = _load()
+    task = next((t for t in tasks if t["id"] == task_id), None)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    sub_task_ids = [st["id"] for st in task.get("sub_tasks", [])]
+    all_ids = [task_id] + sub_task_ids
+
+    # 이슈 조회
+    all_issues = data_store.load("issues.json").get("issues", [])
+    issues = [i for i in all_issues if i.get("task_id") in all_ids]
+
+    if issues:
+        issue_ids = [i["id"] for i in issues]
+        placeholders = ",".join("?" * len(issue_ids))
+        with data_store.get_conn() as conn:
+            all_comments = [dict(r) for r in conn.execute(
+                f"SELECT * FROM issue_comments WHERE issue_id IN ({placeholders}) ORDER BY created_at",
+                issue_ids,
+            ).fetchall()]
+    else:
+        all_comments = []
+
+    for iss in issues:
+        top = [c for c in all_comments if c["issue_id"] == iss["id"] and not c["parent_id"]]
+        for c in top:
+            c["replies"] = [r for r in all_comments if r["parent_id"] == c["id"]]
+        iss["comments"] = top
+
+    # Q&A 조회
+    qna_data = data_store.load("qna.json")
+    all_questions = qna_data.get("questions", [])
+    all_answers = qna_data.get("answers", [])
+    questions = [q for q in all_questions if q.get("task_id") in all_ids]
+
+    with data_store.get_conn() as conn:
+        all_replies = [dict(r) for r in conn.execute(
+            "SELECT * FROM answer_replies ORDER BY created_at"
+        ).fetchall()]
+
+    q_ids = {q["id"] for q in questions}
+    for q in questions:
+        q_answers = []
+        for a in all_answers:
+            if a["question_id"] == q["id"]:
+                a_dict = dict(a)
+                a_dict["replies"] = [r for r in all_replies if r["answer_id"] == a["id"]]
+                q_answers.append(a_dict)
+        q["answers"] = q_answers
+
+    # 컨플루언스 링크 조회
+    all_links = data_store.load("confluence_links.json").get("links", [])
+    links = [l for l in all_links if l.get("task_id") in all_ids]
+
+    # 주차별 그룹핑
+    week_map: dict = {}
+    for iss in issues:
+        w = iss.get("week", "")
+        week_map.setdefault(w, {"week": w, "issues": [], "questions": [], "confluence_links": []})
+        week_map[w]["issues"].append(iss)
+    for q in questions:
+        w = q.get("week", "")
+        week_map.setdefault(w, {"week": w, "issues": [], "questions": [], "confluence_links": []})
+        week_map[w]["questions"].append(q)
+    for lnk in links:
+        w = lnk.get("week", "")
+        week_map.setdefault(w, {"week": w, "issues": [], "questions": [], "confluence_links": []})
+        week_map[w]["confluence_links"].append(lnk)
+
+    weeks = sorted(week_map.values(), key=lambda x: x["week"], reverse=True)
+    return {"task": task, "weeks": weeks}
+
+
 @router.get("/{task_id}", response_model=Task)
 def get_task(task_id: str):
     tasks = _load()

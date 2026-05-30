@@ -117,12 +117,12 @@
                 <TiptapEditor v-model="editingReplyText" height="100px" />
                 <div class="flex gap-4 mt-8" style="justify-content:flex-end">
                   <button class="btn btn-ghost btn-xs" @click="cancelEditReply">취소</button>
-                  <button class="btn btn-primary btn-xs" @click="updateReply(ans.id, rep.id)" :disabled="!editingReplyText.trim()">저장</button>
+                  <button class="btn btn-primary btn-xs" @click="updateReply(ans.id, rep.id)" :disabled="!hasContent(editingReplyText)">저장</button>
                 </div>
               </div>
             </template>
             <template v-else>
-              <span class="reply-text">{{ rep.reply }}</span>
+              <TiptapPreview :modelValue="rep.reply" />
               <span class="answer-by">
                 — {{ rep.reply_by }}
                 <span class="answer-date">{{ rep.updated_at ?? rep.created_at }}</span>
@@ -140,10 +140,10 @@
           <div class="reply-line"></div>
           <span class="badge badge-gray">↩</span>
           <div style="flex:1">
-            <input v-model="newReplyText" class="reply-input" placeholder="답글을 입력하세요..." @keydown.enter.exact.prevent="addReply(ans.id, qa)" />
+            <TiptapEditor v-model="newReplyText" height="100px" placeholder="답글을 입력하세요..." />
             <div class="flex gap-4 mt-6" style="justify-content:flex-end">
               <button class="btn btn-ghost btn-xs" @click="cancelAddReply">취소</button>
-              <button class="btn btn-primary btn-xs" @click="addReply(ans.id, qa)" :disabled="!newReplyText.trim()">등록</button>
+              <button class="btn btn-primary btn-xs" @click="addReply(ans.id, qa)" :disabled="!hasContent(newReplyText)">등록</button>
             </div>
           </div>
         </div>
@@ -430,7 +430,7 @@ function _updateRepliesInQuestion(qa, answerId, fn) {
 }
 
 async function addReply(answerId, qa) {
-  if (!newReplyText.value.trim()) return
+  if (!hasContent(newReplyText.value)) return
   try {
     const { data } = await axios.post(`/api/qna/answers/${answerId}/replies`, {
       reply: newReplyText.value.trim(),
@@ -442,7 +442,7 @@ async function addReply(answerId, qa) {
 }
 
 async function updateReply(answerId, replyId) {
-  if (!editingReplyText.value.trim()) return
+  if (!hasContent(editingReplyText.value)) return
   try {
     const { data } = await axios.put(`/api/qna/answers/${answerId}/replies/${replyId}`, {
       reply: editingReplyText.value.trim(),
@@ -521,18 +521,6 @@ async function deleteReply(answerId, replyId) {
   white-space: pre-wrap;
   word-break: break-word;
 }
-.reply-input {
-  width: 100%;
-  padding: 7px 10px;
-  border: 1px solid var(--outline, #e5e7eb);
-  border-radius: 6px;
-  font-size: 13px;
-  background: var(--background, #f8fafc);
-  color: var(--text);
-  outline: none;
-  box-sizing: border-box;
-}
-.reply-input:focus { border-color: var(--primary); background: #fff; }
 .badge-gray {
   background: var(--gray-100, #f3f4f6);
   color: var(--text-muted, #888);

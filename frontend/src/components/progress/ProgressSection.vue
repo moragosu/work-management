@@ -40,41 +40,51 @@
         <!-- 댓글 영역 -->
         <div class="comment-section">
           <div v-for="c in (iss.comments || [])" :key="c.id" class="comment-item">
-            <div class="comment-row">
+            <div class="comment-meta-row">
               <span class="comment-by">{{ c.comment_by }}</span>
-              <span class="comment-text">{{ c.comment }}</span>
               <span class="comment-date">{{ c.updated_at ?? c.created_at }}</span>
               <div v-if="!readonly" class="comment-actions">
-                <button class="btn btn-ghost btn-xs" @click="startReplyToComment(iss.id, c.id)">↩</button>
+                <button class="btn btn-ghost btn-xs" @click="startReplyToComment(iss.id, c.id)">↩ 답글</button>
                 <button v-if="c.created_by === auth.user?.username || auth.isAdmin" class="btn btn-ghost btn-xs" @click="startEditComment(iss.id, c)">수정</button>
                 <button v-if="c.created_by === auth.user?.username || auth.isAdmin" class="btn btn-danger btn-xs" @click="deleteComment(iss.id, c.id)">삭제</button>
               </div>
             </div>
+            <TiptapPreview :modelValue="c.comment" />
             <!-- 대댓글 -->
-            <div v-for="r in (c.replies || [])" :key="r.id" class="comment-row comment-reply">
-              <div class="reply-indent"></div>
-              <span class="comment-by">{{ r.comment_by }}</span>
-              <span class="comment-text">{{ r.comment }}</span>
-              <span class="comment-date">{{ r.updated_at ?? r.created_at }}</span>
-              <div v-if="!readonly" class="comment-actions">
-                <button v-if="r.created_by === auth.user?.username || auth.isAdmin" class="btn btn-ghost btn-xs" @click="startEditComment(iss.id, r)">수정</button>
-                <button v-if="r.created_by === auth.user?.username || auth.isAdmin" class="btn btn-danger btn-xs" @click="deleteComment(iss.id, r.id)">삭제</button>
+            <div v-for="r in (c.replies || [])" :key="r.id" class="reply-item">
+              <div class="reply-indent-line"></div>
+              <div class="reply-body">
+                <div class="comment-meta-row">
+                  <span class="comment-by">{{ r.comment_by }}</span>
+                  <span class="comment-date">{{ r.updated_at ?? r.created_at }}</span>
+                  <div v-if="!readonly" class="comment-actions">
+                    <button v-if="r.created_by === auth.user?.username || auth.isAdmin" class="btn btn-ghost btn-xs" @click="startEditComment(iss.id, r)">수정</button>
+                    <button v-if="r.created_by === auth.user?.username || auth.isAdmin" class="btn btn-danger btn-xs" @click="deleteComment(iss.id, r.id)">삭제</button>
+                  </div>
+                </div>
+                <TiptapPreview :modelValue="r.comment" />
               </div>
             </div>
             <!-- 대댓글 입력 폼 -->
-            <div v-if="replyingToCommentId === c.id" class="comment-row comment-reply">
-              <div class="reply-indent"></div>
-              <input v-model="newCommentText" class="comment-input" placeholder="답글..." @keydown.enter.exact.prevent="submitComment(iss.id, c.id)" />
-              <button class="btn btn-primary btn-xs" @click="submitComment(iss.id, c.id)" :disabled="!newCommentText.trim()">등록</button>
-              <button class="btn btn-ghost btn-xs" @click="cancelComment">취소</button>
+            <div v-if="replyingToCommentId === c.id" class="reply-editor-form">
+              <div class="reply-indent-line"></div>
+              <div style="flex:1">
+                <TiptapEditor v-model="newCommentText" height="100px" placeholder="답글을 입력하세요..." />
+                <div class="flex gap-4 mt-6" style="justify-content:flex-end">
+                  <button class="btn btn-ghost btn-xs" @click="cancelComment">취소</button>
+                  <button class="btn btn-primary btn-xs" @click="submitComment(iss.id, c.id)" :disabled="!hasContent(newCommentText)">등록</button>
+                </div>
+              </div>
             </div>
           </div>
           <!-- 댓글 입력 -->
           <div v-if="!readonly">
-            <div v-if="commentingIssueId === iss.id && !replyingToCommentId" class="comment-row">
-              <input v-model="newCommentText" class="comment-input" placeholder="댓글을 입력하세요..." @keydown.enter.exact.prevent="submitComment(iss.id, null)" />
-              <button class="btn btn-primary btn-xs" @click="submitComment(iss.id, null)" :disabled="!newCommentText.trim()">등록</button>
-              <button class="btn btn-ghost btn-xs" @click="cancelComment">취소</button>
+            <div v-if="commentingIssueId === iss.id && !replyingToCommentId" class="comment-editor-form">
+              <TiptapEditor v-model="newCommentText" height="120px" placeholder="댓글을 입력하세요..." />
+              <div class="flex gap-4 mt-6" style="justify-content:flex-end">
+                <button class="btn btn-ghost btn-xs" @click="cancelComment">취소</button>
+                <button class="btn btn-primary btn-xs" @click="submitComment(iss.id, null)" :disabled="!hasContent(newCommentText)">등록</button>
+              </div>
             </div>
             <button v-else-if="commentingIssueId !== iss.id" class="btn btn-ghost btn-xs mt-4" @click="startComment(iss.id)">+ 댓글</button>
           </div>
@@ -219,7 +229,7 @@ function _updateComments(issueId, fn) {
 }
 
 async function submitComment(issueId, parentId) {
-  if (!newCommentText.value.trim()) return
+  if (!hasContent(newCommentText.value)) return
   try {
     if (editingCommentId.value) {
       const { data } = await axios.put(`/api/issues/${issueId}/comments/${editingCommentId.value}`, { comment: newCommentText.value.trim() })
@@ -284,43 +294,47 @@ async function deleteComment(issueId, commentId) {
   padding-top: 8px;
   border-top: 1px dashed var(--outline, #e5e7eb);
 }
-.comment-item { margin-bottom: 4px; }
-.comment-row {
+.comment-item {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--outline, #e5e7eb);
+}
+.comment-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.comment-meta-row {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 6px;
-  border-radius: 6px;
-  font-size: 13px;
+  margin-bottom: 4px;
+  font-size: 12px;
 }
-.comment-row:hover { background: var(--gray-50, #f9fafb); }
-.comment-reply { padding-left: 16px; }
-.reply-indent {
-  width: 2px;
-  height: 16px;
-  background: var(--outline, #e5e7eb);
-  border-radius: 1px;
-  flex-shrink: 0;
-}
+.comment-meta-row:hover .comment-actions { opacity: 1; }
 .comment-by {
   font-weight: 600;
   color: var(--text-secondary, #555);
   white-space: nowrap;
-  flex-shrink: 0;
 }
-.comment-text { flex: 1; color: var(--text); word-break: break-word; }
-.comment-date { font-size: 11px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
+.comment-date { font-size: 11px; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
 .comment-actions { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; }
-.comment-row:hover .comment-actions { opacity: 1; }
-.comment-input {
-  flex: 1;
-  padding: 5px 8px;
-  border: 1px solid var(--outline, #e5e7eb);
-  border-radius: 6px;
-  font-size: 13px;
-  background: var(--background, #f8fafc);
-  color: var(--text);
-  outline: none;
+.reply-item {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  padding-left: 8px;
 }
-.comment-input:focus { border-color: var(--primary); background: #fff; }
+.reply-indent-line {
+  width: 2px;
+  flex-shrink: 0;
+  background: var(--outline, #e5e7eb);
+  border-radius: 1px;
+  align-self: stretch;
+  min-height: 20px;
+}
+.reply-body { flex: 1; min-width: 0; }
+.reply-editor-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  padding-left: 8px;
+}
+.comment-editor-form { margin-top: 8px; }
 </style>

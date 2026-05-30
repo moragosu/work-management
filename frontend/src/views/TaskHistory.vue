@@ -1,0 +1,454 @@
+<template>
+  <div class="page-container">
+    <div v-if="loading" class="loading-state">
+      <span class="material-symbols-outlined spin">progress_activity</span>
+      불러오는 중…
+    </div>
+
+    <template v-else-if="task">
+      <!-- 헤더 -->
+      <div class="page-header">
+        <button class="back-btn" @click="$router.back()">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <div class="header-content">
+          <div class="header-top">
+            <span v-if="task.objective_id" class="obj-badge">{{ task.objective_id }}</span>
+            <h2 class="page-title">{{ task.id }} · {{ task.name }}</h2>
+          </div>
+          <div class="header-meta">
+            <span v-if="task.target" class="meta-chip">{{ task.target }}</span>
+            <span v-for="m in task.members" :key="m.staff_id" class="meta-chip member-chip">
+              <span class="material-symbols-outlined" style="font-size:12px">person</span>
+              {{ m.name }}
+            </span>
+            <span class="meta-chip week-count-chip">{{ weeks.length }}개 주차 이력</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 소과제 탭 (있는 경우) -->
+      <div v-if="task.sub_tasks?.length" class="subtask-tabs card">
+        <div class="card-body tab-body">
+          <button
+            class="tab-btn"
+            :class="{ active: activeSubTask === null }"
+            @click="activeSubTask = null"
+          >전체</button>
+          <button
+            v-for="st in task.sub_tasks"
+            :key="st.id"
+            class="tab-btn"
+            :class="{ active: activeSubTask === st.id, done: st.done }"
+            @click="activeSubTask = st.id"
+          >
+            <span v-if="st.done" class="material-symbols-outlined" style="font-size:13px;color:var(--success)">check_circle</span>
+            {{ st.id }} · {{ st.name }}
+          </button>
+        </div>
+      </div>
+
+      <!-- 데이터 없음 -->
+      <div v-if="filteredWeeks.length === 0" class="empty-state card">
+        <div class="card-body">
+          <span class="material-symbols-outlined empty-icon">history</span>
+          <p>등록된 이력이 없습니다.</p>
+        </div>
+      </div>
+
+      <!-- 주차별 타임라인 -->
+      <div v-for="(entry, idx) in filteredWeeks" :key="entry.week" class="week-card card">
+        <div class="week-header" @click="toggleWeek(entry.week)">
+          <div class="week-header-left">
+            <span class="material-symbols-outlined week-chevron" :class="{ open: isOpen(entry.week) }">expand_more</span>
+            <span class="week-label">{{ formatWeekLabel(entry.week) }}</span>
+            <span class="week-range">{{ getWeekDateRange(entry.week) }}</span>
+          </div>
+          <div class="week-badges">
+            <span v-if="visibleIssues(entry).length" class="w-badge badge-issue">
+              <span class="material-symbols-outlined" style="font-size:12px">warning</span>
+              이슈 {{ visibleIssues(entry).length }}
+            </span>
+            <span v-if="visibleQuestions(entry).length" class="w-badge badge-qa">
+              <span class="material-symbols-outlined" style="font-size:12px">forum</span>
+              Q&A {{ visibleQuestions(entry).length }}
+            </span>
+            <span v-if="visibleLinks(entry).length" class="w-badge badge-link">
+              <span class="material-symbols-outlined" style="font-size:12px">link</span>
+              링크 {{ visibleLinks(entry).length }}
+            </span>
+          </div>
+        </div>
+
+        <div v-if="isOpen(entry.week)" class="week-body">
+
+          <!-- 컨플루언스 링크 -->
+          <div v-if="visibleLinks(entry).length" class="history-block">
+            <div class="block-title">
+              <span class="material-symbols-outlined block-icon icon-link">link</span>
+              컨플루언스
+            </div>
+            <div class="link-list">
+              <a
+                v-for="lnk in visibleLinks(entry)"
+                :key="lnk.id"
+                :href="lnk.url"
+                target="_blank"
+                rel="noopener"
+                class="confluence-link"
+              >
+                <span class="material-symbols-outlined" style="font-size:14px">open_in_new</span>
+                <span class="link-tid">{{ lnk.task_id }}</span>
+                <span class="link-url">{{ lnk.url }}</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- 이슈 목록 -->
+          <div v-if="visibleIssues(entry).length" class="history-block">
+            <div class="block-title">
+              <span class="material-symbols-outlined block-icon icon-issue">warning</span>
+              이슈
+            </div>
+            <div v-for="iss in visibleIssues(entry)" :key="iss.id" class="history-item issue-item">
+              <div class="item-meta">
+                <span class="meta-tid">{{ iss.task_id }}</span>
+                <span class="meta-who">
+                  <span class="material-symbols-outlined" style="font-size:12px">person</span>
+                  {{ iss.assignee }}
+                </span>
+                <span class="meta-date">{{ iss.created_at }}</span>
+              </div>
+              <div class="item-content tiptap-output" v-html="iss.issue" />
+
+              <!-- 이슈 댓글 -->
+              <div v-if="iss.comments?.length" class="comments-section">
+                <div v-for="c in iss.comments" :key="c.id" class="comment">
+                  <div class="comment-meta">
+                    <span class="material-symbols-outlined" style="font-size:12px;color:var(--text-muted)">subdirectory_arrow_right</span>
+                    <strong>{{ c.comment_by }}</strong>
+                    <span class="meta-date">{{ c.created_at?.slice(0, 10) }}</span>
+                  </div>
+                  <div class="comment-body tiptap-output" v-html="c.comment" />
+                  <div v-for="r in c.replies" :key="r.id" class="reply">
+                    <span class="material-symbols-outlined" style="font-size:11px;color:var(--text-muted)">subdirectory_arrow_right</span>
+                    <strong>{{ r.comment_by }}</strong>
+                    <span class="reply-text tiptap-output" v-html="r.comment" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Q&A 목록 -->
+          <div v-if="visibleQuestions(entry).length" class="history-block">
+            <div class="block-title">
+              <span class="material-symbols-outlined block-icon icon-qa">forum</span>
+              의견/질문
+            </div>
+            <div v-for="q in visibleQuestions(entry)" :key="q.id" class="history-item qa-item">
+              <div class="item-meta">
+                <span class="meta-tid">{{ q.task_id }}</span>
+                <span class="meta-who">
+                  <span class="material-symbols-outlined" style="font-size:12px">person</span>
+                  {{ q.questioner }}
+                </span>
+                <span v-if="q.targets?.length" class="meta-targets">
+                  → {{ q.targets.join(', ') }}
+                </span>
+                <span class="meta-date">{{ q.created_at?.slice(0, 10) }}</span>
+              </div>
+              <div class="item-content tiptap-output" v-html="q.question" />
+
+              <!-- 답변 없음 -->
+              <div v-if="!q.answers?.length" class="no-answer">
+                <span class="inline-badge badge-unanswered">미답변</span>
+              </div>
+
+              <!-- 답변 목록 -->
+              <div v-for="a in q.answers" :key="a.id" class="answer">
+                <div class="answer-meta">
+                  <span class="inline-badge badge-answered">A</span>
+                  <strong>{{ a.answer_by }}</strong>
+                  <span class="meta-date">{{ a.created_at?.slice(0, 10) }}</span>
+                </div>
+                <div class="answer-content tiptap-output" v-html="a.answer" />
+                <div v-for="r in a.replies" :key="r.id" class="reply">
+                  <span class="material-symbols-outlined" style="font-size:11px;color:var(--text-muted)">subdirectory_arrow_right</span>
+                  <strong>{{ r.reply_by }}</strong>
+                  <span class="reply-text tiptap-output" v-html="r.reply" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </template>
+
+    <div v-else class="empty-state card">
+      <div class="card-body">
+        <span class="material-symbols-outlined empty-icon">error_outline</span>
+        <p>과제를 찾을 수 없습니다.</p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import axios from 'axios'
+import { formatWeekLabel, getWeekDateRange } from '../utils/week.js'
+
+const route = useRoute()
+const loading = ref(true)
+const task = ref(null)
+const weeks = ref([])
+const activeSubTask = ref(null)
+const openWeeks = ref(new Set())
+
+async function fetchHistory() {
+  loading.value = true
+  try {
+    const { data } = await axios.get(`/api/tasks/${route.params.id}/history`)
+    task.value = data.task
+    weeks.value = data.weeks
+    // 최근 2개 주차 기본 펼침
+    data.weeks.slice(0, 2).forEach(w => openWeeks.value.add(w.week))
+  } finally {
+    loading.value = false
+  }
+}
+
+function toggleWeek(week) {
+  if (openWeeks.value.has(week)) openWeeks.value.delete(week)
+  else openWeeks.value.add(week)
+}
+function isOpen(week) { return openWeeks.value.has(week) }
+
+const filteredWeeks = computed(() => {
+  if (!activeSubTask.value) return weeks.value
+  return weeks.value.filter(entry =>
+    visibleIssues(entry).length ||
+    visibleQuestions(entry).length ||
+    visibleLinks(entry).length
+  )
+})
+
+function visibleIssues(entry) {
+  if (!activeSubTask.value) return entry.issues
+  return entry.issues.filter(i => i.task_id === activeSubTask.value)
+}
+function visibleQuestions(entry) {
+  if (!activeSubTask.value) return entry.questions
+  return entry.questions.filter(q => q.task_id === activeSubTask.value)
+}
+function visibleLinks(entry) {
+  if (!activeSubTask.value) return entry.confluence_links
+  return entry.confluence_links.filter(l => l.task_id === activeSubTask.value)
+}
+
+onMounted(fetchHistory)
+</script>
+
+<style scoped>
+/* 로딩 */
+.loading-state {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--text-muted); font-size: 13px; padding: 40px 0;
+}
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 헤더 */
+.page-header {
+  display: flex; align-items: flex-start; gap: 12px;
+  margin-bottom: 16px;
+}
+.back-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; flex-shrink: 0;
+  background: var(--gray-50); border: 1px solid var(--outline);
+  border-radius: 8px; cursor: pointer; color: var(--text-secondary);
+  transition: background 0.15s;
+}
+.back-btn:hover { background: var(--primary-light); color: var(--primary); }
+.header-content { flex: 1; min-width: 0; }
+.header-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.obj-badge {
+  padding: 2px 8px; border-radius: 10px;
+  background: var(--primary-light); color: var(--primary);
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+.page-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.header-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.meta-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 10px;
+  background: var(--gray-100); color: var(--text-secondary);
+  font-size: 11px;
+}
+.member-chip { background: #f0fdf4; color: #15803d; }
+.week-count-chip { background: #eff6ff; color: var(--primary); }
+
+/* 소과제 탭 */
+.subtask-tabs { margin-bottom: 12px; }
+.tab-body { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 12px; border-radius: 16px;
+  border: 1px solid var(--outline); background: var(--gray-50);
+  font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  cursor: pointer; transition: all 0.15s;
+}
+.tab-btn:hover { border-color: var(--primary); color: var(--primary); }
+.tab-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.tab-btn.done { opacity: 0.6; }
+
+/* 빈 상태 */
+.empty-state .card-body {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; padding: 40px 0; color: var(--text-muted);
+}
+.empty-icon { font-size: 36px; }
+
+/* 주차 카드 */
+.week-card { margin-bottom: 12px; overflow: hidden; }
+.week-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; cursor: pointer; user-select: none;
+  gap: 8px;
+  transition: background 0.15s;
+}
+.week-header:hover { background: var(--gray-50); }
+.week-header-left { display: flex; align-items: center; gap: 8px; }
+.week-chevron {
+  font-size: 18px; color: var(--text-muted);
+  transition: transform 0.2s; flex-shrink: 0;
+}
+.week-chevron.open { transform: rotate(180deg); }
+.week-label { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.week-range { font-size: 12px; color: var(--text-muted); }
+.week-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.w-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;
+}
+.badge-issue { background: #fff7ed; color: #c2410c; }
+.badge-qa { background: #eff6ff; color: var(--primary); }
+.badge-link { background: #f0fdf4; color: #15803d; }
+
+/* 주차 본문 */
+.week-body {
+  padding: 0 16px 16px;
+  display: flex; flex-direction: column; gap: 16px;
+  border-top: 1px solid var(--outline);
+}
+
+/* 블록 */
+.history-block { display: flex; flex-direction: column; gap: 8px; }
+.block-title {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700;
+  padding-top: 12px;
+}
+.block-icon { font-size: 15px; }
+.icon-issue { color: var(--warning); }
+.icon-qa { color: var(--primary); }
+.icon-link { color: #16a34a; }
+
+/* 컨플루언스 링크 */
+.link-list { display: flex; flex-direction: column; gap: 4px; }
+.confluence-link {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 10px; border-radius: 6px;
+  background: #f0fdf4; border: 1px solid #bbf7d0;
+  color: #15803d; text-decoration: none; font-size: 12px;
+  transition: background 0.15s;
+}
+.confluence-link:hover { background: #dcfce7; }
+.link-tid { font-weight: 600; flex-shrink: 0; }
+.link-url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.8; }
+
+/* 이슈 / QA 아이템 */
+.history-item {
+  border-radius: 8px;
+  border: 1px solid var(--outline);
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.issue-item { border-left: 3px solid var(--warning); }
+.qa-item { border-left: 3px solid var(--primary); }
+
+.item-meta {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+}
+.meta-tid {
+  font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 4px;
+  background: var(--gray-100); color: var(--text-muted);
+}
+.meta-who {
+  display: flex; align-items: center; gap: 3px;
+  font-size: 12px; font-weight: 600; color: var(--text-primary);
+}
+.meta-targets { font-size: 12px; color: var(--primary); }
+.meta-date { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+
+.item-content { font-size: 13px; line-height: 1.7; color: var(--text-primary); }
+
+/* 이슈 댓글 */
+.comments-section {
+  display: flex; flex-direction: column; gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--outline);
+}
+.comment { display: flex; flex-direction: column; gap: 2px; }
+.comment-meta {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; color: var(--text-secondary);
+}
+.comment-body { font-size: 12px; color: var(--text-secondary); padding-left: 18px; line-height: 1.6; }
+
+/* 답변 */
+.no-answer { padding-top: 4px; }
+.answer {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 6px;
+}
+.answer-meta {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text-secondary);
+}
+.answer-content { font-size: 13px; color: var(--text-primary); line-height: 1.7; }
+
+/* 대댓글 */
+.reply {
+  display: flex; align-items: baseline; gap: 5px;
+  padding-left: 12px;
+  font-size: 12px; color: var(--text-secondary);
+}
+.reply-text { line-height: 1.6; }
+
+/* 뱃지 */
+.inline-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 4px;
+  font-size: 10px; font-weight: 700; flex-shrink: 0;
+}
+.badge-answered { background: var(--success-light); color: var(--success); }
+.badge-unanswered { width: auto; padding: 0 6px; background: #fff7ed; color: #c2410c; font-size: 10px; border-radius: 4px; }
+
+/* tiptap 렌더링 공통 */
+.tiptap-output :deep(p) { margin: 0 0 4px; }
+.tiptap-output :deep(ul), .tiptap-output :deep(ol) { padding-left: 18px; margin: 4px 0; }
+.tiptap-output :deep(img) { max-width: 100%; border-radius: 4px; }
+.tiptap-output :deep(code) { background: var(--gray-100); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+.tiptap-output :deep(pre) { background: var(--gray-100); padding: 8px 12px; border-radius: 6px; overflow-x: auto; font-size: 12px; }
+.tiptap-output :deep(blockquote) { border-left: 3px solid var(--outline); margin: 4px 0; padding-left: 10px; color: var(--text-muted); }
+.tiptap-output :deep(table) { border-collapse: collapse; font-size: 12px; }
+.tiptap-output :deep(td), .tiptap-output :deep(th) { border: 1px solid var(--outline); padding: 4px 8px; }
+</style>

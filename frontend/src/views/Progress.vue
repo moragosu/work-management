@@ -97,6 +97,9 @@
                   <span v-for="m in taskMembers(task.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
                   <span v-if="taskMembers(task.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
                 </template>
+                <button class="btn btn-ghost btn-xs" style="margin-left:4px" @click="router.push(`/tasks/${task.id}/history`)" data-tooltip="주차별 전체 이력 보기">
+                  <span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">history</span>이력
+                </button>
               </div>
             </div>
 
@@ -279,6 +282,9 @@
                   >{{ m.name }}</span>
                   <span v-if="taskMembers(task.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
                 </template>
+                <button class="btn btn-ghost btn-xs" style="margin-left:4px" @click="router.push(`/tasks/${task.id}/history`)" data-tooltip="주차별 전체 이력 보기">
+                  <span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">history</span>이력
+                </button>
               </div>
             </div>
 
@@ -439,7 +445,7 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { useToast } from '../composables/useToast.js'
 import { parseIds } from '../utils/parseIds.js'
@@ -449,6 +455,7 @@ import ProgressSection from '../components/progress/ProgressSection.vue'
 import QASection from '../components/progress/QASection.vue'
 
 const route = useRoute()
+const router = useRouter()
 
 const tasks = ref([])
 const objectives = ref([])
