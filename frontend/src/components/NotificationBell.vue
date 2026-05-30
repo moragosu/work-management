@@ -144,14 +144,20 @@ onUnmounted(() => {
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: none;
-  background: none;
+  border: 1px solid var(--outline, #e5e7eb);
+  background: var(--surface, #fff);
   cursor: pointer;
   border-radius: 8px;
-  color: var(--text-muted, #888);
-  transition: background 0.15s, color 0.15s;
+  color: var(--text-secondary, #555);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
 }
-.bell-btn:hover { background: var(--gray-100, #f3f4f6); color: var(--text, #111); }
+.bell-btn:hover {
+  background: var(--primary-light, #eff6ff);
+  color: var(--primary, #2563eb);
+  border-color: var(--primary, #2563eb);
+  box-shadow: 0 2px 6px rgba(37,99,235,0.15);
+}
 .bell-btn .material-symbols-outlined { font-size: 22px; }
 .badge {
   position: absolute;
