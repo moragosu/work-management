@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload, settings, issues, go, feedback, auth, notifications
+from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload, settings, issues, issue_comments, go, feedback, auth, notifications
 import uvicorn
 import os
 import data_store
@@ -35,6 +35,7 @@ app.include_router(confluence.router, prefix="/api/confluence", tags=["Confluenc
 app.include_router(upload.router, prefix="/api/upload", tags=["Upload"])
 app.include_router(settings.router, prefix="/api/settings", tags=["Settings"])
 app.include_router(issues.router, prefix="/api/issues", tags=["Issues"])
+app.include_router(issue_comments.router, prefix="/api/issues", tags=["IssueComments"])
 app.include_router(feedback.router, prefix="/api/feedback", tags=["Feedback"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
