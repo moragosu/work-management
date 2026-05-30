@@ -59,16 +59,6 @@
 
       <div v-else class="split-container">
 
-        <!-- ══ 지난주 패널 복원 버튼 ══ -->
-        <button
-          v-if="panelState === 'right'"
-          class="panel-restore-btn"
-          @click="panelState = 'split'"
-          title="지난주 패널 펼치기"
-        >
-          <span class="material-symbols-outlined">chevron_right</span>
-        </button>
-
         <!-- ══ 지난주 패널 ══ -->
         <div v-show="panelState !== 'right'" class="split-panel split-left">
           <div class="panel-header">
@@ -76,7 +66,10 @@
               <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">history</span>
               지난주 · {{ leftWeekDisplay }}
             </span>
-            <button class="panel-collapse-btn" @click="panelState = 'right'" title="지난주 패널 접기">
+            <button class="panel-collapse-btn"
+              @click="panelState = panelState === 'split' ? 'right' : 'split'"
+              :title="panelState === 'split' ? '지난주 패널 접기' : '둘 다 보기'"
+            >
               <span class="material-symbols-outlined">chevron_left</span>
             </button>
           </div>
@@ -239,20 +232,13 @@
           </div>
         </div>
 
-        <!-- ══ 이번주 패널 복원 버튼 ══ -->
-        <button
-          v-if="panelState === 'left'"
-          class="panel-restore-btn panel-restore-right"
-          @click="panelState = 'split'"
-          title="이번주 패널 펼치기"
-        >
-          <span class="material-symbols-outlined">chevron_left</span>
-        </button>
-
         <!-- ══ 이번주 패널 ══ -->
         <div v-show="panelState !== 'left'" class="split-panel split-right">
           <div class="panel-header">
-            <button class="panel-collapse-btn" @click="panelState = 'left'" title="이번주 패널 접기">
+            <button class="panel-collapse-btn"
+              @click="panelState = panelState === 'split' ? 'left' : 'split'"
+              :title="panelState === 'split' ? '이번주 패널 접기' : '둘 다 보기'"
+            >
               <span class="material-symbols-outlined">chevron_right</span>
             </button>
             <span class="panel-title">
