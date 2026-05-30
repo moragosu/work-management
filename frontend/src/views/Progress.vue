@@ -764,7 +764,7 @@ async function handleFocusQuery() {
   }
 
   await nextTick()
-  await new Promise(r => setTimeout(r, 80))
+  await new Promise(r => setTimeout(r, 150))
 
   const targetId = focusQuestion
     ? `qa-${focusQuestion}`
@@ -772,13 +772,15 @@ async function handleFocusQuery() {
       ? `issue-${focusIssueId}`
       : `task-${focusIssue || focusTask}`
 
-  let el = document.getElementById(targetId)
-  if (!el) {
-    await nextTick()
-    await new Promise(r => setTimeout(r, 200))
+  // DOM이 준비될 때까지 최대 3회 재시도
+  let el = null
+  for (const delay of [0, 200, 400]) {
+    if (delay) await new Promise(r => setTimeout(r, delay))
     el = document.getElementById(targetId)
+    if (el) break
   }
   if (!el) return
+
   el.scrollIntoView({ behavior: 'smooth', block: 'center' })
   el.classList.add('highlight-focus')
   setTimeout(() => el?.classList.remove('highlight-focus'), 2200)
@@ -811,11 +813,14 @@ onMounted(fetchAll)
 
 // 알림 클릭 등으로 같은 페이지에서 쿼리 파라미터가 바뀌면 week·focus 처리
 watch(() => route.query, async (q, prev) => {
+  let reloaded = false
   if (q.week && q.week !== prev?.week) {
     selectedWeek.value = q.week
     await onWeekChange()
+    reloaded = true
   }
-  if (q.focusQuestion !== prev?.focusQuestion || q.focusIssueId !== prev?.focusIssueId) {
+  const focusChanged = q.focusQuestion !== prev?.focusQuestion || q.focusIssueId !== prev?.focusIssueId
+  if (focusChanged || reloaded) {
     await handleFocusQuery()
   }
 })

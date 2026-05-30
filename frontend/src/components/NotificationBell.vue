@@ -22,7 +22,10 @@
           >
             <span class="bell-item-icon material-symbols-outlined" :style="{ color: typeColor(n.type) }">{{ typeIcon(n.type) }}</span>
             <div class="bell-item-body">
-              <div class="bell-item-title">{{ n.title }}</div>
+              <div class="bell-item-title">
+                {{ n.title }}
+                <span v-if="weekLabel(n.link)" class="bell-item-week">{{ weekLabel(n.link) }}</span>
+              </div>
               <div class="bell-item-msg">{{ n.message }}</div>
               <div class="bell-item-time">{{ formatTime(n.created_at) }}</div>
             </div>
@@ -64,6 +67,15 @@ const TYPE_COLORS = {
 }
 function typeIcon(type)  { return TYPE_ICONS[type]  || 'notifications' }
 function typeColor(type) { return TYPE_COLORS[type] || '#6b7280' }
+
+function weekLabel(link) {
+  if (!link) return ''
+  const m = link.match(/[?&]week=([^&]+)/)
+  if (!m) return ''
+  // 예: 2025-W21 → 21주차
+  const w = m[1].match(/(\d{4})-W(\d+)/)
+  return w ? `${w[1].slice(2)}년 ${parseInt(w[2])}주차` : m[1]
+}
 
 function formatTime(iso) {
   if (!iso) return ''
@@ -245,7 +257,24 @@ onUnmounted(() => {
 }
 .bell-item-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
 .bell-item-body { flex: 1; min-width: 0; }
-.bell-item-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.bell-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.bell-item-week {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--gray-100, #f3f4f6);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
 .bell-item-msg { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
 .bell-item-time { font-size: 11px; color: var(--text-muted); }
 .bell-item-del {
