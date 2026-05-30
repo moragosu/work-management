@@ -40,7 +40,11 @@
           </template>
           <template v-else>
             <!-- 질문자 / 대상자 표시 -->
-            <div v-if="qa.questioner || (qa.targets && qa.targets.length > 0)" class="question-targets">
+            <div class="question-targets">
+              <span v-if="qa.answers.length === 0" class="badge-pending">
+                <span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px">hourglass_empty</span>
+                답변 대기
+              </span>
               <span v-if="qa.questioner" class="badge badge-purple" style="font-size:11px">{{ qa.questioner }}</span>
               <template v-if="qa.targets && qa.targets.length > 0">
                 <span class="material-symbols-outlined" style="font-size:13px;color:var(--text-muted)">arrow_forward</span>
@@ -187,9 +191,10 @@
         </div>
       </div>
       <TiptapEditor v-model="newQuestionText" height="160px" @image-uploaded="url => addQuestionUploads.push(url)" />
-      <div class="flex gap-8 mt-8" style="justify-content:flex-end">
+      <div class="flex gap-8 mt-8" style="align-items:center;justify-content:flex-end">
+        <span v-if="newTargets.length === 0" class="target-required-hint">질문 대상을 선택해주세요</span>
         <button class="btn btn-ghost btn-sm" @click="cancelAddQuestion">취소</button>
-        <button class="btn btn-primary btn-sm" @click="addQuestion" :disabled="!hasContent(newQuestionText)">등록</button>
+        <button class="btn btn-primary btn-sm" @click="addQuestion" :disabled="!hasContent(newQuestionText) || newTargets.length === 0">등록</button>
       </div>
     </div>
     <div v-else-if="!readonlyQuestion && auth.isLoggedIn" class="mt-8">
@@ -563,6 +568,23 @@ async function deleteReply(answerId, replyId) {
   color: var(--primary);
   border-color: var(--primary);
   font-weight: 600;
+}
+.badge-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #d97706;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+.target-required-hint {
+  font-size: 12px;
+  color: #d97706;
+  font-weight: 500;
 }
 .target-chip-leader {
   border-color: #8b5cf6;
