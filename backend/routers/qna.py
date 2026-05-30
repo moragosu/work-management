@@ -135,7 +135,7 @@ def delete_question(question_id: str, user: dict = Depends(get_current_user)):
 
 
 @router.post("/answers", status_code=201)
-def create_answer(body: AnswerCreate):
+def create_answer(body: AnswerCreate, user: dict = Depends(get_current_user)):
     questions, answers = _load()
     target_q = next((q for q in questions if q["id"] == body.question_id), None)
     if not target_q:
@@ -146,6 +146,7 @@ def create_answer(body: AnswerCreate):
         "answer": body.answer,
         "answer_by": body.answer_by,
         "images": body.images,
+        "created_by": user["username"],
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }
     answers.append(new_a)
@@ -164,10 +165,12 @@ def create_answer(body: AnswerCreate):
 
 
 @router.put("/answers/{answer_id}")
-def update_answer(answer_id: str, body: AnswerUpdate):
+def update_answer(answer_id: str, body: AnswerUpdate, user: dict = Depends(get_current_user)):
     questions, answers = _load()
     for a in answers:
         if a["id"] == answer_id:
+            if not user.get("is_admin") and a.get("created_by") != user["username"] and a.get("answer_by") != user.get("name"):
+                raise HTTPException(status_code=403, detail="본인이 작성한 답변만 수정할 수 있습니다")
             a["answer"] = body.answer
             a["answer_by"] = body.answer_by
             a["images"] = body.images
@@ -178,9 +181,13 @@ def update_answer(answer_id: str, body: AnswerUpdate):
 
 
 @router.delete("/answers/{answer_id}")
-def delete_answer(answer_id: str):
+def delete_answer(answer_id: str, user: dict = Depends(get_current_user)):
     questions, answers = _load()
     target_a = next((a for a in answers if a["id"] == answer_id), None)
+    if not target_a:
+        raise HTTPException(status_code=404, detail="Answer not found")
+    if not user.get("is_admin") and target_a.get("created_by") != user["username"] and target_a.get("answer_by") != user.get("name"):
+        raise HTTPException(status_code=403, detail="본인이 작성한 답변만 삭제할 수 있습니다")
     answers = [a for a in answers if a["id"] != answer_id]
     _save(questions, answers)
 
