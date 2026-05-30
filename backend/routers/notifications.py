@@ -13,7 +13,21 @@ def list_notifications(user: dict = Depends(get_current_user)):
             "SELECT * FROM notifications WHERE recipient=? ORDER BY created_at DESC",
             (user["username"],)
         ).fetchall()
-    return [dict(r) for r in rows]
+        notifications = [dict(r) for r in rows]
+        # question_tagged 알림: 질문의 현재 답변 유무 확인 (답변 삭제 후에도 실시간 반영)
+        qid_map = {}
+        for n in notifications:
+            if n["type"] == "question_tagged":
+                m = re.search(r'focusQuestion=([^&]+)', n["link"] or "")
+                if m:
+                    qid_map[n["id"]] = m.group(1)
+        answered = set()
+        for nid, qid in qid_map.items():
+            if conn.execute("SELECT 1 FROM answers WHERE question_id=?", (qid,)).fetchone():
+                answered.add(nid)
+        for n in notifications:
+            n["is_pending"] = (n["id"] in qid_map and n["id"] not in answered)
+    return notifications
 
 
 @router.get("/unread-count")
