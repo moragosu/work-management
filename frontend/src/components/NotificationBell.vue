@@ -102,10 +102,15 @@ import { nextTick } from 'vue'
 function positionDropdown() {
   if (!wrapRef.value) return
   const rect = wrapRef.value.getBoundingClientRect()
+  const dropW = 320
+  const vw = window.innerWidth
+  // 버튼 오른쪽에 띄우되, 화면 밖으로 나가면 왼쪽으로 조정
+  let left = rect.right + 8
+  if (left + dropW > vw) left = rect.left - dropW - 8
   dropdownStyle.value = {
     position: 'fixed',
-    top: `${rect.bottom + 6}px`,
-    left: `${rect.left - 280 + rect.width}px`,
+    top: `${rect.top}px`,
+    left: `${left}px`,
     zIndex: 9000,
   }
 }
