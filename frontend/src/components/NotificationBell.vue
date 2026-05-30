@@ -25,6 +25,7 @@
               <div class="bell-item-title">
                 {{ n.title }}
                 <span v-if="weekLabel(n.link)" class="bell-item-week">{{ weekLabel(n.link) }}</span>
+                <span v-if="n.is_pending" class="bell-item-pending">답변 대기</span>
               </div>
               <div class="bell-item-msg">{{ n.message }}</div>
               <div class="bell-item-time">{{ formatTime(n.created_at) }}</div>
@@ -276,6 +277,15 @@ onUnmounted(() => {
   font-weight: 500;
   color: var(--text-muted);
   background: var(--gray-100, #f3f4f6);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+.bell-item-pending {
+  font-size: 10px;
+  font-weight: 600;
+  color: #d97706;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
   padding: 1px 6px;
   border-radius: 8px;
 }
