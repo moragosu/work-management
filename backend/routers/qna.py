@@ -77,7 +77,7 @@ def create_question(body: QuestionCreate, user: dict = Depends(get_current_user)
     # 알림: 질문 대상자에게
     preview = body.question[:40].replace('\n', ' ')
     for target_name in body.targets:
-        recipient = data_store.get_username_by_name(target_name)
+        recipient = data_store.get_username_for_notification(target_name)
         data_store.insert_notification(
             recipient, "question_tagged",
             "새 질문이 등록되었습니다",
@@ -135,8 +135,8 @@ def create_answer(body: AnswerCreate):
     _save(questions, answers)
     # 알림: 질문자에게
     questioner_name = target_q.get("questioner", "")
-    recipient = data_store.get_username_by_name(questioner_name)
-    if recipient and recipient != data_store.get_username_by_name(body.answer_by):
+    recipient = data_store.get_username_for_notification(questioner_name)
+    if recipient and recipient != data_store.get_username_for_notification(body.answer_by):
         data_store.insert_notification(
             recipient, "answer_received",
             "답변이 달렸습니다",

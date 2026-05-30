@@ -182,7 +182,7 @@
                     <QASection
                       :questions="getLeftQuestionsForTask(st.id)"
                       :staff-list="staffList"
-                      
+                      :qa-leaders="qaLeaders"
                       :task-id="st.id"
                       :week="leftWeek"
                       @update:questions="qs => onLeftQuestionsUpdate(st.id, qs)"
@@ -224,7 +224,7 @@
                 <QASection
                   :questions="getLeftQuestionsForTask(task.id)"
                   :staff-list="staffList"
-                  
+                  :qa-leaders="qaLeaders"
                   :task-id="task.id"
                   :week="leftWeek"
                   @update:questions="qs => onLeftQuestionsUpdate(task.id, qs)"
@@ -381,7 +381,7 @@
                     <QASection
                       :questions="getQuestionsForTask(st.id)"
                       :staff-list="staffList"
-                      
+                      :qa-leaders="qaLeaders"
                       :task-id="st.id"
                       :week="selectedWeek"
                       @update:questions="qs => onQuestionsUpdate(st.id, qs)"
@@ -433,7 +433,7 @@
                 <QASection
                   :questions="getQuestionsForTask(task.id)"
                   :staff-list="staffList"
-                  
+                  :qa-leaders="qaLeaders"
                   :task-id="task.id"
                   :week="selectedWeek"
                   @update:questions="qs => onQuestionsUpdate(task.id, qs)"
@@ -466,6 +466,7 @@ const route = useRoute()
 const tasks = ref([])
 const objectives = ref([])
 const staffList = ref([])
+const qaLeaders = ref([])
 const loading = ref(false)
 const { toastMsg, showToast, toastError } = useToast()
 
@@ -786,13 +787,15 @@ async function handleFocusQuery() {
 async function fetchAll() {
   loading.value = true
   try {
-    const [tRes, oRes, sRes, stRes] = await Promise.all([
+    const [tRes, oRes, sRes, stRes, leadersRes] = await Promise.all([
       axios.get('/api/tasks'), axios.get('/api/okrs'), axios.get('/api/staff'),
       axios.get('/api/settings').catch(() => ({ data: {} })),
+      axios.get('/api/auth/qa-targets').catch(() => ({ data: [] })),
     ])
     tasks.value = tRes.data
     objectives.value = oRes.data
     staffList.value = sRes.data
+    qaLeaders.value = leadersRes.data
     // 소과제 전체 기본 펼침
     const allSubIds = new Set()
     tRes.data.forEach(t => (t.sub_tasks || []).forEach(st => allSubIds.add(st.id)))

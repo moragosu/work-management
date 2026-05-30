@@ -122,6 +122,7 @@
                 <th>아이디</th>
                 <th>이름</th>
                 <th>직책</th>
+                <th>Staff 연결</th>
                 <th>관리자</th>
                 <th>가입일</th>
                 <th></th>
@@ -136,6 +137,17 @@
                     <option value="member">파트원</option>
                     <option value="group_leader">그룹장</option>
                     <option value="part_leader">파트장</option>
+                  </select>
+                </td>
+                <td>
+                  <span v-if="u.role !== 'member'" class="text-muted text-sm">-</span>
+                  <span v-else-if="u.staff_id" class="badge badge-blue" style="font-size:11px;gap:4px;display:inline-flex;align-items:center">
+                    {{ u.staff_name }}
+                    <button style="background:none;border:none;cursor:pointer;padding:0;line-height:1" @click="unlinkStaff(u.username)">✕</button>
+                  </span>
+                  <select v-else @change="linkStaff(u.username, $event.target.value)" class="role-select" style="max-width:110px">
+                    <option value="">연결 선택</option>
+                    <option v-for="s in staffList" :key="s.id" :value="s.id">{{ s.name }}</option>
                   </select>
                 </td>
                 <td>
@@ -340,6 +352,27 @@ async function resetPassword(username, name) {
 function copyTempPw() {
   navigator.clipboard.writeText(tempPwModal.value.password)
   copied.value = true
+}
+
+async function linkStaff(username, staffId) {
+  if (!staffId) return
+  try {
+    await axios.put(`/api/auth/users/${username}/staff-link`, { staff_id: staffId })
+    await fetchUsers()
+    showToast('Staff 연결이 저장되었습니다')
+  } catch (e) {
+    showToast('연결 실패: ' + (e.response?.data?.detail || e.message))
+  }
+}
+
+async function unlinkStaff(username) {
+  try {
+    await axios.put(`/api/auth/users/${username}/staff-link`, { staff_id: null })
+    await fetchUsers()
+    showToast('Staff 연결이 해제되었습니다')
+  } catch (e) {
+    showToast('해제 실패: ' + (e.response?.data?.detail || e.message))
+  }
 }
 
 async function toggleAdmin(username, is_admin) {
