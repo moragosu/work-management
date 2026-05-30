@@ -102,8 +102,8 @@
           </div>
           <div v-if="editingAnswerId !== ans.id" class="qa-actions">
             <button v-if="!readonlyQuestion && auth.isLoggedIn" class="btn btn-ghost btn-xs" @click="startAddReply(ans.id)" data-tooltip="답글 달기">↩ 답글</button>
-            <button v-if="!readonlyQuestion" class="btn btn-ghost btn-xs" @click="startEditAnswer(ans)" data-tooltip="답변 수정">수정</button>
-            <button v-if="!readonlyQuestion" class="btn btn-danger btn-xs" @click="deleteAnswer(ans.id, qa.id)" data-tooltip="답변 삭제">삭제</button>
+            <button v-if="!readonlyQuestion && (auth.isAdmin || auth.user?.name === ans.answer_by)" class="btn btn-ghost btn-xs" @click="startEditAnswer(ans)" data-tooltip="답변 수정">수정</button>
+            <button v-if="!readonlyQuestion && (auth.isAdmin || auth.user?.name === ans.answer_by)" class="btn btn-danger btn-xs" @click="deleteAnswer(ans.id, qa.id)" data-tooltip="답변 삭제">삭제</button>
           </div>
         </div>
 
