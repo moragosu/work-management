@@ -8,11 +8,8 @@
     <Teleport to="body">
       <div v-if="open" class="bell-dropdown" :style="dropdownStyle" ref="dropRef">
         <div class="bell-header">
-          <span class="bell-title">알림</span>
-          <div class="bell-header-actions">
-            <button v-if="items.length > 0" class="btn btn-ghost btn-xs" @click="markAllRead">전체 읽음</button>
-            <RouterLink to="/notifications" class="btn btn-ghost btn-xs" @click="open = false">전체 보기</RouterLink>
-          </div>
+          <span class="bell-title">알림 <span v-if="unreadCount > 0" class="bell-unread-label">{{ unreadCount }}개 안읽음</span></span>
+          <button v-if="items.length > 0" class="btn btn-ghost btn-xs" @click="markAllRead">전체 읽음</button>
         </div>
         <div v-if="items.length === 0" class="bell-empty">새 알림이 없습니다</div>
         <div v-else class="bell-list">
@@ -23,12 +20,15 @@
             :class="{ unread: !n.is_read }"
             @click="handleClick(n)"
           >
-            <span class="bell-item-icon material-symbols-outlined">{{ typeIcon(n.type) }}</span>
+            <span class="bell-item-icon material-symbols-outlined" :style="{ color: typeColor(n.type) }">{{ typeIcon(n.type) }}</span>
             <div class="bell-item-body">
               <div class="bell-item-title">{{ n.title }}</div>
               <div class="bell-item-msg">{{ n.message }}</div>
               <div class="bell-item-time">{{ formatTime(n.created_at) }}</div>
             </div>
+            <button class="bell-item-del" @click.stop="remove(n.id)" data-tooltip="삭제">
+              <span class="material-symbols-outlined">close</span>
+            </button>
           </div>
         </div>
       </div>
@@ -56,7 +56,14 @@ const TYPE_ICONS = {
   issue_assigned: 'warning',
   notice_updated: 'campaign',
 }
-function typeIcon(type) { return TYPE_ICONS[type] || 'notifications' }
+const TYPE_COLORS = {
+  question_tagged: '#2563eb',
+  answer_received: '#16a34a',
+  issue_assigned:  '#d97706',
+  notice_updated:  '#7c3aed',
+}
+function typeIcon(type)  { return TYPE_ICONS[type]  || 'notifications' }
+function typeColor(type) { return TYPE_COLORS[type] || '#6b7280' }
 
 function formatTime(iso) {
   if (!iso) return ''
@@ -71,8 +78,13 @@ function formatTime(iso) {
 async function load() {
   try {
     const { data } = await axios.get('/api/notifications')
-    items.value = data.slice(0, 10)
+    items.value = data
   } catch { /* 미인증 시 무시 */ }
+}
+
+async function remove(id) {
+  await axios.delete(`/api/notifications/${id}`)
+  items.value = items.value.filter(n => n.id !== id)
 }
 
 async function markAllRead() {
@@ -178,44 +190,78 @@ onUnmounted(() => {
 }
 
 .bell-dropdown {
-  width: 320px;
+  width: 340px;
   background: var(--surface, #fff);
   border: 1px solid var(--outline, #e5e7eb);
-  border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.13);
   overflow: hidden;
 }
 .bell-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px 10px;
+  padding: 13px 16px 11px;
   border-bottom: 1px solid var(--outline, #e5e7eb);
 }
-.bell-title { font-size: 14px; font-weight: 700; color: var(--text); }
-.bell-header-actions { display: flex; gap: 4px; }
+.bell-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bell-unread-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary, #2563eb);
+  background: var(--primary-light, #eff6ff);
+  padding: 2px 7px;
+  border-radius: 10px;
+}
 .bell-empty {
   text-align: center;
   color: var(--text-muted);
   font-size: 13px;
-  padding: 24px 16px;
+  padding: 28px 16px;
 }
-.bell-list { max-height: 360px; overflow-y: auto; }
+.bell-list { max-height: 420px; overflow-y: auto; }
 .bell-item {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 11px;
   padding: 12px 14px;
   cursor: pointer;
   border-bottom: 1px solid var(--outline, #e5e7eb);
   transition: background 0.12s;
+  position: relative;
 }
 .bell-item:last-child { border-bottom: none; }
 .bell-item:hover { background: var(--gray-50, #f9fafb); }
-.bell-item.unread { background: var(--primary-light, #eff6ff); }
-.bell-item-icon { font-size: 18px; color: var(--primary, #2563eb); flex-shrink: 0; margin-top: 2px; }
+.bell-item.unread {
+  border-left: 3px solid var(--primary, #2563eb);
+  background: var(--primary-light, #eff6ff);
+}
+.bell-item-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
 .bell-item-body { flex: 1; min-width: 0; }
 .bell-item-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
 .bell-item-msg { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
 .bell-item-time { font-size: 11px; color: var(--text-muted); }
+.bell-item-del {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+  border-radius: 4px;
+}
+.bell-item:hover .bell-item-del { opacity: 1; }
+.bell-item-del:hover { background: var(--gray-100, #f3f4f6); color: var(--text); }
+.bell-item-del .material-symbols-outlined { font-size: 15px; }
 </style>
