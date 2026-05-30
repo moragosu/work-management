@@ -4,6 +4,7 @@ data_store.py — SQLite 기반 데이터 저장소
 라우터 코드 변경 없이 JSON → SQLite 전환.
 """
 import json
+import re
 import sqlite3
 import os
 import uuid
@@ -268,14 +269,32 @@ def insert_notification(recipient: str, ntype: str, title: str, message: str, li
             "INSERT INTO notifications (id,recipient,type,title,message,link,is_read,created_at) VALUES (?,?,?,?,?,?,0,?)",
             (nid, recipient, ntype, title, message, link, datetime.now().isoformat()),
         )
-        # 개수 초과 시 가장 오래된 것 삭제
-        conn.execute("""
-            DELETE FROM notifications WHERE id IN (
-                SELECT id FROM notifications WHERE recipient=?
-                ORDER BY created_at ASC
-                LIMIT MAX(0, (SELECT COUNT(*) FROM notifications WHERE recipient=?) - ?)
-            )
-        """, (recipient, recipient, NOTIFICATION_LIMIT))
+        # 50개 초과 시 오래된 것부터 삭제
+        # 단, 미답변 question_tagged 알림은 삭제 대상에서 제외
+        all_notifs = conn.execute(
+            "SELECT id, type, link FROM notifications WHERE recipient=? ORDER BY created_at ASC",
+            (recipient,)
+        ).fetchall()
+        total = len(all_notifs)
+        if total > NOTIFICATION_LIMIT:
+            deletable = []
+            for n in all_notifs:
+                if n["type"] != "question_tagged":
+                    deletable.append(n["id"])
+                else:
+                    m = re.search(r'focusQuestion=([^&]+)', n["link"] or "")
+                    if m:
+                        has_answer = conn.execute(
+                            "SELECT 1 FROM answers WHERE question_id=?", (m.group(1),)
+                        ).fetchone()
+                        if has_answer:
+                            deletable.append(n["id"])
+                    else:
+                        deletable.append(n["id"])
+            to_delete = deletable[:total - NOTIFICATION_LIMIT]
+            if to_delete:
+                ph = ",".join("?" * len(to_delete))
+                conn.execute(f"DELETE FROM notifications WHERE id IN ({ph})", to_delete)
 
 
 def get_username_by_name(name: str) -> str:
