@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS users (
     role                   TEXT NOT NULL DEFAULT 'member',
     is_admin               INTEGER NOT NULL DEFAULT 0,
     force_password_change  INTEGER NOT NULL DEFAULT 0,
+    staff_id               TEXT DEFAULT NULL,
     created_at             TEXT
 );
 """
@@ -169,6 +170,7 @@ def init_db() -> None:
             "ALTER TABLE questions ADD COLUMN created_by TEXT NOT NULL DEFAULT ''",
             "ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0",
             "ALTER TABLE users ADD COLUMN force_password_change INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE users ADD COLUMN staff_id TEXT DEFAULT NULL",
         ]:
             try:
                 conn.execute(sql)
@@ -178,6 +180,19 @@ def init_db() -> None:
         conn.execute("UPDATE users SET role='group_leader' WHERE role='leader'")
         # 기존 admin role → is_admin=1, role=member 로 분리
         conn.execute("UPDATE users SET is_admin=1, role='member' WHERE role='admin'")
+        # staff_id 미연결 파트원 → 이름 기반 자동 연결 (유일 매칭만)
+        unlinked = conn.execute(
+            "SELECT username, name FROM users WHERE staff_id IS NULL AND role='member'"
+        ).fetchall()
+        for row in unlinked:
+            matches = conn.execute(
+                "SELECT id FROM staff WHERE name=?", (row["name"],)
+            ).fetchall()
+            if len(matches) == 1:
+                conn.execute(
+                    "UPDATE users SET staff_id=? WHERE username=?",
+                    (matches[0]["id"], row["username"])
+                )
 
 
 # ── 행 변환 헬퍼 ─────────────────────────────────────────────────────────────
@@ -240,6 +255,29 @@ def get_username_by_name(name: str) -> str:
         return ""
     with get_conn() as conn:
         row = conn.execute("SELECT username FROM users WHERE name=?", (name,)).fetchone()
+    return row["username"] if row else ""
+
+
+def get_username_for_notification(name: str) -> str:
+    """알림 발송용 username 조회.
+    파트원: staff_id 조인으로 안전하게 조회 (동명이인 대응).
+    그룹장·파트장: users.name 직접 조회 (staff 항목 없음).
+    """
+    if not name:
+        return ""
+    with get_conn() as conn:
+        # staff_id 기반 조회 (파트원)
+        row = conn.execute(
+            "SELECT u.username FROM users u JOIN staff s ON u.staff_id = s.id WHERE s.name=?",
+            (name,)
+        ).fetchone()
+        if row:
+            return row["username"]
+        # fallback: 그룹장·파트장은 staff 항목이 없으므로 users.name 직접 조회
+        row = conn.execute(
+            "SELECT username FROM users WHERE name=? AND role IN ('group_leader', 'part_leader')",
+            (name,)
+        ).fetchone()
     return row["username"] if row else ""
 
 

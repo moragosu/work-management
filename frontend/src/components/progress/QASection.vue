@@ -21,6 +21,15 @@
                   :class="{ active: editingTargets.includes(s.name) }"
                   @click="toggleTarget(editingTargets, s.name)"
                 >{{ s.name }}</button>
+                <template v-if="qaLeaders.length > 0">
+                  <span class="target-group-sep">|</span>
+                  <button
+                    v-for="l in qaLeaders" :key="l.username"
+                    class="target-chip target-chip-leader"
+                    :class="{ active: editingTargets.includes(l.name) }"
+                    @click="toggleTarget(editingTargets, l.name)"
+                  >{{ l.name }}</button>
+                </template>
               </div>
             </div>
             <TiptapEditor v-model="editingQuestionText" height="140px" @image-uploaded="url => editQuestionUploads.push(url)" />
@@ -35,7 +44,10 @@
               <span v-if="qa.questioner" class="badge badge-purple" style="font-size:11px">{{ qa.questioner }}</span>
               <template v-if="qa.targets && qa.targets.length > 0">
                 <span class="material-symbols-outlined" style="font-size:13px;color:var(--text-muted)">arrow_forward</span>
-                <span v-for="t in qa.targets" :key="t" class="badge badge-blue" style="font-size:11px">{{ t }}</span>
+                <span v-for="t in qa.targets" :key="t"
+                  class="badge" style="font-size:11px"
+                  :class="isLeaderTarget(t) ? 'badge-purple' : 'badge-blue'"
+                >{{ t }}</span>
               </template>
             </div>
             <TiptapPreview :modelValue="qa.question" />
@@ -119,6 +131,15 @@
             :class="{ active: newTargets.includes(s.name) }"
             @click="toggleTarget(newTargets, s.name)"
           >{{ s.name }}</button>
+          <template v-if="qaLeaders.length > 0">
+            <span class="target-group-sep">|</span>
+            <button
+              v-for="l in qaLeaders" :key="l.username"
+              class="target-chip target-chip-leader"
+              :class="{ active: newTargets.includes(l.name) }"
+              @click="toggleTarget(newTargets, l.name)"
+            >{{ l.name }}</button>
+          </template>
         </div>
       </div>
       <TiptapEditor v-model="newQuestionText" height="160px" @image-uploaded="url => addQuestionUploads.push(url)" />
@@ -150,6 +171,7 @@ import { deleteOrphanedImages, deleteAllImages, deleteUrls } from '../../composa
 const props = defineProps({
   questions:       { type: Array,   default: () => [] },
   staffList:       { type: Array,   default: () => [] },
+  qaLeaders:       { type: Array,   default: () => [] },
   taskId:          { type: String,  required: true },
   week:            { type: String,  required: true },
   readonlyQuestion:{ type: Boolean, default: false },
@@ -157,6 +179,10 @@ const props = defineProps({
 const emit = defineEmits(['update:questions'])
 const { toastMsg, showToast, toastError } = useToast()
 const auth = useAuthStore()
+
+function isLeaderTarget(name) {
+  return props.qaLeaders.some(l => l.name === name)
+}
 
 // ── 링크 복사 ──
 async function copyLink(type, id) {
@@ -401,6 +427,22 @@ async function deleteAnswer(answerId, questionId) {
   color: var(--primary);
   border-color: var(--primary);
   font-weight: 600;
+}
+.target-chip-leader {
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+}
+.target-chip-leader.active {
+  background: #f3effe;
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+  font-weight: 600;
+}
+.target-group-sep {
+  color: var(--text-muted);
+  font-size: 12px;
+  align-self: center;
+  padding: 0 2px;
 }
 .question-targets {
   display: flex;
