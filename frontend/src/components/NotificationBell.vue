@@ -9,7 +9,10 @@
       <div v-if="open" class="bell-dropdown" :style="dropdownStyle" ref="dropRef">
         <div class="bell-header">
           <span class="bell-title">알림 <span v-if="unreadCount > 0" class="bell-unread-label">{{ unreadCount }}개 안읽음</span></span>
-          <button v-if="items.length > 0" class="btn btn-ghost btn-xs" @click="markAllRead">전체 읽음</button>
+          <div style="display:flex;gap:4px">
+            <button v-if="items.length > 0" class="btn btn-ghost btn-xs" @click="markAllRead">전체 읽음</button>
+            <button v-if="items.length > 0" class="btn btn-ghost btn-xs" @click="deleteAll">전체 삭제</button>
+          </div>
         </div>
         <div v-if="items.length === 0" class="bell-empty">새 알림이 없습니다</div>
         <div v-else class="bell-list">
@@ -107,6 +110,13 @@ async function remove(id) {
 async function markAllRead() {
   await axios.patch('/api/notifications/read-all')
   items.value.forEach(n => { n.is_read = 1 })
+}
+
+async function deleteAll() {
+  if (!confirm('삭제 가능한 알림을 모두 삭제하시겠습니까?\n(미답변 질문 알림은 유지됩니다)')) return
+  const { data } = await axios.delete('/api/notifications')
+  await load()
+  if (data.deleted === 0) alert('삭제 가능한 알림이 없습니다')
 }
 
 async function handleClick(n) {

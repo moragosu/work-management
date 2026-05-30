@@ -40,6 +40,34 @@ def unread_count(user: dict = Depends(get_current_user)):
     return {"count": row["cnt"]}
 
 
+@router.delete("")
+def delete_all_notifications(user: dict = Depends(get_current_user)):
+    """전체 삭제 — 미답변 question_tagged는 제외."""
+    with data_store.get_conn() as conn:
+        rows = conn.execute(
+            "SELECT id, type, link FROM notifications WHERE recipient=?",
+            (user["username"],)
+        ).fetchall()
+        deletable = []
+        for n in rows:
+            if n["type"] != "question_tagged":
+                deletable.append(n["id"])
+            else:
+                m = re.search(r'focusQuestion=([^&]+)', n["link"] or "")
+                if m:
+                    has_answer = conn.execute(
+                        "SELECT 1 FROM answers WHERE question_id=?", (m.group(1),)
+                    ).fetchone()
+                    if has_answer:
+                        deletable.append(n["id"])
+                else:
+                    deletable.append(n["id"])
+        if deletable:
+            ph = ",".join("?" * len(deletable))
+            conn.execute(f"DELETE FROM notifications WHERE id IN ({ph})", deletable)
+    return {"deleted": len(deletable) if deletable else 0}
+
+
 @router.patch("/{nid}/read")
 def mark_read(nid: str, user: dict = Depends(get_current_user)):
     with data_store.get_conn() as conn:
