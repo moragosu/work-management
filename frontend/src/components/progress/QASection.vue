@@ -405,6 +405,8 @@ async function deleteAnswer(answerId, questionId) {
       q.id === questionId ? { ...q, answers: q.answers.filter(a => a.id !== answerId) } : q
     ))
     showToast('삭제되었습니다')
+    // 답변 삭제로 인해 알림이 재발송됐을 수 있으므로 벨 갱신
+    window.dispatchEvent(new Event('refresh-notifications'))
   } catch (e) { toastError(e, '답변 삭제 실패') }
 }
 

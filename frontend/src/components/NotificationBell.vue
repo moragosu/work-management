@@ -157,10 +157,12 @@ onMounted(() => {
   load()
   pollInterval = setInterval(load, 5 * 60 * 1000)
   document.addEventListener('click', onOutside, true)
+  window.addEventListener('refresh-notifications', load)
 })
 onUnmounted(() => {
   clearInterval(pollInterval)
   document.removeEventListener('click', onOutside, true)
+  window.removeEventListener('refresh-notifications', load)
 })
 </script>
 
