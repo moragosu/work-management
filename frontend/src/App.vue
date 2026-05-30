@@ -42,8 +42,9 @@
         <span class="page-title">{{ pageTitle }}</span>
         <div class="header-right">
           <NotificationBell />
+          <div class="header-divider"></div>
           <div class="user-info">
-            <span class="material-symbols-outlined user-icon">person</span>
+            <div class="user-avatar">{{ auth.user?.name?.charAt(0) }}</div>
             <span class="user-name">{{ auth.user?.name }}</span>
             <button class="logout-btn" @click="doLogout" data-tooltip="로그아웃">
               <span class="material-symbols-outlined">logout</span>
@@ -214,43 +215,62 @@ function onMouseOut(e) {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  height: 52px;
-  background: var(--surface, #fff);
-  border-bottom: 1px solid var(--outline, #e5e7eb);
+  height: 56px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .page-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  color: var(--text, #111);
+  color: #111;
+  letter-spacing: -0.2px;
 }
 .header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+}
+.header-divider {
+  width: 1px;
+  height: 24px;
+  background: #e5e7eb;
 }
 .user-info {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
-.user-icon { font-size: 18px; color: var(--text-muted, #888); flex-shrink: 0; }
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
 .user-name {
   font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary, #555);
+  font-weight: 600;
+  color: #374151;
 }
 .logout-btn {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--text-muted, #888);
+  color: #9ca3af;
   display: flex;
   align-items: center;
-  padding: 4px;
-  border-radius: 6px;
+  padding: 6px;
+  border-radius: 8px;
   transition: background 0.15s, color 0.15s;
 }
-.logout-btn:hover { background: var(--gray-100, #f3f4f6); color: var(--text, #111); }
+.logout-btn:hover { background: #f3f4f6; color: #374151; }
 .logout-btn .material-symbols-outlined { font-size: 18px; }
 </style>
