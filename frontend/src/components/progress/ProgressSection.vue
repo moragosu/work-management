@@ -2,7 +2,7 @@
   <div class="section-block">
     <div class="section-label">
       <span class="material-symbols-outlined section-icon">warning</span>
-      이슈
+      진행 현황 및 이슈
     </div>
 
     <!-- 등록된 이슈 목록 -->
@@ -48,7 +48,7 @@
       </div>
     </div>
 
-    <button v-if="!adding && !readonly" class="btn btn-ghost btn-sm mt-4" @click="openAdd" data-tooltip="이번 주 이슈를 등록합니다">+ 이슈 등록</button>
+    <button v-if="!adding && !readonly" class="btn btn-ghost btn-sm mt-4" @click="openAdd" data-tooltip="이번 주 진행 현황 및 이슈를 등록합니다">+ 등록</button>
   </div>
 
   <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
