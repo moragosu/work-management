@@ -104,12 +104,12 @@ function positionDropdown() {
   const rect = wrapRef.value.getBoundingClientRect()
   const dropW = 320
   const vw = window.innerWidth
-  // 버튼 오른쪽에 띄우되, 화면 밖으로 나가면 왼쪽으로 조정
-  let left = rect.right + 8
-  if (left + dropW > vw) left = rect.left - dropW - 8
+  // 버튼 오른쪽 정렬, 화면 밖이면 왼쪽으로
+  let left = rect.right - dropW
+  if (left < 0) left = rect.left
   dropdownStyle.value = {
     position: 'fixed',
-    top: `${rect.top}px`,
+    top: `${rect.bottom + 6}px`,
     left: `${left}px`,
     zIndex: 9000,
   }
@@ -148,10 +148,10 @@ onUnmounted(() => {
   background: none;
   cursor: pointer;
   border-radius: 8px;
-  color: rgba(255,255,255,0.75);
+  color: var(--text-muted, #888);
   transition: background 0.15s, color 0.15s;
 }
-.bell-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.bell-btn:hover { background: var(--gray-100, #f3f4f6); color: var(--text, #111); }
 .bell-btn .material-symbols-outlined { font-size: 22px; }
 .badge {
   position: absolute;

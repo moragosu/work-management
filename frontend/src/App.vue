@@ -36,20 +36,25 @@
           <span class="nav-text">도움말</span>
         </RouterLink>
       </nav>
-      <div v-if="auth.isLoggedIn" class="sidebar-footer">
-        <NotificationBell />
-        <div class="user-info">
-          <span class="material-symbols-outlined user-icon">person</span>
-          <span class="user-name">{{ auth.user?.name }}</span>
-          <button class="logout-btn" @click="doLogout" data-tooltip="로그아웃">
-            <span class="material-symbols-outlined">logout</span>
-          </button>
-        </div>
-      </div>
     </aside>
-    <main class="main-content">
-      <RouterView />
-    </main>
+    <div class="main-wrap">
+      <header v-if="auth.isLoggedIn" class="top-header">
+        <span class="page-title">{{ pageTitle }}</span>
+        <div class="header-right">
+          <NotificationBell />
+          <div class="user-info">
+            <span class="material-symbols-outlined user-icon">person</span>
+            <span class="user-name">{{ auth.user?.name }}</span>
+            <button class="logout-btn" @click="doLogout" data-tooltip="로그아웃">
+              <span class="material-symbols-outlined">logout</span>
+            </button>
+          </div>
+        </div>
+      </header>
+      <main class="main-content">
+        <RouterView />
+      </main>
+    </div>
   </div>
 
   <!-- 전역 마우스 추적 툴팁 -->
@@ -71,13 +76,16 @@
 </template>
 
 <script setup>
-import { RouterLink, RouterView, useRouter } from 'vue-router'
+import { RouterLink, RouterView, useRouter, useRoute } from 'vue-router'
 import { reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from './stores/auth.js'
 import NotificationBell from './components/NotificationBell.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
+
+const pageTitle = computed(() => route.meta?.title || '')
 
 function doLogout() {
   auth.logout()
@@ -194,41 +202,55 @@ function onMouseOut(e) {
 </style>
 
 <style>
-.sidebar-footer {
-  padding: 10px 12px;
-  border-top: 1px solid rgba(255,255,255,0.1);
+.main-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.top-header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 52px;
+  background: var(--surface, #fff);
+  border-bottom: 1px solid var(--outline, #e5e7eb);
+  flex-shrink: 0;
+}
+.page-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text, #111);
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .user-info {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex: 1;
-  min-width: 0;
 }
-.user-icon { font-size: 18px; color: rgba(255,255,255,0.6); flex-shrink: 0; }
+.user-icon { font-size: 18px; color: var(--text-muted, #888); flex-shrink: 0; }
 .user-name {
   font-size: 13px;
   font-weight: 500;
-  color: rgba(255,255,255,0.85);
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: var(--text-secondary, #555);
 }
 .logout-btn {
   background: none;
   border: none;
   cursor: pointer;
-  color: rgba(255,255,255,0.5);
+  color: var(--text-muted, #888);
   display: flex;
   align-items: center;
   padding: 4px;
   border-radius: 6px;
   transition: background 0.15s, color 0.15s;
 }
-.logout-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); }
+.logout-btn:hover { background: var(--gray-100, #f3f4f6); color: var(--text, #111); }
 .logout-btn .material-symbols-outlined { font-size: 18px; }
 </style>
