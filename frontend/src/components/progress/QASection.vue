@@ -74,30 +74,74 @@
       </div>
 
       <!-- 기존 답변들 -->
-      <div v-for="ans in qa.answers" :key="ans.id" class="answer-row">
-        <span class="badge badge-green">A</span>
-        <div class="qa-content">
-          <template v-if="editingAnswerId === ans.id">
-            <div style="flex:1">
-              <TiptapEditor v-model="editingAnswerText" height="160px" @image-uploaded="url => editAnswerUploads.push(url)" />
-              <div class="flex gap-4 mt-8" style="justify-content:flex-end">
-                <button class="btn btn-ghost btn-xs" @click="cancelEditAnswer">취소</button>
-                <button class="btn btn-primary btn-xs" @click="updateAnswer(ans.id)" :disabled="!hasContent(editingAnswerText)">저장</button>
+      <div v-for="ans in qa.answers" :key="ans.id">
+        <div class="answer-row">
+          <span class="badge badge-green">A</span>
+          <div class="qa-content">
+            <template v-if="editingAnswerId === ans.id">
+              <div style="flex:1">
+                <TiptapEditor v-model="editingAnswerText" height="160px" @image-uploaded="url => editAnswerUploads.push(url)" />
+                <div class="flex gap-4 mt-8" style="justify-content:flex-end">
+                  <button class="btn btn-ghost btn-xs" @click="cancelEditAnswer">취소</button>
+                  <button class="btn btn-primary btn-xs" @click="updateAnswer(ans.id)" :disabled="!hasContent(editingAnswerText)">저장</button>
+                </div>
               </div>
-            </div>
-          </template>
-          <template v-else>
-            <TiptapPreview :modelValue="ans.answer" />
-            <span class="answer-by">
-              — {{ ans.answer_by }}
-              <span class="answer-date">{{ ans.updated_at ?? ans.created_at }}</span>
-              <span v-if="ans.updated_at" class="answer-edited">(수정됨)</span>
-            </span>
-          </template>
+            </template>
+            <template v-else>
+              <TiptapPreview :modelValue="ans.answer" />
+              <span class="answer-by">
+                — {{ ans.answer_by }}
+                <span class="answer-date">{{ ans.updated_at ?? ans.created_at }}</span>
+                <span v-if="ans.updated_at" class="answer-edited">(수정됨)</span>
+              </span>
+            </template>
+          </div>
+          <div v-if="editingAnswerId !== ans.id" class="qa-actions">
+            <button v-if="!readonlyQuestion && auth.isLoggedIn" class="btn btn-ghost btn-xs" @click="startAddReply(ans.id)" data-tooltip="답글 달기">↩ 답글</button>
+            <button v-if="!readonlyQuestion" class="btn btn-ghost btn-xs" @click="startEditAnswer(ans)" data-tooltip="답변 수정">수정</button>
+            <button v-if="!readonlyQuestion" class="btn btn-danger btn-xs" @click="deleteAnswer(ans.id, qa.id)" data-tooltip="답변 삭제">삭제</button>
+          </div>
         </div>
-        <div v-if="editingAnswerId !== ans.id" class="qa-actions">
-          <button v-if="!readonlyQuestion" class="btn btn-ghost btn-xs" @click="startEditAnswer(ans)" data-tooltip="답변 수정">수정</button>
-          <button v-if="!readonlyQuestion" class="btn btn-danger btn-xs" @click="deleteAnswer(ans.id, qa.id)" data-tooltip="답변 삭제">삭제</button>
+
+        <!-- 대댓글 목록 -->
+        <div v-for="rep in (ans.replies || [])" :key="rep.id" class="reply-row">
+          <div class="reply-line"></div>
+          <span class="badge badge-gray">↩</span>
+          <div class="qa-content">
+            <template v-if="editingReplyId === rep.id">
+              <div style="flex:1">
+                <TiptapEditor v-model="editingReplyText" height="100px" />
+                <div class="flex gap-4 mt-8" style="justify-content:flex-end">
+                  <button class="btn btn-ghost btn-xs" @click="cancelEditReply">취소</button>
+                  <button class="btn btn-primary btn-xs" @click="updateReply(ans.id, rep.id)" :disabled="!editingReplyText.trim()">저장</button>
+                </div>
+              </div>
+            </template>
+            <template v-else>
+              <span class="reply-text">{{ rep.reply }}</span>
+              <span class="answer-by">
+                — {{ rep.reply_by }}
+                <span class="answer-date">{{ rep.updated_at ?? rep.created_at }}</span>
+              </span>
+            </template>
+          </div>
+          <div v-if="editingReplyId !== rep.id" class="qa-actions">
+            <button v-if="!readonlyQuestion && (rep.created_by === auth.user?.username || auth.isAdmin)" class="btn btn-ghost btn-xs" @click="startEditReply(rep)">수정</button>
+            <button v-if="!readonlyQuestion && (rep.created_by === auth.user?.username || auth.isAdmin)" class="btn btn-danger btn-xs" @click="deleteReply(ans.id, rep.id)">삭제</button>
+          </div>
+        </div>
+
+        <!-- 대댓글 입력 폼 -->
+        <div v-if="addingReplyToAnswerId === ans.id" class="reply-row">
+          <div class="reply-line"></div>
+          <span class="badge badge-gray">↩</span>
+          <div style="flex:1">
+            <input v-model="newReplyText" class="reply-input" placeholder="답글을 입력하세요..." @keydown.enter.exact.prevent="addReply(ans.id, qa)" />
+            <div class="flex gap-4 mt-6" style="justify-content:flex-end">
+              <button class="btn btn-ghost btn-xs" @click="cancelAddReply">취소</button>
+              <button class="btn btn-primary btn-xs" @click="addReply(ans.id, qa)" :disabled="!newReplyText.trim()">등록</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -358,6 +402,59 @@ async function deleteAnswer(answerId, questionId) {
     showToast('삭제되었습니다')
   } catch (e) { toastError(e, '답변 삭제 실패') }
 }
+
+// ── 대댓글 ────────────────────────────────────────────────────────────────────
+const addingReplyToAnswerId = ref('')
+const newReplyText = ref('')
+const editingReplyId = ref('')
+const editingReplyText = ref('')
+
+function startAddReply(answerId) { addingReplyToAnswerId.value = answerId; newReplyText.value = '' }
+function cancelAddReply() { addingReplyToAnswerId.value = ''; newReplyText.value = '' }
+function startEditReply(rep) { editingReplyId.value = rep.id; editingReplyText.value = rep.reply }
+function cancelEditReply() { editingReplyId.value = ''; editingReplyText.value = '' }
+
+function _updateRepliesInQuestion(qa, answerId, fn) {
+  return props.questions.map(q =>
+    q.id === qa.id
+      ? { ...q, answers: q.answers.map(a => a.id === answerId ? { ...a, replies: fn(a.replies || []) } : a) }
+      : q
+  )
+}
+
+async function addReply(answerId, qa) {
+  if (!newReplyText.value.trim()) return
+  try {
+    const { data } = await axios.post(`/api/qna/answers/${answerId}/replies`, {
+      reply: newReplyText.value.trim(),
+      reply_by: auth.user?.name || '',
+    })
+    emit('update:questions', _updateRepliesInQuestion(qa, answerId, replies => [...replies, data]))
+    cancelAddReply()
+  } catch (e) { toastError(e, '답글 등록 실패') }
+}
+
+async function updateReply(answerId, replyId) {
+  if (!editingReplyText.value.trim()) return
+  try {
+    const { data } = await axios.put(`/api/qna/answers/${answerId}/replies/${replyId}`, {
+      reply: editingReplyText.value.trim(),
+    })
+    const qa = props.questions.find(q => q.answers?.some(a => a.id === answerId))
+    if (qa) emit('update:questions', _updateRepliesInQuestion(qa, answerId, replies => replies.map(r => r.id === replyId ? { ...r, ...data } : r)))
+    cancelEditReply()
+  } catch (e) { toastError(e, '답글 수정 실패') }
+}
+
+async function deleteReply(answerId, replyId) {
+  if (!confirm('답글을 삭제하시겠습니까?')) return
+  try {
+    await axios.delete(`/api/qna/answers/${answerId}/replies/${replyId}`)
+    const qa = props.questions.find(q => q.answers?.some(a => a.id === answerId))
+    if (qa) emit('update:questions', _updateRepliesInQuestion(qa, answerId, replies => replies.filter(r => r.id !== replyId)))
+    showToast('삭제되었습니다')
+  } catch (e) { toastError(e, '답글 삭제 실패') }
+}
 </script>
 
 <style scoped>
@@ -395,6 +492,45 @@ async function deleteAnswer(answerId, questionId) {
   gap: 6px;
 }
 .answer-date { color: var(--text-muted); }
+.reply-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px 6px 28px;
+  position: relative;
+}
+.reply-line {
+  position: absolute;
+  left: 16px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--outline, #e5e7eb);
+  border-radius: 1px;
+}
+.reply-text {
+  font-size: 13px;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.reply-input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--outline, #e5e7eb);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--background, #f8fafc);
+  color: var(--text);
+  outline: none;
+  box-sizing: border-box;
+}
+.reply-input:focus { border-color: var(--primary); background: #fff; }
+.badge-gray {
+  background: var(--gray-100, #f3f4f6);
+  color: var(--text-muted, #888);
+  border: 1px solid var(--outline, #e5e7eb);
+}
 .answer-edited { font-size: 11px; opacity: 0.7; }
 
 /* 질문 대상자 */

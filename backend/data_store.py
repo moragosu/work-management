@@ -90,6 +90,25 @@ CREATE TABLE IF NOT EXISTS issues (
     created_at TEXT,
     updated_at TEXT
 );
+CREATE TABLE IF NOT EXISTS answer_replies (
+    id         TEXT PRIMARY KEY,
+    answer_id  TEXT NOT NULL DEFAULT '',
+    reply      TEXT NOT NULL DEFAULT '',
+    reply_by   TEXT NOT NULL DEFAULT '',
+    created_by TEXT NOT NULL DEFAULT '',
+    created_at TEXT,
+    updated_at TEXT
+);
+CREATE TABLE IF NOT EXISTS issue_comments (
+    id         TEXT PRIMARY KEY,
+    issue_id   TEXT NOT NULL DEFAULT '',
+    parent_id  TEXT DEFAULT NULL,
+    comment    TEXT NOT NULL DEFAULT '',
+    comment_by TEXT NOT NULL DEFAULT '',
+    created_by TEXT NOT NULL DEFAULT '',
+    created_at TEXT,
+    updated_at TEXT
+);
 CREATE TABLE IF NOT EXISTS feedbacks (
     id         TEXT PRIMARY KEY,
     category   TEXT NOT NULL DEFAULT '',
@@ -237,8 +256,10 @@ def _resolve(filename: str):
 
 # ── 알림·사용자 헬퍼 ──────────────────────────────────────────────────────────
 
+NOTIFICATION_LIMIT = 50
+
 def insert_notification(recipient: str, ntype: str, title: str, message: str, link: str) -> None:
-    """알림 1건 삽입. recipient가 비어있으면 무시."""
+    """알림 1건 삽입. recipient가 비어있으면 무시. 50개 초과 시 가장 오래된 것 자동 삭제."""
     if not recipient:
         return
     nid = f"N{uuid.uuid4().hex[:8].upper()}"
@@ -247,6 +268,14 @@ def insert_notification(recipient: str, ntype: str, title: str, message: str, li
             "INSERT INTO notifications (id,recipient,type,title,message,link,is_read,created_at) VALUES (?,?,?,?,?,?,0,?)",
             (nid, recipient, ntype, title, message, link, datetime.now().isoformat()),
         )
+        # 개수 초과 시 가장 오래된 것 삭제
+        conn.execute("""
+            DELETE FROM notifications WHERE id IN (
+                SELECT id FROM notifications WHERE recipient=?
+                ORDER BY created_at ASC
+                LIMIT MAX(0, (SELECT COUNT(*) FROM notifications WHERE recipient=?) - ?)
+            )
+        """, (recipient, recipient, NOTIFICATION_LIMIT))
 
 
 def get_username_by_name(name: str) -> str:

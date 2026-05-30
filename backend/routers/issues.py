@@ -39,6 +39,22 @@ def list_issues(
         items = [i for i in items if i.get("week") == week]
     if task_id:
         items = [i for i in items if i.get("task_id") == task_id]
+    # 댓글·대댓글 포함
+    issue_ids = [i["id"] for i in items]
+    if issue_ids:
+        placeholders = ",".join("?" * len(issue_ids))
+        with data_store.get_conn() as conn:
+            all_comments = [dict(r) for r in conn.execute(
+                f"SELECT * FROM issue_comments WHERE issue_id IN ({placeholders}) ORDER BY created_at",
+                issue_ids
+            ).fetchall()]
+    else:
+        all_comments = []
+    for iss in items:
+        top = [c for c in all_comments if c["issue_id"] == iss["id"] and not c["parent_id"]]
+        for c in top:
+            c["replies"] = [r for r in all_comments if r["parent_id"] == c["id"]]
+        iss["comments"] = top
     return items
 
 

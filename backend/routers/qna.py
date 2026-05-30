@@ -45,6 +45,15 @@ class AnswerUpdate(BaseModel):
     images: list = []
 
 
+class ReplyCreate(BaseModel):
+    reply: str
+    reply_by: str
+
+
+class ReplyUpdate(BaseModel):
+    reply: str
+
+
 @router.get("/questions")
 def list_questions(week: Optional[str] = Query(None), task_id: Optional[str] = Query(None)):
     questions, answers = _load()
@@ -52,9 +61,17 @@ def list_questions(week: Optional[str] = Query(None), task_id: Optional[str] = Q
         questions = [q for q in questions if q.get("week") == week]
     if task_id:
         questions = [q for q in questions if q.get("task_id") == task_id]
+    # 대댓글 로드
+    with data_store.get_conn() as conn:
+        all_replies = [dict(r) for r in conn.execute("SELECT * FROM answer_replies ORDER BY created_at").fetchall()]
     result = []
     for q in questions:
-        q_answers = [a for a in answers if a["question_id"] == q["id"]]
+        q_answers = []
+        for a in answers:
+            if a["question_id"] == q["id"]:
+                a_dict = dict(a)
+                a_dict["replies"] = [r for r in all_replies if r["answer_id"] == a["id"]]
+                q_answers.append(a_dict)
         result.append({**q, "answers": q_answers})
     return result
 
@@ -166,3 +183,52 @@ def delete_answer(answer_id: str):
     answers = [a for a in answers if a["id"] != answer_id]
     _save(questions, answers)
     return {"deleted": answer_id}
+
+
+# ── 대댓글 ────────────────────────────────────────────────────────────────────
+
+@router.post("/answers/{answer_id}/replies", status_code=201)
+def create_reply(answer_id: str, body: ReplyCreate, user: dict = Depends(get_current_user)):
+    with data_store.get_conn() as conn:
+        new_r = {
+            "id": short_uuid("R"),
+            "answer_id": answer_id,
+            "reply": body.reply,
+            "reply_by": body.reply_by,
+            "created_by": user["username"],
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "updated_at": None,
+        }
+        conn.execute(
+            "INSERT INTO answer_replies (id,answer_id,reply,reply_by,created_by,created_at) VALUES (?,?,?,?,?,?)",
+            (new_r["id"], answer_id, body.reply, body.reply_by, user["username"], new_r["created_at"]),
+        )
+    return new_r
+
+
+@router.put("/answers/{answer_id}/replies/{reply_id}")
+def update_reply(answer_id: str, reply_id: str, body: ReplyUpdate, user: dict = Depends(get_current_user)):
+    with data_store.get_conn() as conn:
+        row = conn.execute("SELECT * FROM answer_replies WHERE id=?", (reply_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Reply not found")
+        if not user.get("is_admin") and row["created_by"] != user["username"]:
+            raise HTTPException(status_code=403, detail="본인이 작성한 답글만 수정할 수 있습니다")
+        updated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
+        conn.execute(
+            "UPDATE answer_replies SET reply=?, updated_at=? WHERE id=?",
+            (body.reply, updated_at, reply_id),
+        )
+    return {**dict(row), "reply": body.reply, "updated_at": updated_at}
+
+
+@router.delete("/answers/{answer_id}/replies/{reply_id}")
+def delete_reply(answer_id: str, reply_id: str, user: dict = Depends(get_current_user)):
+    with data_store.get_conn() as conn:
+        row = conn.execute("SELECT created_by FROM answer_replies WHERE id=?", (reply_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Reply not found")
+        if not user.get("is_admin") and row["created_by"] != user["username"]:
+            raise HTTPException(status_code=403, detail="본인이 작성한 답글만 삭제할 수 있습니다")
+        conn.execute("DELETE FROM answer_replies WHERE id=?", (reply_id,))
+    return {"deleted": reply_id}

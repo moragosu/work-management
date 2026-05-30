@@ -36,6 +36,49 @@
             <button v-if="!readonly" class="btn btn-danger btn-xs" @click="deleteIssue(iss.id)" data-tooltip="이슈 삭제">삭제</button>
           </div>
         </div>
+
+        <!-- 댓글 영역 -->
+        <div class="comment-section">
+          <div v-for="c in (iss.comments || [])" :key="c.id" class="comment-item">
+            <div class="comment-row">
+              <span class="comment-by">{{ c.comment_by }}</span>
+              <span class="comment-text">{{ c.comment }}</span>
+              <span class="comment-date">{{ c.updated_at ?? c.created_at }}</span>
+              <div v-if="!readonly" class="comment-actions">
+                <button class="btn btn-ghost btn-xs" @click="startReplyToComment(iss.id, c.id)">↩</button>
+                <button v-if="c.created_by === auth.user?.username || auth.isAdmin" class="btn btn-ghost btn-xs" @click="startEditComment(iss.id, c)">수정</button>
+                <button v-if="c.created_by === auth.user?.username || auth.isAdmin" class="btn btn-danger btn-xs" @click="deleteComment(iss.id, c.id)">삭제</button>
+              </div>
+            </div>
+            <!-- 대댓글 -->
+            <div v-for="r in (c.replies || [])" :key="r.id" class="comment-row comment-reply">
+              <div class="reply-indent"></div>
+              <span class="comment-by">{{ r.comment_by }}</span>
+              <span class="comment-text">{{ r.comment }}</span>
+              <span class="comment-date">{{ r.updated_at ?? r.created_at }}</span>
+              <div v-if="!readonly" class="comment-actions">
+                <button v-if="r.created_by === auth.user?.username || auth.isAdmin" class="btn btn-ghost btn-xs" @click="startEditComment(iss.id, r)">수정</button>
+                <button v-if="r.created_by === auth.user?.username || auth.isAdmin" class="btn btn-danger btn-xs" @click="deleteComment(iss.id, r.id)">삭제</button>
+              </div>
+            </div>
+            <!-- 대댓글 입력 폼 -->
+            <div v-if="replyingToCommentId === c.id" class="comment-row comment-reply">
+              <div class="reply-indent"></div>
+              <input v-model="newCommentText" class="comment-input" placeholder="답글..." @keydown.enter.exact.prevent="submitComment(iss.id, c.id)" />
+              <button class="btn btn-primary btn-xs" @click="submitComment(iss.id, c.id)" :disabled="!newCommentText.trim()">등록</button>
+              <button class="btn btn-ghost btn-xs" @click="cancelComment">취소</button>
+            </div>
+          </div>
+          <!-- 댓글 입력 -->
+          <div v-if="!readonly">
+            <div v-if="commentingIssueId === iss.id && !replyingToCommentId" class="comment-row">
+              <input v-model="newCommentText" class="comment-input" placeholder="댓글을 입력하세요..." @keydown.enter.exact.prevent="submitComment(iss.id, null)" />
+              <button class="btn btn-primary btn-xs" @click="submitComment(iss.id, null)" :disabled="!newCommentText.trim()">등록</button>
+              <button class="btn btn-ghost btn-xs" @click="cancelComment">취소</button>
+            </div>
+            <button v-else-if="commentingIssueId !== iss.id" class="btn btn-ghost btn-xs mt-4" @click="startComment(iss.id)">+ 댓글</button>
+          </div>
+        </div>
       </template>
     </div>
 
@@ -159,6 +202,61 @@ async function deleteIssue(id) {
     showToast('삭제되었습니다')
   } catch (e) { toastError(e, '삭제 실패') }
 }
+
+// ── 댓글 ──
+const commentingIssueId = ref('')
+const replyingToCommentId = ref('')
+const newCommentText = ref('')
+const editingCommentId = ref('')
+
+function startComment(issueId) { commentingIssueId.value = issueId; newCommentText.value = ''; replyingToCommentId.value = '' }
+function startReplyToComment(issueId, commentId) { commentingIssueId.value = issueId; replyingToCommentId.value = commentId; newCommentText.value = '' }
+function cancelComment() { commentingIssueId.value = ''; replyingToCommentId.value = ''; newCommentText.value = '' }
+function startEditComment(issueId, c) { commentingIssueId.value = issueId; editingCommentId.value = c.id; newCommentText.value = c.comment }
+
+function _updateComments(issueId, fn) {
+  return props.issues.map(i => i.id === issueId ? { ...i, comments: fn(i.comments || []) } : i)
+}
+
+async function submitComment(issueId, parentId) {
+  if (!newCommentText.value.trim()) return
+  try {
+    if (editingCommentId.value) {
+      const { data } = await axios.put(`/api/issues/${issueId}/comments/${editingCommentId.value}`, { comment: newCommentText.value.trim() })
+      emit('update:issues', _updateComments(issueId, comments =>
+        comments.map(c => c.id === editingCommentId.value
+          ? { ...c, ...data }
+          : { ...c, replies: (c.replies || []).map(r => r.id === editingCommentId.value ? { ...r, ...data } : r) }
+        )
+      ))
+      editingCommentId.value = ''
+    } else {
+      const { data } = await axios.post(`/api/issues/${issueId}/comments`, {
+        comment: newCommentText.value.trim(),
+        comment_by: auth.user?.name || '',
+        parent_id: parentId || null,
+      })
+      if (parentId) {
+        emit('update:issues', _updateComments(issueId, comments =>
+          comments.map(c => c.id === parentId ? { ...c, replies: [...(c.replies || []), data] } : c)
+        ))
+      } else {
+        emit('update:issues', _updateComments(issueId, comments => [...comments, { ...data, replies: [] }]))
+      }
+    }
+    cancelComment()
+  } catch (e) { toastError(e, '댓글 등록 실패') }
+}
+
+async function deleteComment(issueId, commentId) {
+  if (!confirm('삭제하시겠습니까?')) return
+  try {
+    await axios.delete(`/api/issues/${issueId}/comments/${commentId}`)
+    emit('update:issues', _updateComments(issueId, comments =>
+      comments.filter(c => c.id !== commentId).map(c => ({ ...c, replies: (c.replies || []).filter(r => r.id !== commentId) }))
+    ))
+  } catch (e) { toastError(e, '삭제 실패') }
+}
 </script>
 
 <style scoped>
@@ -181,4 +279,48 @@ async function deleteIssue(id) {
 }
 .issue-date { font-size: 11px; color: var(--text-muted); }
 .mt-4 { margin-top: 4px; }
+.comment-section {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--outline, #e5e7eb);
+}
+.comment-item { margin-bottom: 4px; }
+.comment-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.comment-row:hover { background: var(--gray-50, #f9fafb); }
+.comment-reply { padding-left: 16px; }
+.reply-indent {
+  width: 2px;
+  height: 16px;
+  background: var(--outline, #e5e7eb);
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+.comment-by {
+  font-weight: 600;
+  color: var(--text-secondary, #555);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.comment-text { flex: 1; color: var(--text); word-break: break-word; }
+.comment-date { font-size: 11px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
+.comment-actions { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; }
+.comment-row:hover .comment-actions { opacity: 1; }
+.comment-input {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid var(--outline, #e5e7eb);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--background, #f8fafc);
+  color: var(--text);
+  outline: none;
+}
+.comment-input:focus { border-color: var(--primary); background: #fff; }
 </style>
