@@ -16,15 +16,15 @@
               <span class="target-label">질문 대상</span>
               <div class="target-chips">
                 <button
-                  v-for="s in staffList" :key="s.id"
+                  v-for="s in staffList.filter(s => s.name !== auth.user?.name)" :key="s.id"
                   class="target-chip"
                   :class="{ active: editingTargets.includes(s.name) }"
                   @click="toggleTarget(editingTargets, s.name)"
                 >{{ s.name }}</button>
-                <template v-if="qaLeaders.length > 0">
+                <template v-if="qaLeaders.filter(l => l.name !== auth.user?.name).length > 0">
                   <span class="target-group-sep">|</span>
                   <button
-                    v-for="l in qaLeaders" :key="l.username"
+                    v-for="l in qaLeaders.filter(l => l.name !== auth.user?.name)" :key="l.username"
                     class="target-chip target-chip-leader"
                     :class="{ active: editingTargets.includes(l.name) }"
                     @click="toggleTarget(editingTargets, l.name)"
@@ -126,15 +126,15 @@
         <span class="target-label">질문 대상</span>
         <div class="target-chips">
           <button
-            v-for="s in staffList" :key="s.id"
+            v-for="s in staffList.filter(s => s.name !== auth.user?.name)" :key="s.id"
             class="target-chip"
             :class="{ active: newTargets.includes(s.name) }"
             @click="toggleTarget(newTargets, s.name)"
           >{{ s.name }}</button>
-          <template v-if="qaLeaders.length > 0">
+          <template v-if="qaLeaders.filter(l => l.name !== auth.user?.name).length > 0">
             <span class="target-group-sep">|</span>
             <button
-              v-for="l in qaLeaders" :key="l.username"
+              v-for="l in qaLeaders.filter(l => l.name !== auth.user?.name)" :key="l.username"
               class="target-chip target-chip-leader"
               :class="{ active: newTargets.includes(l.name) }"
               @click="toggleTarget(newTargets, l.name)"
