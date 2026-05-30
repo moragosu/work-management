@@ -180,8 +180,39 @@ def update_answer(answer_id: str, body: AnswerUpdate):
 @router.delete("/answers/{answer_id}")
 def delete_answer(answer_id: str):
     questions, answers = _load()
+    target_a = next((a for a in answers if a["id"] == answer_id), None)
     answers = [a for a in answers if a["id"] != answer_id]
     _save(questions, answers)
+
+    # 답변 삭제 후 해당 질문에 남은 답변이 없으면 대상자에게 알림 재발송
+    if target_a:
+        qid = target_a["question_id"]
+        remaining = [a for a in answers if a["question_id"] == qid]
+        if not remaining:
+            target_q = next((q for q in questions if q["id"] == qid), None)
+            if target_q:
+                week = target_q.get("week", "")
+                link = f"/progress?week={week}&focusQuestion={qid}"
+                preview = target_q.get("question", "")[:40].replace("\n", " ")
+                questioner = target_q.get("questioner", "질문자")
+                with data_store.get_conn() as conn:
+                    for target_name in target_q.get("targets", []):
+                        recipient = data_store.get_username_for_notification(target_name)
+                        if not recipient:
+                            continue
+                        # 동일 link의 question_tagged 알림이 이미 있으면 재발송 안 함
+                        exists = conn.execute(
+                            "SELECT 1 FROM notifications WHERE recipient=? AND type='question_tagged' AND link=?",
+                            (recipient, link)
+                        ).fetchone()
+                        if not exists:
+                            data_store.insert_notification(
+                                recipient, "question_tagged",
+                                "답변이 삭제되어 질문이 미답변 상태입니다",
+                                f"{questioner}: {preview}",
+                                link,
+                            )
+
     return {"deleted": answer_id}
 
 
