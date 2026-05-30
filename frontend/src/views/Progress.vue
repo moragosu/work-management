@@ -61,17 +61,15 @@
 
         <!-- ══ 지난주 패널 ══ -->
         <div v-show="panelState !== 'right'" class="split-panel split-left">
-          <div class="panel-header">
+          <div class="panel-header panel-header-clickable"
+            @click="panelState = panelState === 'split' ? 'right' : 'split'"
+            :title="panelState === 'split' ? '지난주 패널 접기' : '둘 다 보기'"
+          >
             <span class="panel-title">
               <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">history</span>
               지난주 · {{ leftWeekDisplay }}
             </span>
-            <button class="panel-collapse-btn"
-              @click="panelState = panelState === 'split' ? 'right' : 'split'"
-              :title="panelState === 'split' ? '지난주 패널 접기' : '둘 다 보기'"
-            >
-              <span class="material-symbols-outlined">chevron_left</span>
-            </button>
+            <span class="material-symbols-outlined panel-collapse-icon">chevron_left</span>
           </div>
 
           <div v-for="task in filteredTasks" :key="'L-' + task.id" class="card mb-16" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
@@ -234,13 +232,11 @@
 
         <!-- ══ 이번주 패널 ══ -->
         <div v-show="panelState !== 'left'" class="split-panel split-right">
-          <div class="panel-header">
-            <button class="panel-collapse-btn"
-              @click="panelState = panelState === 'split' ? 'left' : 'split'"
-              :title="panelState === 'split' ? '이번주 패널 접기' : '둘 다 보기'"
-            >
-              <span class="material-symbols-outlined">chevron_right</span>
-            </button>
+          <div class="panel-header panel-header-clickable"
+            @click="panelState = panelState === 'split' ? 'left' : 'split'"
+            :title="panelState === 'split' ? '이번주 패널 접기' : '둘 다 보기'"
+          >
+            <span class="material-symbols-outlined panel-collapse-icon">chevron_right</span>
             <span class="panel-title">
               <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">today</span>
               이번주 · {{ rightWeekDisplay }}
@@ -961,20 +957,18 @@ watch(() => route.query, async (q, prev) => {
   align-items: center;
   gap: 6px;
 }
-.panel-collapse-btn {
-  display: flex;
-  align-items: center;
-  background: none;
-  border: none;
+.panel-header-clickable {
   cursor: pointer;
-  color: var(--text-muted);
-  padding: 4px;
-  border-radius: 4px;
-  transition: background 0.15s, color 0.15s;
+  user-select: none;
+  transition: background 0.15s;
 }
-.panel-collapse-btn:hover {
-  background: var(--gray-200, #e5e7eb);
-  color: var(--text-primary);
+.panel-header-clickable:hover {
+  background: var(--gray-100, #f3f4f6);
+}
+.panel-collapse-icon {
+  font-size: 18px;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 .panel-restore-btn {
   display: flex;
