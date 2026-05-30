@@ -59,23 +59,28 @@
 
       <div v-else class="split-container">
 
+        <!-- ══ 지난주 패널 복원 버튼 ══ -->
+        <button
+          v-if="panelState === 'right'"
+          class="panel-restore-btn"
+          @click="panelState = 'split'"
+          title="지난주 패널 펼치기"
+        >
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+
         <!-- ══ 지난주 패널 ══ -->
-        <div class="split-panel split-left" :class="{ 'panel-collapsed': panelState === 'right' }">
+        <div v-show="panelState !== 'right'" class="split-panel split-left">
           <div class="panel-header">
-            <span v-show="panelState !== 'right'" class="panel-title">
+            <span class="panel-title">
               <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">history</span>
               지난주 · {{ leftWeekDisplay }}
             </span>
-            <button
-              class="panel-collapse-btn"
-              @click="panelState = panelState === 'right' ? 'split' : 'right'"
-              :title="panelState === 'right' ? '지난주 패널 펼치기' : '지난주 패널 접기'"
-            >
-              <span class="material-symbols-outlined">{{ panelState === 'right' ? 'chevron_right' : 'chevron_left' }}</span>
+            <button class="panel-collapse-btn" @click="panelState = 'right'" title="지난주 패널 접기">
+              <span class="material-symbols-outlined">chevron_left</span>
             </button>
           </div>
 
-          <template v-if="panelState !== 'right'">
           <div v-for="task in filteredTasks" :key="'L-' + task.id" class="card mb-16" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
             <div class="card-header" style="flex-wrap:wrap;gap:8px">
               <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
@@ -232,27 +237,31 @@
               </template>
             </div>
           </div>
-          </template><!-- /panelState !== 'right' -->
         </div>
 
+        <!-- ══ 이번주 패널 복원 버튼 ══ -->
+        <button
+          v-if="panelState === 'left'"
+          class="panel-restore-btn panel-restore-right"
+          @click="panelState = 'split'"
+          title="이번주 패널 펼치기"
+        >
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+
         <!-- ══ 이번주 패널 ══ -->
-        <div class="split-panel split-right" :class="{ 'panel-collapsed': panelState === 'left' }">
+        <div v-show="panelState !== 'left'" class="split-panel split-right">
           <div class="panel-header">
-            <button
-              class="panel-collapse-btn"
-              @click="panelState = panelState === 'left' ? 'split' : 'left'"
-              :title="panelState === 'left' ? '이번주 패널 펼치기' : '이번주 패널 접기'"
-            >
-              <span class="material-symbols-outlined">{{ panelState === 'left' ? 'chevron_left' : 'chevron_right' }}</span>
+            <button class="panel-collapse-btn" @click="panelState = 'left'" title="이번주 패널 접기">
+              <span class="material-symbols-outlined">chevron_right</span>
             </button>
-            <span v-show="panelState !== 'left'" class="panel-title">
+            <span class="panel-title">
               <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">today</span>
               이번주 · {{ rightWeekDisplay }}
               <span v-if="selectedWeek === getCurrentWeek()" class="week-current-badge">이번 주</span>
             </span>
           </div>
 
-          <template v-if="panelState !== 'left'">
           <div v-for="task in filteredTasks" :key="task.id" :id="'task-' + task.id" class="card mb-16" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
             <div class="card-header" style="flex-wrap:wrap;gap:8px">
               <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
@@ -437,7 +446,6 @@
               </template>
             </div>
           </div>
-          </template><!-- /panelState !== 'left' -->
         </div>
 
       </div>
@@ -944,10 +952,6 @@ watch(() => route.query, async (q, prev) => {
 .split-panel {
   flex: 1 1 0;
   min-width: 0;
-  transition: flex 0.2s;
-}
-.split-panel.panel-collapsed {
-  flex: 0 0 auto;
 }
 
 .panel-header {
@@ -985,6 +989,26 @@ watch(() => route.query, async (q, prev) => {
 .panel-collapse-btn:hover {
   background: var(--gray-200, #e5e7eb);
   color: var(--text-primary);
+}
+.panel-restore-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  flex-shrink: 0;
+  align-self: stretch;
+  min-height: 120px;
+  background: var(--gray-50, #f9fafb);
+  border: 1px solid var(--outline);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.panel-restore-btn:hover {
+  background: var(--primary-light, #eff6ff);
+  color: var(--primary, #4f8ef7);
+  border-color: var(--primary, #4f8ef7);
 }
 
 /* ── 컨텐츠 ── */
