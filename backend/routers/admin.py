@@ -57,7 +57,7 @@ def export_tasks():
     headers = ["task_id", "task_name", "objective_id", "members"]
     rows = [
         [t.get("id"), t.get("name"), t.get("objective_id"),
-         "; ".join(f"{m.get('name')}({m.get('staff_id')})" for m in t.get("members", []))]
+         "; ".join(f"{m.get('name')}({m.get('username', m.get('staff_id', ''))})" for m in t.get("members", []))]
         for t in tasks
     ]
     return _csv_response("tasks.csv", headers, rows)
@@ -65,9 +65,12 @@ def export_tasks():
 
 @router.get("/export/staff")
 def export_staff():
-    staff = data_store.load("staff.json").get("staff", [])
-    fields = ["id", "name", "role", "main_skills", "sub_skills", "learning", "desired_field", "objectives"]
-    rows = [[s.get(f) for f in fields] for s in staff]
+    with data_store.get_conn() as conn:
+        rows_db = conn.execute(
+            "SELECT username, name, job_title, main_skills, sub_skills, learning, desired_field, okrs FROM users WHERE role='member' ORDER BY name"
+        ).fetchall()
+    fields = ["username", "name", "job_title", "main_skills", "sub_skills", "learning", "desired_field", "okrs"]
+    rows = [[dict(r).get(f, "") for f in fields] for r in rows_db]
     return _csv_response("staff.csv", fields, rows)
 
 
@@ -120,8 +123,8 @@ async def import_tasks(file: UploadFile = File(...)):
         for m in r.get("members", "").strip().split(";"):
             if "(" in m and ")" in m:
                 name = m.split("(")[0].strip()
-                staff_id = m.split("(")[1].replace(")", "").strip()
-                members.append({"staff_id": staff_id, "name": name})
+                username = m.split("(")[1].replace(")", "").strip()
+                members.append({"username": username, "name": name})
         tasks.append({
             "id": r.get("task_id") or short_uuid("T"),
             "name": r.get("task_name", "").strip(),

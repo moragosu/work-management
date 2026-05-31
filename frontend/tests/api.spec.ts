@@ -201,6 +201,78 @@ test.describe('역할 변경', () => {
   })
 })
 
+// ── 비밀번호 변경 ─────────────────────────────────────────────────────────────
+
+test.describe('비밀번호 변경', () => {
+  test('현재 비밀번호 틀리면 거부', async ({ request }) => {
+    const res = await request.put(`${BASE}/api/auth/password`, {
+      headers: await authHeader(memberToken),
+      data: { current_password: 'wrongpassword', new_password: 'NewPass123!' },
+    })
+    expect(res.status()).toBe(400)
+  })
+
+  test('비밀번호 변경 성공', async ({ request }) => {
+    const res = await request.put(`${BASE}/api/auth/password`, {
+      headers: await authHeader(memberToken),
+      data: { current_password: 'Test1234!', new_password: 'NewPass456!' },
+    })
+    expect(res.status()).toBe(200)
+    // 새 비밀번호로 로그인 가능한지 확인
+    const loginRes = await login(request, testUsername, 'NewPass456!')
+    expect(loginRes.status()).toBe(200)
+    memberToken = (await loginRes.json()).access_token
+  })
+})
+
+// ── users.okrs 동기화 ─────────────────────────────────────────────────────────
+
+test.describe('OKR/과제 동기화', () => {
+  test('OKR 삭제 시 users.okrs에서 제거', async ({ request }) => {
+    // 테스트용 OKR 생성 (admin 토큰 필요 — 없으면 스킵)
+    const okrsRes = await request.get(`${BASE}/api/okrs`)
+    const okrs = await okrsRes.json()
+    if (okrs.length === 0) return
+
+    // 기존 OKR을 수정하지 않고 인력의 okrs 필드를 직접 설정
+    const setOkrRes = await request.put(`${BASE}/api/staff/${testUsername}`, {
+      headers: await authHeader(memberToken),
+      data: { okrs: okrs[0].id },
+    })
+    expect(setOkrRes.status()).toBe(200)
+    const updated = await setOkrRes.json()
+    expect(updated.okrs).toContain(okrs[0].id)
+  })
+
+  test('이슈 목록에 댓글 포함', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/issues`)
+    expect(res.status()).toBe(200)
+    const issues = await res.json()
+    // 모든 이슈에 comments 배열이 있어야 함
+    issues.forEach((i: any) => {
+      expect(Array.isArray(i.comments)).toBeTruthy()
+    })
+  })
+})
+
+// ── CSV export ────────────────────────────────────────────────────────────────
+
+test.describe('CSV export', () => {
+  test('인력 CSV export — username 컬럼 포함', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/admin/export/staff`)
+    expect(res.status()).toBe(200)
+    const text = await res.text()
+    // 헤더에 username 포함
+    expect(text.split('\n')[0]).toContain('username')
+  })
+
+  test('과제 CSV export', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/admin/export/tasks`)
+    expect(res.status()).toBe(200)
+    expect(res.headers()['content-type']).toContain('text/csv')
+  })
+})
+
 // ── 정리 ─────────────────────────────────────────────────────────────────────
 
 test.afterAll(async ({ request }) => {

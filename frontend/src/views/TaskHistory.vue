@@ -18,7 +18,7 @@
           </div>
           <div class="header-meta">
             <span v-if="task.target" class="meta-chip">{{ task.target }}</span>
-            <span v-for="m in task.members" :key="m.staff_id" class="meta-chip member-chip">
+            <span v-for="m in task.members" :key="m.username || m.name" class="meta-chip member-chip">
               <span class="material-symbols-outlined" style="font-size:12px">person</span>
               {{ m.name }}
             </span>
