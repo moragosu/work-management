@@ -349,6 +349,28 @@ body {
 .badge-gray  { background: var(--gray-100); color: var(--gray-600); }
 .badge-purple{ background: #ede9fe; color: #6d28d9; }
 
+/* ── Author meta row ── */
+.author-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+.meta-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.meta-edited {
+  font-size: 10px;
+  color: var(--text-muted);
+  border: 1px solid var(--outline, #e5e7eb);
+  border-radius: 4px;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
 /* ── Progress bar ── */
 .progress-bar { height: 6px; background: var(--gray-200); border-radius: var(--radius-full); overflow: hidden; }
 .progress-fill { height: 100%; border-radius: var(--radius-full); transition: width .3s; }

@@ -43,7 +43,8 @@
             <span class="feedback-title">{{ fb.title }}</span>
             <div class="feedback-meta">
               <span class="badge badge-gray">{{ fb.author }}</span>
-              <span class="feedback-date">{{ fb.updated_at ?? fb.created_at }}</span>
+              <span class="meta-date">{{ fb.updated_at ?? fb.created_at }}</span>
+              <span v-if="fb.updated_at" class="meta-edited">수정됨</span>
               <button class="btn btn-ghost btn-xs" @click="startEdit(fb)" data-tooltip="수정">수정</button>
               <button class="btn btn-danger btn-xs" @click="deleteFeedback(fb.id)" data-tooltip="삭제">삭제</button>
             </div>
@@ -278,7 +279,6 @@ onMounted(fetchAll)
   gap: 6px;
   flex-shrink: 0;
 }
-.feedback-date { font-size: 11px; color: var(--text-muted); }
 .feedback-card-body { padding: 12px 16px; }
 
 .category-badge {

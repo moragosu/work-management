@@ -93,11 +93,11 @@
             </template>
             <template v-else>
               <TiptapPreview :modelValue="ans.answer" />
-              <span class="answer-by">
-                — {{ ans.answer_by }}
-                <span class="answer-date">{{ ans.updated_at ?? ans.created_at }}</span>
-                <span v-if="ans.updated_at" class="answer-edited">(수정됨)</span>
-              </span>
+              <div class="author-row">
+                <span class="badge badge-gray">{{ ans.answer_by }}</span>
+                <span class="meta-date">{{ ans.updated_at ?? ans.created_at }}</span>
+                <span v-if="ans.updated_at" class="meta-edited">수정됨</span>
+              </div>
             </template>
           </div>
           <div v-if="editingAnswerId !== ans.id" class="qa-actions">
@@ -123,10 +123,11 @@
             </template>
             <template v-else>
               <TiptapPreview :modelValue="rep.reply" />
-              <span class="answer-by">
-                — {{ rep.reply_by }}
-                <span class="answer-date">{{ rep.updated_at ?? rep.created_at }}</span>
-              </span>
+              <div class="author-row">
+                <span class="badge badge-gray">{{ rep.reply_by }}</span>
+                <span class="meta-date">{{ rep.updated_at ?? rep.created_at }}</span>
+                <span v-if="rep.updated_at" class="meta-edited">수정됨</span>
+              </div>
             </template>
           </div>
           <div v-if="editingReplyId !== rep.id" class="qa-actions">
@@ -490,15 +491,6 @@ async function deleteReply(answerId, replyId) {
   gap: 4px;
   flex-shrink: 0;
 }
-.answer-by {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 4px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.answer-date { color: var(--text-muted); }
 .reply-row {
   display: flex;
   align-items: flex-start;
@@ -526,7 +518,6 @@ async function deleteReply(answerId, replyId) {
   color: var(--text-muted, #888);
   border: 1px solid var(--outline, #e5e7eb);
 }
-.answer-edited { font-size: 11px; opacity: 0.7; }
 
 /* 질문 대상자 */
 .target-row {

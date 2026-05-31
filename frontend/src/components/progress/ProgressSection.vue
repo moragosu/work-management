@@ -27,7 +27,8 @@
         </div>
         <div class="flex gap-4 mt-8" style="align-items:center">
           <span v-if="iss.assignee" class="badge badge-gray">{{ iss.assignee }}</span>
-          <span class="issue-date">{{ iss.updated_at ?? iss.created_at }}</span>
+          <span class="meta-date">{{ iss.updated_at ?? iss.created_at }}</span>
+          <span v-if="iss.updated_at" class="meta-edited">수정됨</span>
           <div style="margin-left:auto;display:flex;gap:4px">
             <button class="btn btn-ghost btn-xs" @click="copyLink(iss)" data-tooltip="링크 복사 — 메신저 공유용">
               <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">link</span>
@@ -41,9 +42,10 @@
         <div class="comment-section">
           <div v-for="c in (iss.comments || [])" :key="c.id" class="comment-item">
             <div class="comment-meta-row">
-              <span class="comment-by">{{ c.comment_by }}</span>
-              <span class="comment-date">{{ c.updated_at ?? c.created_at }}</span>
-              <div v-if="!readonly" class="comment-actions">
+              <span class="badge badge-gray">{{ c.comment_by }}</span>
+              <span class="meta-date">{{ c.updated_at ?? c.created_at }}</span>
+              <span v-if="c.updated_at" class="meta-edited">수정됨</span>
+              <div v-if="!readonly" class="comment-actions" style="margin-left:auto">
                 <button class="btn btn-ghost btn-xs" @click="startReplyToComment(iss.id, c.id)">↩ 답글</button>
                 <button v-if="c.created_by === auth.user?.username || auth.isAdmin" class="btn btn-ghost btn-xs" @click="startEditComment(iss.id, c)">수정</button>
                 <button v-if="c.created_by === auth.user?.username || auth.isAdmin" class="btn btn-danger btn-xs" @click="deleteComment(iss.id, c.id)">삭제</button>
@@ -55,9 +57,10 @@
               <div class="reply-indent-line"></div>
               <div class="reply-body">
                 <div class="comment-meta-row">
-                  <span class="comment-by">{{ r.comment_by }}</span>
-                  <span class="comment-date">{{ r.updated_at ?? r.created_at }}</span>
-                  <div v-if="!readonly" class="comment-actions">
+                  <span class="badge badge-gray">{{ r.comment_by }}</span>
+                  <span class="meta-date">{{ r.updated_at ?? r.created_at }}</span>
+                  <span v-if="r.updated_at" class="meta-edited">수정됨</span>
+                  <div v-if="!readonly" class="comment-actions" style="margin-left:auto">
                     <button v-if="r.created_by === auth.user?.username || auth.isAdmin" class="btn btn-ghost btn-xs" @click="startEditComment(iss.id, r)">수정</button>
                     <button v-if="r.created_by === auth.user?.username || auth.isAdmin" class="btn btn-danger btn-xs" @click="deleteComment(iss.id, r.id)">삭제</button>
                   </div>
@@ -287,7 +290,6 @@ async function deleteComment(issueId, commentId) {
   padding: 8px 12px;
   border-radius: 0 4px 4px 0;
 }
-.issue-date { font-size: 11px; color: var(--text-muted); }
 .mt-4 { margin-top: 4px; }
 .comment-section {
   margin-top: 10px;
@@ -308,12 +310,6 @@ async function deleteComment(issueId, commentId) {
   font-size: 12px;
 }
 .comment-meta-row:hover .comment-actions { opacity: 1; }
-.comment-by {
-  font-weight: 600;
-  color: var(--text-secondary, #555);
-  white-space: nowrap;
-}
-.comment-date { font-size: 11px; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
 .comment-actions { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; }
 .reply-item {
   display: flex;

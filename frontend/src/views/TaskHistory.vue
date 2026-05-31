@@ -113,10 +113,7 @@
             <div v-for="iss in visibleIssues(entry)" :key="iss.id" class="history-item issue-item">
               <div class="item-meta">
                 <span class="meta-tid">{{ iss.task_id }}</span>
-                <span class="meta-who">
-                  <span class="material-symbols-outlined" style="font-size:12px">person</span>
-                  {{ iss.assignee }}
-                </span>
+                <span class="badge badge-gray">{{ iss.assignee }}</span>
                 <span class="meta-date">{{ iss.created_at }}</span>
               </div>
               <TiptapPreview :modelValue="iss.issue" />
@@ -126,13 +123,14 @@
                 <div v-for="c in iss.comments" :key="c.id" class="comment">
                   <div class="comment-meta">
                     <span class="material-symbols-outlined" style="font-size:12px;color:var(--text-muted)">subdirectory_arrow_right</span>
-                    <strong>{{ c.comment_by }}</strong>
+                    <span class="badge badge-gray">{{ c.comment_by }}</span>
                     <span class="meta-date">{{ c.created_at?.slice(0, 10) }}</span>
                   </div>
                   <TiptapPreview :modelValue="c.comment" />
                   <div v-for="r in c.replies" :key="r.id" class="reply">
                     <span class="material-symbols-outlined" style="font-size:11px;color:var(--text-muted)">subdirectory_arrow_right</span>
-                    <strong>{{ r.comment_by }}</strong>
+                    <span class="badge badge-gray">{{ r.comment_by }}</span>
+                    <span class="meta-date">{{ r.created_at?.slice(0, 10) }}</span>
                     <TiptapPreview :modelValue="r.comment" />
                   </div>
                 </div>
@@ -149,10 +147,7 @@
             <div v-for="q in visibleQuestions(entry)" :key="q.id" class="history-item qa-item">
               <div class="item-meta">
                 <span class="meta-tid">{{ q.task_id }}</span>
-                <span class="meta-who">
-                  <span class="material-symbols-outlined" style="font-size:12px">person</span>
-                  {{ q.questioner }}
-                </span>
+                <span class="badge badge-gray">{{ q.questioner }}</span>
                 <span v-if="q.targets?.length" class="meta-targets">
                   → {{ q.targets.join(', ') }}
                 </span>
@@ -169,13 +164,14 @@
               <div v-for="a in q.answers" :key="a.id" class="answer">
                 <div class="answer-meta">
                   <span class="inline-badge badge-answered">A</span>
-                  <strong>{{ a.answer_by }}</strong>
+                  <span class="badge badge-gray">{{ a.answer_by }}</span>
                   <span class="meta-date">{{ a.created_at?.slice(0, 10) }}</span>
                 </div>
                 <TiptapPreview :modelValue="a.answer" />
                 <div v-for="r in a.replies" :key="r.id" class="reply">
                   <span class="material-symbols-outlined" style="font-size:11px;color:var(--text-muted)">subdirectory_arrow_right</span>
-                  <strong>{{ r.reply_by }}</strong>
+                  <span class="badge badge-gray">{{ r.reply_by }}</span>
+                  <span class="meta-date">{{ r.created_at?.slice(0, 10) }}</span>
                   <TiptapPreview :modelValue="r.reply" />
                 </div>
               </div>
@@ -389,10 +385,6 @@ onMounted(fetchHistory)
   font-size: 10px; font-weight: 700;
   padding: 1px 6px; border-radius: 4px;
   background: var(--gray-100); color: var(--text-muted);
-}
-.meta-who {
-  display: flex; align-items: center; gap: 3px;
-  font-size: 12px; font-weight: 600; color: var(--text-primary);
 }
 .meta-targets { font-size: 12px; color: var(--primary); }
 .meta-date { font-size: 11px; color: var(--text-muted); margin-left: auto; }

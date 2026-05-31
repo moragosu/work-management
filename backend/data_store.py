@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS answers (
     answer      TEXT NOT NULL DEFAULT '',
     answer_by   TEXT NOT NULL DEFAULT '',
     images      TEXT NOT NULL DEFAULT '[]',
+    created_by  TEXT NOT NULL DEFAULT '',
     created_at  TEXT,
     updated_at  TEXT
 );
@@ -196,6 +197,7 @@ def init_db() -> None:
         for sql in [
             "ALTER TABLE issues ADD COLUMN created_by TEXT NOT NULL DEFAULT ''",
             "ALTER TABLE questions ADD COLUMN created_by TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE answers ADD COLUMN created_by TEXT NOT NULL DEFAULT ''",
             "ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0",
             "ALTER TABLE users ADD COLUMN force_password_change INTEGER NOT NULL DEFAULT 0",
             "ALTER TABLE users ADD COLUMN staff_id TEXT DEFAULT NULL",
