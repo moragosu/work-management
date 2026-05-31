@@ -28,10 +28,10 @@
       <span class="filter-label-sm">인력</span>
       <button
         v-for="s in props.staffList"
-        :key="s.id"
+        :key="s.username"
         class="staff-chip"
-        :class="{ 'staff-chip-active': selectedStaffFilter.includes(s.id) }"
-        @click="toggleStaffFilter(s.id)"
+        :class="{ 'staff-chip-active': selectedStaffFilter.includes(s.username) }"
+        @click="toggleStaffFilter(s.username)"
       >{{ s.name }}</button>
       <button v-if="selectedStaffFilter.length > 0" class="btn btn-ghost btn-xs" @click="selectedStaffFilter = []" data-tooltip="인력 필터 초기화">전체 보기</button>
     </div>
@@ -80,7 +80,7 @@
               </td>
               <td style="max-width:200px">
                 <div v-if="getObjectiveStaff(o.id).length" class="member-chips">
-                  <span v-for="s in getObjectiveStaff(o.id)" :key="s.id" class="badge badge-gray" :title="s.role">{{ s.name }}</span>
+                  <span v-for="s in getObjectiveStaff(o.id)" :key="s.username" class="badge badge-gray" :title="s.job_title">{{ s.name }}</span>
                 </div>
                 <span v-else class="text-muted text-sm">-</span>
               </td>
@@ -230,7 +230,7 @@ function sortBy(key) {
 const sortedObjectives = computed(() => {
   let list = props.objectives
   if (selectedStaffFilter.value.length > 0) {
-    list = list.filter(o => getObjectiveStaff(o.id).some(s => selectedStaffFilter.value.includes(s.id)))
+    list = list.filter(o => getObjectiveStaff(o.id).some(s => selectedStaffFilter.value.includes(s.username)))
   }
   if (!sortKey.value) return list
   return [...list].sort((a, b) => {
@@ -246,11 +246,11 @@ const sortedObjectives = computed(() => {
 function getObjectiveTasks(id) { return props.tasks.filter(t => t.objective_id === id) }
 function getObjectiveStaff(id) {
   const fromOkrs = props.staffList.filter(s => parseIds(s.okrs).includes(id))
-  const fromOkrsIds = new Set(fromOkrs.map(s => s.id))
+  const fromOkrsUsernames = new Set(fromOkrs.map(s => s.username))
   const connectedTaskIds = new Set(props.tasks.filter(t => t.objective_id === id).map(t => t.id))
   const fromTasks = props.staffList.filter(s =>
-    !fromOkrsIds.has(s.id) &&
-    parseIds(s.selected_tasks).some(tid => connectedTaskIds.has(tid))
+    !fromOkrsUsernames.has(s.username) &&
+    (s.task_ids || []).some(tid => connectedTaskIds.has(tid))
   )
   return [...fromOkrs, ...fromTasks]
 }

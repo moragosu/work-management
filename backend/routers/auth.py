@@ -66,29 +66,10 @@ def signup(body: SignupRequest):
         exists = conn.execute("SELECT 1 FROM users WHERE username=?", (body.username,)).fetchone()
         if exists:
             raise HTTPException(status_code=409, detail="이미 사용 중인 아이디입니다")
-        # staff 자동 생성·연결
-        # user_id IS NULL인 staff만 검색 — 이미 다른 계정이 연결된 staff는 제외
-        staff_matches = conn.execute(
-            "SELECT id FROM staff WHERE name=? AND user_id IS NULL", (body.name.strip(),)
-        ).fetchall()
-        if len(staff_matches) == 1:
-            # 이름 매칭 1개 → 기존 staff에 연결
-            staff_id = staff_matches[0]["id"]
-        elif len(staff_matches) == 0:
-            # 매칭 없음(신규 또는 이미 연결된 동명) → 새 staff 생성
-            staff_id = short_uuid("S")
-            conn.execute("INSERT INTO staff (id, name, user_id) VALUES (?, ?, ?)",
-                         (staff_id, body.name.strip(), body.username))
-        else:
-            # 동명이인 미연결 staff가 2개 이상 → 관리자가 수동 지정
-            staff_id = None
         conn.execute(
-            "INSERT INTO users (username, name, password_hash, role, is_admin, staff_id, created_at) VALUES (?,?,?,?,?,?,?)",
-            (body.username, body.name, auth_utils.hash_password(body.password), "member", 0, staff_id, datetime.now().isoformat()),
+            "INSERT INTO users (username, name, password_hash, role, is_admin, created_at) VALUES (?,?,?,?,?,?)",
+            (body.username, body.name, auth_utils.hash_password(body.password), "member", 0, datetime.now().isoformat()),
         )
-        # staff.user_id 동기화 (기존 staff에 연결된 경우)
-        if staff_id and len(staff_matches) == 1:
-            conn.execute("UPDATE staff SET user_id=? WHERE id=?", (body.username, staff_id))
     token = auth_utils.create_access_token({"sub": body.username})
     return {
         "access_token": token,
@@ -119,10 +100,7 @@ def change_password(body: ChangePasswordRequest, user: dict = Depends(get_curren
 def list_users(_admin: dict = Depends(require_admin)):
     with data_store.get_conn() as conn:
         rows = conn.execute(
-            """SELECT u.username, u.name, u.role, u.is_admin, u.created_at, u.staff_id,
-                      s.name AS staff_name
-               FROM users u LEFT JOIN staff s ON u.staff_id = s.id
-               ORDER BY u.created_at"""
+            "SELECT username, name, role, is_admin, created_at FROM users ORDER BY created_at"
         ).fetchall()
     return [dict(r) for r in rows]
 
@@ -154,34 +132,9 @@ def update_role(username: str, body: RoleUpdate, _admin: dict = Depends(require_
     if body.role not in ("member", "group_leader", "part_leader"):
         raise HTTPException(status_code=400, detail="유효하지 않은 직책입니다")
     with data_store.get_conn() as conn:
-        user_row = conn.execute(
-            "SELECT name, staff_id FROM users WHERE username=?", (username,)
-        ).fetchone()
-        if not user_row:
-            raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
-
-        if body.role in ("group_leader", "part_leader"):
-            result = conn.execute(
-                "UPDATE users SET role=? WHERE username=?", (body.role, username)
-            )
-            # 리더로 변경 시 연결된 staff.user_id 초기화 (인력 탭 제외 처리용)
-            if user_row["staff_id"]:
-                conn.execute("UPDATE staff SET user_id=NULL WHERE id=?", (user_row["staff_id"],))
-        else:
-            # 파트원으로 변경 시 이름 기반 staff 자동 연결
-            staff_id = user_row["staff_id"]
-            if not staff_id:
-                matches = conn.execute(
-                    "SELECT id FROM staff WHERE name=? AND user_id IS NULL", (user_row["name"],)
-                ).fetchall()
-                if len(matches) == 1:
-                    staff_id = matches[0]["id"]
-            result = conn.execute(
-                "UPDATE users SET role=?, staff_id=? WHERE username=?", (body.role, staff_id, username)
-            )
-            # staff.user_id 동기화
-            if staff_id:
-                conn.execute("UPDATE staff SET user_id=? WHERE id=?", (username, staff_id))
+        result = conn.execute(
+            "UPDATE users SET role=? WHERE username=?", (body.role, username)
+        )
         if result.rowcount == 0:
             raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
     return {"ok": True}

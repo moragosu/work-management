@@ -185,13 +185,13 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="s in sortedStaff" :key="s.id" style="cursor:default">
+                  <tr v-for="s in sortedStaff" :key="s.username" style="cursor:default">
                     <td style="vertical-align:middle">
                       <div class="member-cell">
                         <span class="member-avatar">{{ s.name[0] }}</span>
                         <div>
                           <div class="member-name">{{ s.name }}</div>
-                          <div class="member-role">{{ s.role }}</div>
+                          <div class="member-role">{{ s.job_title }}</div>
                         </div>
                       </div>
                     </td>
@@ -450,7 +450,7 @@ const memberStatsMap = computed(() => {
     const answered   = received.filter(q => q.answers && q.answers.length > 0).length
     const unanswered = received.length - answered
     map[s.name] = {
-      tasks:      parseIds(s.selected_tasks || '').length,
+      tasks:      (s.task_ids || []).length,
       issues:     wIssues.filter(i => i.assignee === s.name).length,
       answered,
       unanswered,

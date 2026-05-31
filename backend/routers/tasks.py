@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
@@ -8,7 +9,7 @@ router = APIRouter()
 
 
 class TaskMember(BaseModel):
-    staff_id: str
+    username: str
     name: str
     role: str = ""
 
@@ -51,17 +52,22 @@ def _save(tasks: list) -> None:
 
 
 def _cascade_delete_ids(ids_to_remove: set, task_name: str = "") -> None:
-    """staff.selected_tasks 및 progress에서 해당 ID들 제거."""
-    staff_data = data_store.load("staff.json")
-    changed = False
-    for staff in staff_data.get("staff", []):
-        parts = [x.strip() for x in staff.get("selected_tasks", "").split(",") if x.strip()]
-        new_parts = [x for x in parts if x not in ids_to_remove]
-        if len(new_parts) != len(parts):
-            staff["selected_tasks"] = ",".join(new_parts)
-            changed = True
-    if changed:
-        data_store.save("staff.json", staff_data)
+    """users.task_ids 및 progress에서 해당 ID들 제거."""
+    with data_store.get_conn() as conn:
+        rows = conn.execute(
+            "SELECT username, task_ids FROM users WHERE role='member'"
+        ).fetchall()
+        for row in rows:
+            try:
+                ids = json.loads(row["task_ids"] or "[]")
+            except (json.JSONDecodeError, TypeError):
+                ids = []
+            new_ids = [x for x in ids if x not in ids_to_remove]
+            if len(new_ids) != len(ids):
+                conn.execute(
+                    "UPDATE users SET task_ids=? WHERE username=?",
+                    (json.dumps(new_ids, ensure_ascii=False), row["username"])
+                )
 
     progress_data = data_store.load("progress.json")
     changed = False
@@ -256,35 +262,37 @@ def update_task(task_id: str, update: TaskUpdate):
             tasks[i] = {**t, **patch}
             _save(tasks)
             if old_objective_id != new_objective_id:
-                member_ids = {m["staff_id"] for m in t.get("members", [])}
-                if member_ids:
-                    _sync_staff_okrs(member_ids, old_objective_id, new_objective_id, tasks)
+                member_usernames = {m["username"] for m in t.get("members", []) if m.get("username")}
+                if member_usernames:
+                    _sync_staff_okrs(member_usernames, old_objective_id, new_objective_id, tasks)
             return tasks[i]
     raise HTTPException(status_code=404, detail="Task not found")
 
 
-def _sync_staff_okrs(member_ids: set, old_obj_id: str, new_obj_id: str, all_tasks: list):
-    """task objective_id 변경 시 관련 staff.okrs 자동 동기화."""
-    staff_data = data_store.load("staff.json")
-    changed = False
-    for staff in staff_data.get("staff", []):
-        if staff["id"] not in member_ids:
-            continue
-        okrs = [x.strip() for x in staff.get("okrs", "").split(",") if x.strip()]
-        if old_obj_id:
-            still_connected = any(
-                t.get("objective_id") == old_obj_id and
-                any(m["staff_id"] == staff["id"] for m in t.get("members", []))
-                for t in all_tasks
+def _sync_staff_okrs(member_usernames: set, old_obj_id: str, new_obj_id: str, all_tasks: list):
+    """task objective_id 변경 시 관련 users.okrs 자동 동기화."""
+    with data_store.get_conn() as conn:
+        for username in member_usernames:
+            row = conn.execute(
+                "SELECT okrs FROM users WHERE username=?", (username,)
+            ).fetchone()
+            if not row:
+                continue
+            okrs = [x.strip() for x in (row["okrs"] or "").split(",") if x.strip()]
+            if old_obj_id:
+                still_connected = any(
+                    t.get("objective_id") == old_obj_id and
+                    any(m.get("username") == username for m in t.get("members", []))
+                    for t in all_tasks
+                )
+                if not still_connected and old_obj_id in okrs:
+                    okrs.remove(old_obj_id)
+            if new_obj_id and new_obj_id not in okrs:
+                okrs.append(new_obj_id)
+            conn.execute(
+                "UPDATE users SET okrs=? WHERE username=?",
+                (",".join(okrs), username)
             )
-            if not still_connected and old_obj_id in okrs:
-                okrs.remove(old_obj_id)
-        if new_obj_id and new_obj_id not in okrs:
-            okrs.append(new_obj_id)
-        staff["okrs"] = ",".join(okrs)
-        changed = True
-    if changed:
-        data_store.save("staff.json", staff_data)
 
 
 @router.delete("/{task_id}")
@@ -315,7 +323,6 @@ def get_task_related_data(task_id: str):
         raise HTTPException(status_code=404, detail="Task not found")
 
     objectives_data = data_store.load("okrs.json")
-    staff_data = data_store.load("staff.json")
 
     related_objective = None
     if task.get("objective_id"):
@@ -323,9 +330,15 @@ def get_task_related_data(task_id: str):
             (o for o in objectives_data.get("objectives", []) if o["id"] == task["objective_id"]), None
         )
 
-    related_staff = [
-        s for s in staff_data.get("staff", [])
-        if any(m["staff_id"] == s["id"] for m in task.get("members", []))
-    ]
+    usernames = [m.get("username") for m in task.get("members", []) if m.get("username")]
+    related_staff = []
+    if usernames:
+        ph = ",".join("?" * len(usernames))
+        with data_store.get_conn() as conn:
+            rows = conn.execute(
+                f"SELECT username, name, job_title, main_skills FROM users WHERE username IN ({ph})",
+                usernames
+            ).fetchall()
+        related_staff = [dict(r) for r in rows]
 
     return {"task": task, "related_objective": related_objective, "related_staff": related_staff}

@@ -135,19 +135,19 @@ def delete_objective(objective_id: str):
     if tasks_changed:
         data_store.save("tasks.json", tasks_data)
 
-    # Cascade: staff.okrs에서 제거
-    staff_data = data_store.load("staff.json")
-    staff_changed = False
-    for staff in staff_data.get("staff", []):
-        okrs_str = staff.get("okrs", "")
-        if okrs_str:
-            ids = [x.strip() for x in okrs_str.split(",") if x.strip()]
+    # Cascade: users.okrs에서 제거
+    with data_store.get_conn() as conn:
+        rows = conn.execute(
+            "SELECT username, okrs FROM users WHERE role='member' AND okrs != ''"
+        ).fetchall()
+        for row in rows:
+            ids = [x.strip() for x in (row["okrs"] or "").split(",") if x.strip()]
             new_ids = [x for x in ids if x != objective_id]
             if len(new_ids) != len(ids):
-                staff["okrs"] = ",".join(new_ids)
-                staff_changed = True
-    if staff_changed:
-        data_store.save("staff.json", staff_data)
+                conn.execute(
+                    "UPDATE users SET okrs=? WHERE username=?",
+                    (",".join(new_ids), row["username"])
+                )
 
     # Cascade: progress의 objective ID를 이름 텍스트로 변환 (이력 보존)
     progress_data = data_store.load("progress.json")
@@ -229,15 +229,17 @@ def get_objective_related_data(objective_id: str):
         raise HTTPException(status_code=404, detail="Objective not found")
 
     tasks_data = data_store.load("tasks.json")
-    staff_data = data_store.load("staff.json")
-
     related_tasks = [t for t in tasks_data.get("tasks", []) if t.get("objective_id") == objective_id]
 
-    staff_ids = set()
-    for task in related_tasks:
-        for member in task.get("members", []):
-            staff_ids.add(member["staff_id"])
-
-    related_staff = [s for s in staff_data.get("staff", []) if s["id"] in staff_ids]
+    usernames = {m.get("username") for t in related_tasks for m in t.get("members", []) if m.get("username")}
+    related_staff = []
+    if usernames:
+        ph = ",".join("?" * len(usernames))
+        with data_store.get_conn() as conn:
+            rows = conn.execute(
+                f"SELECT username, name, job_title, main_skills FROM users WHERE username IN ({ph})",
+                list(usernames)
+            ).fetchall()
+        related_staff = [dict(r) for r in rows]
 
     return {"objective": objective, "related_tasks": related_tasks, "related_staff": related_staff}
