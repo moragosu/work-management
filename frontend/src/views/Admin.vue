@@ -147,7 +147,10 @@
                   </span>
                   <select v-else @change="linkStaff(u.username, $event.target.value)" class="role-select" style="max-width:110px">
                     <option value="">연결 선택</option>
-                    <option v-for="s in allStaffList" :key="s.id" :value="s.id">{{ s.name }}</option>
+                    <option
+                      v-for="s in allStaffList" :key="s.id" :value="s.id"
+                      :selected="s.name === u.name && allStaffList.filter(x => x.name === u.name).length === 1"
+                    >{{ s.name }}</option>
                   </select>
                 </td>
                 <td>
