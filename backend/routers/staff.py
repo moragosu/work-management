@@ -79,6 +79,32 @@ def get_staff(username: str):
     return _row_to_member(row)
 
 
+@router.post("", response_model=StaffMember, status_code=201)
+def create_staff(member: StaffMember):
+    """관리자가 직접 파트원 계정 없이 인력 정보를 등록할 때 사용."""
+    import secrets, string
+    from utils.id_generator import short_uuid
+    import auth_utils
+    username = member.username or short_uuid("U")
+    task_ids_json = json.dumps(member.task_ids or [], ensure_ascii=False)
+    with data_store.get_conn() as conn:
+        if conn.execute("SELECT 1 FROM users WHERE username=?", (username,)).fetchone():
+            raise HTTPException(status_code=409, detail="이미 존재하는 아이디입니다")
+        temp_pw = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(10))
+        conn.execute(
+            """INSERT INTO users
+               (username, name, password_hash, role, is_admin, force_password_change,
+                job_title, main_skills, sub_skills, learning, desired_field, okrs, task_ids, created_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (username, member.name, auth_utils.hash_password(temp_pw),
+             "member", 0, 1,
+             member.job_title, member.main_skills, member.sub_skills,
+             member.learning, member.desired_field, member.okrs, task_ids_json,
+             __import__('datetime').datetime.now().isoformat())
+        )
+    return get_staff(username)
+
+
 @router.put("/{username}", response_model=StaffMember)
 def update_staff(username: str, update: StaffUpdate):
     patch = update.model_dump(exclude_none=True)

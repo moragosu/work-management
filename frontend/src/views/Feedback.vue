@@ -79,7 +79,7 @@
               <label class="form-label">작성자 <span style="color:var(--danger)">*</span></label>
               <select v-model="form.author" class="form-control" style="max-width:200px">
                 <option value="">선택</option>
-                <option v-for="s in staffList" :key="s.id" :value="s.name">{{ s.name }}</option>
+                <option v-for="s in staffList" :key="s.username" :value="s.name">{{ s.name }}</option>
               </select>
             </div>
             <div class="form-group">

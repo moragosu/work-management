@@ -146,6 +146,10 @@
           <button class="modal-close" @click="closeModal">✕</button>
         </div>
         <div class="modal-body">
+          <div v-if="!selectedMember" class="form-group">
+            <label class="form-label">아이디 (username) *</label>
+            <input v-model="form.username" class="form-control" placeholder="예: gildong.hong" />
+          </div>
           <div class="form-group">
             <label class="form-label">이름 *</label>
             <input v-model="form.name" class="form-control" :disabled="!!selectedMember" />
@@ -229,7 +233,7 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-ghost" @click="closeModal">취소</button>
-          <button class="btn btn-primary" @click="submitForm" :disabled="!form.name.trim()">
+          <button class="btn btn-primary" @click="submitForm" :disabled="!form.name.trim() || (!selectedMember && !form.username.trim())">
             {{ selectedMember ? '수정' : '추가' }}
           </button>
         </div>
@@ -263,7 +267,7 @@ const { show: showModal, open: openModal, close: closeModal } = useModal()
 const { toastMsg, showToast, toastError } = useToast()
 const debounceTimers = {}
 
-const defaultForm = () => ({ name: '', job_title: '', main_skills: '', sub_skills: '', taskIds: [] })
+const defaultForm = () => ({ username: '', name: '', job_title: '', main_skills: '', sub_skills: '', taskIds: [] })
 const form = ref(defaultForm())
 const selectedMember = ref(null)
 
@@ -411,8 +415,9 @@ async function submitForm() {
       if (idx !== -1) staff.value[idx] = data
       showToast('인력 정보가 수정되었습니다')
     } else {
-      // 추가는 계정 기반이므로 지원하지 않음 — 회원가입으로 생성
-      showToast('인력은 회원가입을 통해 추가됩니다')
+      const { data } = await axios.post('/api/staff', payload)
+      staff.value.push(data)
+      showToast('인력이 추가되었습니다 (임시 비밀번호로 계정 생성됨)')
     }
     closeModal()
     emit('updated')
