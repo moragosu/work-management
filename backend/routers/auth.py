@@ -147,8 +147,9 @@ def update_role(username: str, body: RoleUpdate, _admin: dict = Depends(require_
         raise HTTPException(status_code=400, detail="유효하지 않은 직책입니다")
     with data_store.get_conn() as conn:
         if body.role in ("group_leader", "part_leader"):
+            # staff_id는 유지 (NULL로 초기화하지 않음 — 인력 탭 필터링에 필요)
             result = conn.execute(
-                "UPDATE users SET role=?, staff_id=NULL WHERE username=?", (body.role, username)
+                "UPDATE users SET role=? WHERE username=?", (body.role, username)
             )
         else:
             user_row = conn.execute("SELECT name FROM users WHERE username=?", (username,)).fetchone()
