@@ -106,10 +106,16 @@
                 </td>
                 <td>
                   <div class="objective-task-list">
-                    <div v-for="objId in getTaskIdsObjectiveIds(member.task_ids || [])" :key="objId" class="objective-item">
+                    <div v-for="(objId, idx) in getTaskIdsObjectiveIds(member.task_ids || [])" :key="objId ?? '__unlinked__' + idx" class="objective-item">
                       <div class="objective-header">
-                        <span class="badge badge-blue">{{ objId }}</span>
-                        <span class="objective-label">{{ getObjectiveName(objId) }}</span>
+                        <template v-if="objId">
+                          <span class="badge badge-blue">{{ objId }}</span>
+                          <span class="objective-label">{{ getObjectiveName(objId) }}</span>
+                        </template>
+                        <template v-else>
+                          <span class="badge badge-gray">미연결</span>
+                          <span class="objective-label">목표 없음</span>
+                        </template>
                       </div>
                       <div class="task-list">
                         <div
@@ -322,22 +328,23 @@ function resolveTaskObjectiveId(id) {
   return t?.objective_id || null
 }
 
-// task_ids 배열에서 목표 ID 목록 추출
+// task_ids 배열에서 목표 ID 목록 추출 (null = 미연결 포함)
 function getTaskIdsObjectiveIds(taskIds) {
   const seen = new Set()
   const result = []
   taskIds.forEach(id => {
     const objId = resolveTaskObjectiveId(id)
-    if (objId && !seen.has(objId)) { seen.add(objId); result.push(objId) }
+    const key = objId ?? '__unlinked__'
+    if (!seen.has(key)) { seen.add(key); result.push(objId) }
   })
   return result
 }
 
-// task_ids 배열에서 특정 목표에 속하는 과제 목록
+// task_ids 배열에서 특정 목표에 속하는 과제 목록 (objId=null이면 미연결 과제)
 function getTasksForObjective(taskIds, objId) {
   const selected = new Set(taskIds)
   const result = []
-  tasks.value.filter(t => t.objective_id === objId).forEach(t => {
+  tasks.value.filter(t => (objId === null ? !t.objective_id : t.objective_id === objId)).forEach(t => {
     if (selected.has(t.id)) result.push({ id: t.id, name: t.name, isSub: false })
     ;(t.sub_tasks || []).forEach(st => {
       if (selected.has(st.id)) result.push({ id: st.id, name: st.name, isSub: true })
