@@ -60,7 +60,8 @@ CREATE TABLE IF NOT EXISTS staff (
     desired_field  TEXT NOT NULL DEFAULT '',
     okrs           TEXT NOT NULL DEFAULT '',
     selected_tasks TEXT NOT NULL DEFAULT '',
-    task_ids       TEXT NOT NULL DEFAULT '[]'
+    task_ids       TEXT NOT NULL DEFAULT '[]',
+    user_id        TEXT DEFAULT NULL
 );
 CREATE TABLE IF NOT EXISTS questions (
     id         TEXT PRIMARY KEY,
@@ -191,6 +192,7 @@ def init_db() -> None:
             "ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0",
             "ALTER TABLE users ADD COLUMN force_password_change INTEGER NOT NULL DEFAULT 0",
             "ALTER TABLE users ADD COLUMN staff_id TEXT DEFAULT NULL",
+            "ALTER TABLE staff ADD COLUMN user_id TEXT DEFAULT NULL",
         ]:
             try:
                 conn.execute(sql)
@@ -206,13 +208,26 @@ def init_db() -> None:
         ).fetchall()
         for row in unlinked:
             matches = conn.execute(
-                "SELECT id FROM staff WHERE name=?", (row["name"],)
+                "SELECT id FROM staff WHERE name=? AND user_id IS NULL", (row["name"],)
             ).fetchall()
             if len(matches) == 1:
                 conn.execute(
                     "UPDATE users SET staff_id=? WHERE username=?",
                     (matches[0]["id"], row["username"])
                 )
+                conn.execute(
+                    "UPDATE staff SET user_id=? WHERE id=?",
+                    (row["username"], matches[0]["id"])
+                )
+        # 기존 users.staff_id 연결 기반으로 staff.user_id 채우기
+        conn.execute(
+            """UPDATE staff SET user_id = (
+                SELECT u.username FROM users u WHERE u.staff_id = staff.id LIMIT 1
+               )
+               WHERE user_id IS NULL AND EXISTS (
+                SELECT 1 FROM users u WHERE u.staff_id = staff.id
+               )"""
+        )
 
 
 # ── 행 변환 헬퍼 ─────────────────────────────────────────────────────────────
