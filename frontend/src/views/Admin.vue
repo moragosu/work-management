@@ -147,7 +147,7 @@
                   </span>
                   <select v-else @change="linkStaff(u.username, $event.target.value)" class="role-select" style="max-width:110px">
                     <option value="">연결 선택</option>
-                    <option v-for="s in staffList" :key="s.id" :value="s.id">{{ s.name }}</option>
+                    <option v-for="s in allStaffList" :key="s.id" :value="s.id">{{ s.name }}</option>
                   </select>
                 </td>
                 <td>
@@ -234,6 +234,7 @@ const activeTab = ref('objective')
 const objectives = ref([])
 const tasks = ref([])
 const staffList = ref([])
+const allStaffList = ref([])  // 필터 없는 전체 목록 — staff 연결 드롭다운용
 const loading = ref(false)
 const taskLoading = ref(false)
 const { toastMsg, showToast } = useToast(2500)
@@ -288,8 +289,12 @@ async function fetchTasks() {
 }
 
 async function fetchStaff() {
-  const { data } = await axios.get('/api/staff')
+  const [{ data }, { data: allData }] = await Promise.all([
+    axios.get('/api/staff'),
+    axios.get('/api/auth/staff-unlinked'),
+  ])
   staffList.value = data
+  allStaffList.value = allData
 }
 
 async function fetchSettings() {
