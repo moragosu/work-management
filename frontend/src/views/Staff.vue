@@ -80,7 +80,10 @@
             </thead>
             <tbody>
               <tr v-for="member in sortedStaff" :key="member.id">
-                <td style="font-weight:600;white-space:nowrap">{{ member.name }}</td>
+                <td style="white-space:nowrap">
+                  <div style="font-weight:600">{{ member.name }}</div>
+                  <div style="font-size:10px;color:var(--text-muted);margin-top:2px;font-family:monospace">{{ member.id }}</div>
+                </td>
                 <td>
                   <input
                     class="form-control inline"
