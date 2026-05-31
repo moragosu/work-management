@@ -44,6 +44,17 @@ def _save(staff: list):
 @router.get("", response_model=List[StaffMember])
 def list_staff(search: Optional[str] = Query(None)):
     staff = _load()
+
+    # 리더·관리자 계정의 이름을 조회해 인력 탭에서 제외
+    # staff_id가 NULL인 경우도 커버하기 위해 이름 기반 매칭 사용
+    with data_store.get_conn() as conn:
+        excluded_names = {
+            row["name"] for row in conn.execute(
+                "SELECT name FROM users WHERE role != 'member' OR is_admin = 1"
+            ).fetchall()
+        }
+    staff = [s for s in staff if s.get("name") not in excluded_names]
+
     if search:
         q = search.lower()
         staff = [
