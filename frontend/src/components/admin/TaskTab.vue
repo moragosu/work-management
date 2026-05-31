@@ -39,10 +39,10 @@
       <span class="filter-label-sm">인력</span>
       <button
         v-for="s in props.staffList"
-        :key="s.id"
+        :key="s.username"
         class="staff-chip"
-        :class="{ 'staff-chip-active': selectedStaffFilter.includes(s.id) }"
-        @click="toggleStaffFilter(s.id)"
+        :class="{ 'staff-chip-active': selectedStaffFilter.includes(s.username) }"
+        @click="toggleStaffFilter(s.username)"
       >{{ s.name }}</button>
       <button v-if="selectedStaffFilter.length > 0" class="btn btn-ghost btn-xs" @click="selectedStaffFilter = []" data-tooltip="인력 필터 초기화">전체 보기</button>
     </div>
@@ -97,7 +97,7 @@
                 <td><span class="text-sm">{{ getObjectiveName(t.objective_id) }}</span></td>
                 <td>
                   <div v-if="taskMembers(t.id).length > 0" class="member-chips">
-                    <span v-for="m in taskMembers(t.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                    <span v-for="m in taskMembers(t.id)" :key="m.username" class="badge badge-gray" :title="m.job_title">{{ m.name }}</span>
                   </div>
                   <span v-else class="text-muted text-sm">미배정</span>
                 </td>
@@ -128,7 +128,7 @@
                 <td></td>
                 <td>
                   <div v-if="subTaskMembers(st.id).length > 0" class="member-chips">
-                    <span v-for="m in subTaskMembers(st.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                    <span v-for="m in subTaskMembers(st.id)" :key="m.username" class="badge badge-gray" :title="m.job_title">{{ m.name }}</span>
                   </div>
                   <span v-else class="text-muted text-sm">미배정</span>
                 </td>
@@ -219,20 +219,20 @@
         <div class="modal-body">
           <div v-if="selectedTask?.members?.length > 0" style="margin-bottom:16px">
             <div class="text-sm text-muted" style="margin-bottom:8px">연결된 인력:</div>
-            <div v-for="m in selectedTask.members" :key="m.staff_id" class="kr-edit-item">
+            <div v-for="m in selectedTask.members" :key="m.username" class="kr-edit-item">
               <div class="flex gap-8" style="align-items:center">
                 <div style="flex:1">
                   <div>{{ m.name }}</div>
                   <div class="text-xs text-muted">{{ m.role || '역할 없음' }}</div>
                 </div>
-                <button class="btn btn-danger btn-xs" @click="removeMember(m.staff_id)">✕</button>
+                <button class="btn btn-danger btn-xs" @click="removeMember(m.username)">✕</button>
               </div>
             </div>
           </div>
           <div class="text-sm text-muted" style="margin-bottom:8px">인력 추가:</div>
           <select v-model="selectedStaffId" class="form-control" style="margin-bottom:8px">
             <option value="">선택</option>
-            <option v-for="s in availableStaff" :key="s.id" :value="s.id">{{ s.name }}</option>
+            <option v-for="s in availableStaff" :key="s.username" :value="s.username">{{ s.name }}</option>
           </select>
           <input v-model="selectedStaffRole" class="form-control" placeholder="역할을 입력하세요" style="margin-bottom:8px" />
           <button class="btn btn-primary btn-sm" @click="addMember" :disabled="!selectedStaffId">추가</button>
@@ -324,7 +324,7 @@ function toggleStaffFilter(staffId) {
 const sortedTasks = computed(() => {
   let list = props.tasks
   if (selectedStaffFilter.value.length > 0) {
-    list = list.filter(t => taskMembers(t.id).some(m => selectedStaffFilter.value.includes(m.id)))
+    list = list.filter(t => taskMembers(t.id).some(m => selectedStaffFilter.value.includes(m.username)))
   }
   return [...list].sort((a, b) => {
     const aNum = parseInt(a.id.replace('T', '')) || 0
@@ -427,16 +427,16 @@ const selectedStaffRole = ref('')
 
 const availableStaff = computed(() => {
   if (!selectedTask.value) return []
-  const memberIds = selectedTask.value.members?.map(m => m.staff_id) || []
-  return props.staffList.filter(s => !memberIds.includes(s.id))
+  const memberUsernames = selectedTask.value.members?.map(m => m.username) || []
+  return props.staffList.filter(s => !memberUsernames.includes(s.username))
 })
 
 async function addMember() {
   if (!selectedStaffId.value) return
-  const staff = props.staffList.find(s => s.id === selectedStaffId.value)
-  if (!staff) return
+  const staff = props.staffList.find(s => s.username === selectedStaffId.value)
+if (!staff) return
   selectedTask.value.members = selectedTask.value.members || []
-  selectedTask.value.members.push({ staff_id: staff.id, name: staff.name, role: selectedStaffRole.value })
+  selectedTask.value.members.push({ username: staff.username, name: staff.name, role: selectedStaffRole.value })
   try {
     await axios.put(`/api/tasks/${selectedTask.value.id}`, { members: selectedTask.value.members })
     emit('refresh')
@@ -447,7 +447,7 @@ async function addMember() {
 }
 
 async function removeMember(staffId) {
-  selectedTask.value.members = selectedTask.value.members.filter(m => m.staff_id !== staffId)
+  selectedTask.value.members = selectedTask.value.members.filter(m => m.username !== staffId)
   try {
     await axios.put(`/api/tasks/${selectedTask.value.id}`, { members: selectedTask.value.members })
     showToast('삭제되었습니다')

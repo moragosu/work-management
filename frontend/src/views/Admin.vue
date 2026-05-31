@@ -122,7 +122,6 @@
                 <th>아이디</th>
                 <th>이름</th>
                 <th>직책</th>
-                <th>Staff 연결</th>
                 <th>관리자</th>
                 <th>가입일</th>
                 <th></th>
@@ -138,26 +137,6 @@
                     <option value="group_leader">그룹장</option>
                     <option value="part_leader">파트장</option>
                   </select>
-                </td>
-                <td>
-                  <span v-if="u.role !== 'member'" class="text-muted text-sm">-</span>
-                  <span v-else-if="u.staff_id" class="badge badge-blue" style="font-size:11px;gap:4px;display:inline-flex;align-items:center">
-                    {{ u.staff_name }}
-                    <button style="background:none;border:none;cursor:pointer;padding:0;line-height:1" @click="unlinkStaff(u.username)">✕</button>
-                  </span>
-                  <!-- 동명이인: 같은 이름의 staff만 드롭다운으로 선택 -->
-                  <select
-                    v-else-if="allStaffList.filter(s => s.name === u.name).length > 1"
-                    @change="linkStaff(u.username, $event.target.value)"
-                    class="role-select" style="max-width:110px"
-                  >
-                    <option value="">선택</option>
-                    <option v-for="s in allStaffList.filter(s => s.name === u.name)" :key="s.id" :value="s.id">
-                      {{ s.name }} ({{ s.user_id || '미연결' }})
-                    </option>
-                  </select>
-                  <!-- 이름 매칭 없음 -->
-                  <span v-else class="text-muted text-sm">미연결</span>
                 </td>
                 <td>
                   <input
@@ -243,7 +222,6 @@ const activeTab = ref('objective')
 const objectives = ref([])
 const tasks = ref([])
 const staffList = ref([])
-const allStaffList = ref([])  // 필터 없는 전체 목록 — staff 연결 드롭다운용
 const loading = ref(false)
 const taskLoading = ref(false)
 const { toastMsg, showToast } = useToast(2500)
@@ -298,12 +276,8 @@ async function fetchTasks() {
 }
 
 async function fetchStaff() {
-  const [{ data }, { data: allData }] = await Promise.all([
-    axios.get('/api/staff'),
-    axios.get('/api/auth/staff-unlinked'),
-  ])
+  const { data } = await axios.get('/api/staff')
   staffList.value = data
-  allStaffList.value = allData
 }
 
 async function fetchSettings() {
@@ -318,19 +292,6 @@ async function fetchUsers() {
   try {
     const { data } = await axios.get('/api/auth/users')
     userList.value = data
-    // 파트원이고 staff 미연결이면서 이름 매칭 1개인 경우 자동 연결
-    const toLink = data.filter(u =>
-      u.role === 'member' && !u.staff_id &&
-      allStaffList.value.filter(s => s.name === u.name).length === 1
-    )
-    await Promise.all(toLink.map(u => {
-      const match = allStaffList.value.find(s => s.name === u.name)
-      return axios.put(`/api/auth/users/${u.username}/staff-link`, { staff_id: match.id })
-    }))
-    if (toLink.length > 0) {
-      const { data: refreshed } = await axios.get('/api/auth/users')
-      userList.value = refreshed
-    }
   } finally { usersLoading.value = false }
 }
 
@@ -381,26 +342,6 @@ function copyTempPw() {
   copied.value = true
 }
 
-async function linkStaff(username, staffId) {
-  if (!staffId) return
-  try {
-    await axios.put(`/api/auth/users/${username}/staff-link`, { staff_id: staffId })
-    await fetchUsers()
-    showToast('Staff 연결이 저장되었습니다')
-  } catch (e) {
-    showToast('연결 실패: ' + (e.response?.data?.detail || e.message))
-  }
-}
-
-async function unlinkStaff(username) {
-  try {
-    await axios.put(`/api/auth/users/${username}/staff-link`, { staff_id: null })
-    await fetchUsers()
-    showToast('Staff 연결이 해제되었습니다')
-  } catch (e) {
-    showToast('해제 실패: ' + (e.response?.data?.detail || e.message))
-  }
-}
 
 async function toggleAdmin(username, is_admin) {
   try {

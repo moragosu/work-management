@@ -42,7 +42,7 @@
           <span class="filter-label-sm">인력</span>
           <button
             v-for="s in staffList"
-            :key="s.id"
+            :key="s.username"
             class="staff-chip"
             :class="{ 'staff-chip-active': selectedStaff.includes(s.name) }"
             @click="toggleStaff(s.name)"
@@ -90,11 +90,11 @@
               </div>
               <div class="member-badges">
                 <template v-if="task.sub_tasks && task.sub_tasks.length > 0">
-                  <span v-for="m in allTaskMembers(task)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                  <span v-for="m in allTaskMembers(task)" :key="m.username" class="badge badge-gray" :title="m.job_title">{{ m.name }}</span>
                   <span v-if="allTaskMembers(task).length === 0" class="text-muted text-sm">담당자 미배정</span>
                 </template>
                 <template v-else>
-                  <span v-for="m in taskMembers(task.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                  <span v-for="m in taskMembers(task.id)" :key="m.username" class="badge badge-gray" :title="m.job_title">{{ m.name }}</span>
                   <span v-if="taskMembers(task.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
                 </template>
                 <button class="btn btn-ghost btn-xs" style="margin-left:4px" @click="router.push(`/tasks/${task.id}/history`)" data-tooltip="주차별 전체 이력 보기">
@@ -127,7 +127,7 @@
                     </div>
                     <div class="sub-task-meta" @click.stop>
                       <div class="member-badges">
-                        <span v-for="m in subTaskMembers(st.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                        <span v-for="m in subTaskMembers(st.id)" :key="m.username" class="badge badge-gray" :title="m.job_title">{{ m.name }}</span>
                         <span v-if="subTaskMembers(st.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
                       </div>
                       <button
@@ -313,7 +313,7 @@
                     </div>
                     <div class="sub-task-meta" @click.stop>
                       <div class="member-badges">
-                        <span v-for="m in subTaskMembers(st.id)" :key="m.id" class="badge badge-gray" :title="m.role">{{ m.name }}</span>
+                        <span v-for="m in subTaskMembers(st.id)" :key="m.username" class="badge badge-gray" :title="m.job_title">{{ m.name }}</span>
                         <span v-if="subTaskMembers(st.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
                       </div>
                       <button

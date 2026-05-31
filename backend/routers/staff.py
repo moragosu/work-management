@@ -1,174 +1,108 @@
+import json
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import List, Optional
 import data_store
-from utils.id_generator import short_uuid
 
 router = APIRouter()
 
 
 class StaffMember(BaseModel):
-    id: Optional[str] = None
+    username: str
     name: str
-    role: str = ""
+    job_title: str = ""
     main_skills: str = ""
     sub_skills: str = ""
     learning: str = ""
     desired_field: str = ""
-    okrs: str = ""  # 연결된 Objective IDs (콤마 구분)
-    selected_tasks: str = ""  # 선택된 과제 IDs (콤마 구분) - 새로 추가
-    task_ids: List[str] = []  # 연결된 과제 IDs
-    user_id: Optional[str] = None  # 연결된 계정 ID
+    okrs: str = ""
+    task_ids: List[str] = []
+    user_id: Optional[str] = None  # backward compat — username과 동일
 
 
 class StaffUpdate(BaseModel):
     name: Optional[str] = None
-    role: Optional[str] = None
+    job_title: Optional[str] = None
     main_skills: Optional[str] = None
     sub_skills: Optional[str] = None
     learning: Optional[str] = None
     desired_field: Optional[str] = None
     okrs: Optional[str] = None
-    selected_tasks: Optional[str] = None  # 새로 추가
     task_ids: Optional[List[str]] = None
 
 
-def _load():
-    data = data_store.load("staff.json")
-    return data.get("staff", [])
-
-
-def _save(staff: list):
-    data_store.save("staff.json", {"staff": staff})
+def _row_to_member(row) -> dict:
+    d = dict(row)
+    if isinstance(d.get("task_ids"), str):
+        try:
+            d["task_ids"] = json.loads(d["task_ids"])
+        except (json.JSONDecodeError, TypeError):
+            d["task_ids"] = []
+    d["user_id"] = d.get("username")
+    return d
 
 
 @router.get("", response_model=List[StaffMember])
 def list_staff(search: Optional[str] = Query(None)):
-    staff = _load()
-
-    # role이 파트원(member)이 아닌 계정의 이름을 제외 + user_id 조인
     with data_store.get_conn() as conn:
-        excluded_names = {
-            row["name"] for row in conn.execute(
-                "SELECT name FROM users WHERE role != 'member'"
-            ).fetchall()
-        }
-        staff_ids = [s["id"] for s in staff if s.get("id")]
-        if staff_ids:
-            placeholders = ",".join("?" * len(staff_ids))
-            user_id_map = {
-                row["id"]: row["user_id"]
-                for row in conn.execute(
-                    f"SELECT id, user_id FROM staff WHERE id IN ({placeholders})",
-                    staff_ids,
-                ).fetchall()
-            }
-        else:
-            user_id_map = {}
-    staff = [s for s in staff if s.get("name") not in excluded_names]
-    for s in staff:
-        s["user_id"] = user_id_map.get(s.get("id"))
+        rows = conn.execute(
+            """SELECT username, name, job_title, main_skills, sub_skills,
+                      learning, desired_field, okrs, task_ids
+               FROM users WHERE role = 'member' ORDER BY name"""
+        ).fetchall()
+    staff = [_row_to_member(r) for r in rows]
 
     if search:
         q = search.lower()
         staff = [
             s for s in staff
-            if q in s.get("name", "").lower()
-            or q in s.get("main_skills", "").lower()
-            or q in s.get("sub_skills", "").lower()
-            or q in s.get("learning", "").lower()
-            or q in s.get("okrs", "").lower()
+            if q in s["name"].lower()
+            or q in s["main_skills"].lower()
+            or q in s["sub_skills"].lower()
+            or q in s["learning"].lower()
+            or q in s["okrs"].lower()
         ]
     return staff
 
 
-@router.get("/{staff_id}", response_model=StaffMember)
-def get_staff(staff_id: str):
-    staff = _load()
-    for s in staff:
-        if s["id"] == staff_id:
-            return s
-    raise HTTPException(status_code=404, detail="Staff member not found")
-
-
-@router.post("", response_model=StaffMember, status_code=201)
-def create_staff(member: StaffMember):
-    staff = _load()
-    new_member = member.model_dump()
-    new_member["id"] = short_uuid("S")
-    staff.append(new_member)
-    _save(staff)
-    return new_member
-
-
-@router.put("/{staff_id}", response_model=StaffMember)
-def update_staff(staff_id: str, update: StaffUpdate):
-    staff = _load()
-    for i, s in enumerate(staff):
-        if s["id"] == staff_id:
-            patch = update.model_dump(exclude_none=True)
-            staff[i] = {**s, **patch}
-            _save(staff)
-            return staff[i]
-    raise HTTPException(status_code=404, detail="Staff member not found")
-
-
-@router.delete("/{staff_id}")
-def delete_staff(staff_id: str):
-    staff = _load()
-    new_staff = [s for s in staff if s["id"] != staff_id]
-    if len(new_staff) == len(staff):
+@router.get("/{username}", response_model=StaffMember)
+def get_staff(username: str):
+    with data_store.get_conn() as conn:
+        row = conn.execute(
+            """SELECT username, name, job_title, main_skills, sub_skills,
+                      learning, desired_field, okrs, task_ids
+               FROM users WHERE username=? AND role='member'""",
+            (username,)
+        ).fetchone()
+    if not row:
         raise HTTPException(status_code=404, detail="Staff member not found")
-    _save(new_staff)
-    return {"deleted": staff_id}
+    return _row_to_member(row)
 
 
-# ── Related data endpoints ────────────────────────────────────────────────────
+@router.put("/{username}", response_model=StaffMember)
+def update_staff(username: str, update: StaffUpdate):
+    patch = update.model_dump(exclude_none=True)
+    if "task_ids" in patch:
+        patch["task_ids"] = json.dumps(patch["task_ids"], ensure_ascii=False)
+    if not patch:
+        return get_staff(username)
+    sets = ", ".join(f"{k}=?" for k in patch)
+    values = list(patch.values()) + [username]
+    with data_store.get_conn() as conn:
+        result = conn.execute(
+            f"UPDATE users SET {sets} WHERE username=? AND role='member'", values
+        )
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Staff member not found")
+    return get_staff(username)
 
-@router.get("/{staff_id}/related")
-def get_staff_related_data(staff_id: str):
-    """Get related objectives and tasks data for a staff member"""
-    staff = _load()
-    member = next((s for s in staff if s["id"] == staff_id), None)
-    if not member:
-        raise HTTPException(status_code=404, detail="Staff member not found")
-    
-    # Load related data
-    import data_store
-    tasks_data = data_store.load("tasks.json")
-    objectives_data = data_store.load("okrs.json")
-    
-    result = {
-        "staff": member,
-        "related_tasks": [],
-        "related_objectives": []
-    }
-    
-    # Get related tasks (where this staff is a member)
-    related_tasks = []
-    for task in tasks_data.get("tasks", []):
-        if any(member.get("staff_id") == staff_id for member in task.get("members", [])):
-            related_tasks.append(task)
-    result["related_tasks"] = related_tasks
-    
-    # Get related objectives (from tasks and direct okrs field)
-    objective_ids = set()
-    
-    # From tasks
-    for task in related_tasks:
-        if task.get("objective_id"):
-            objective_ids.add(task["objective_id"])
-    
-    # From direct okrs field
-    if member.get("okrs"):
-        for obj_id in member["okrs"].split(","):
-            obj_id = obj_id.strip()
-            if obj_id:
-                objective_ids.add(obj_id)
-    
-    for obj_id in objective_ids:
-        objective = next((o for o in objectives_data.get("objectives", []) if o["id"] == obj_id), None)
-        if objective:
-            result["related_objectives"].append(objective)
-    
-    return result
+
+@router.delete("/{username}")
+def delete_staff(username: str):
+    with data_store.get_conn() as conn:
+        result = conn.execute(
+            "DELETE FROM users WHERE username=? AND role='member'", (username,)
+        )
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Staff member not found")
+    return {"deleted": username}

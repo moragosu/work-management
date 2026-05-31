@@ -185,7 +185,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="s in sortedStaff" :key="s.id" style="cursor:default">
+                  <tr v-for="s in sortedStaff" :key="s.username" style="cursor:default">
                     <td style="vertical-align:middle">
                       <div class="member-cell">
                         <span class="member-avatar">{{ s.name[0] }}</span>
