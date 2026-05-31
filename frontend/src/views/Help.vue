@@ -69,6 +69,13 @@
             </div>
           </div>
           <div class="menu-card">
+            <span class="material-symbols-outlined menu-card-icon icon-teal">rate_review</span>
+            <div>
+              <div class="menu-card-title">피드백</div>
+              <div class="menu-card-desc">시스템 개선 의견·건의사항을 카테고리별로 자유롭게 작성하고 공유</div>
+            </div>
+          </div>
+          <div class="menu-card">
             <span class="material-symbols-outlined menu-card-icon icon-gray">settings</span>
             <div>
               <div class="menu-card-title">관리 도구</div>
@@ -489,7 +496,89 @@
       </div>
     </section>
 
-    <!-- ⑥ 에디터 사용법 -->
+    <!-- ⑤-2 과제 이력 -->
+    <section id="history" class="help-section card">
+      <div class="card-body">
+        <div class="section-heading">
+          <span class="material-symbols-outlined section-icon-lg">history</span>
+          <h3 class="section-title">과제 이력</h3>
+        </div>
+        <p class="section-desc">특정 과제의 전체 주차별 이슈·의견/질문·컨플루언스 링크를 한 페이지에서 시간 순으로 확인하는 화면입니다.</p>
+
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">open_in_new</span>
+            이력 화면 열기
+          </div>
+          <ul class="feature-list">
+            <li>주간 진행 현황의 과제 카드 상단 우측에 있는 <strong>이력</strong> 버튼(<span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">history</span>)을 클릭하면 해당 과제의 이력 페이지로 이동합니다</li>
+            <li>상단에 <strong>← 뒤로</strong> 버튼과 과제 이름이 표시됩니다</li>
+            <li>소과제 필터 칩을 클릭하면 해당 소과제의 이력만 필터링됩니다</li>
+          </ul>
+        </div>
+
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">view_week</span>
+            주차별 이력 구성
+          </div>
+          <ul class="feature-list">
+            <li>최신 주차가 맨 위에 표시되며, 각 주차 카드는 <strong>클릭하면 접기/펼치기</strong>가 가능합니다 — 최근 2개 주차는 기본으로 펼쳐진 상태로 시작합니다</li>
+            <li>주차 카드 헤더에는 해당 주차의 <strong>컨플루언스 · 이슈 · 의견/질문</strong> 수가 배지로 요약됩니다</li>
+            <li>각 주차 안에서 컨플루언스 링크 → 이슈 → 의견/질문 순서로 섹션이 구분됩니다</li>
+          </ul>
+        </div>
+
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">ads_click</span>
+            이슈 · 질문 바로가기
+          </div>
+          <ul class="feature-list">
+            <li>이력 화면에서 <strong>이슈 또는 의견/질문 카드를 클릭</strong>하면, 해당 주차의 주간 진행 현황으로 이동하며 해당 항목으로 자동 스크롤됩니다</li>
+            <li>카드에 마우스를 올리면 배경이 강조되고 <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">open_in_new</span> 아이콘이 표시됩니다</li>
+            <li>답변이 달린 질문도 해당 질문 위치로 바로 이동하므로 원문 확인이 편리합니다</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑥ 피드백 -->
+    <section id="feedback" class="help-section card">
+      <div class="card-body">
+        <div class="section-heading">
+          <span class="material-symbols-outlined section-icon-lg">rate_review</span>
+          <h3 class="section-title">피드백</h3>
+        </div>
+        <p class="section-desc">시스템 개선 의견·건의사항을 카테고리별로 자유롭게 작성하고 공유하는 공간입니다. 왼쪽 사이드바의 <strong>피드백</strong> 메뉴에서 접근할 수 있습니다.</p>
+
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">add_circle</span>
+            피드백 작성
+          </div>
+          <ul class="feature-list">
+            <li>우측 상단의 <strong>"+ 새 피드백"</strong> 버튼을 클릭하면 작성 모달이 열립니다</li>
+            <li><strong>카테고리</strong>를 선택하고 <strong>제목</strong>과 <strong>내용</strong>을 입력합니다 — 내용은 WYSIWYG 에디터를 사용합니다</li>
+            <li>작성자는 로그인 계정으로 자동 기록됩니다</li>
+          </ul>
+        </div>
+
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">filter_list</span>
+            목록 조회 및 필터
+          </div>
+          <ul class="feature-list">
+            <li>등록된 피드백은 카드 형태로 목록에 표시됩니다 — 카테고리 배지, 제목, 작성자, 날짜가 함께 표시됩니다</li>
+            <li>상단 카테고리 탭을 클릭하면 해당 카테고리의 피드백만 필터링됩니다</li>
+            <li>본인이 작성한 피드백은 <strong>수정·삭제</strong>가 가능합니다</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑦ 에디터 사용법 -->
     <section id="markdown" class="help-section card">
       <div class="card-body">
         <div class="section-heading">
@@ -579,7 +668,7 @@
           <span class="material-symbols-outlined section-icon-lg">settings</span>
           <h3 class="section-title">관리 도구</h3>
         </div>
-        <p class="section-desc">목표·과제·인력 데이터를 등록하고 관리하는 화면입니다. 총 4개의 탭으로 구성됩니다.</p>
+        <p class="section-desc">목표·과제·인력 데이터를 등록하고 관리하는 화면입니다. <strong>목표 · 과제 · 인력 · 설정</strong> 4개 탭으로 구성되며, 관리자에게는 <strong>사용자 관리</strong> 탭이 추가로 표시됩니다.</p>
 
         <!-- 목표 탭 -->
         <div class="sub-section">
@@ -661,15 +750,36 @@
             인력(Staff) 탭
           </div>
           <ul class="feature-list">
-            <li>파트원 정보(이름·역할·기술·담당 과제)를 등록·수정·삭제합니다</li>
+            <li>파트원 정보(이름·역할·기술·담당 과제)를 등록하고 수정합니다</li>
             <li>상단의 <strong>이름 칩</strong>을 클릭하면 해당 파트원만 필터링됩니다. 여러 명을 동시에 선택할 수 있습니다</li>
             <li>필터를 초기화하려면 <strong>"전체 보기"</strong> 버튼을 클릭합니다</li>
             <li>목록은 <strong>이름 가나다순</strong>으로 자동 정렬됩니다</li>
-            <li>파트원을 삭제하면 담당 과제 연결도 자동으로 정리됩니다</li>
+            <li>상단의 <strong>CSV 다운로드</strong> 버튼으로 파트원 목록을 파일로 내보낼 수 있습니다</li>
           </ul>
           <div class="callout callout-info">
             <span class="material-symbols-outlined callout-icon">lightbulb</span>
             <div>인력 추가 시 과제를 목표별로 그룹핑해서 선택할 수 있습니다. 목표에 연결되지 않은 과제는 <strong>"목표 없음"</strong> 그룹에 표시됩니다. 과제를 선택하면 연결된 목표가 자동으로 설정됩니다.</div>
+          </div>
+          <div class="callout callout-warning">
+            <span class="material-symbols-outlined callout-icon">info</span>
+            <div>계정 삭제는 <strong>사용자 관리</strong> 탭에서 처리합니다. 인력 탭은 파트원 프로필 정보 관리 전용입니다.</div>
+          </div>
+        </div>
+
+        <!-- 사용자 관리 탭 -->
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">manage_accounts</span>
+            사용자 관리 탭 <span style="font-size:11px;font-weight:400;color:var(--text-muted);margin-left:4px">(관리자 전용)</span>
+          </div>
+          <ul class="feature-list">
+            <li>로그인 계정 목록을 조회하고 <strong>역할</strong>과 <strong>관리자 권한</strong>을 변경할 수 있습니다</li>
+            <li><strong>비밀번호 초기화</strong>: 임시 비밀번호가 자동 생성되며, 해당 계정은 다음 로그인 시 비밀번호 변경이 강제됩니다</li>
+            <li><strong>계정 삭제</strong>: 해당 사용자의 로그인 계정을 영구 삭제합니다 — 삭제해도 이슈·질문 등 작성 이력은 유지됩니다</li>
+          </ul>
+          <div class="callout callout-warning">
+            <span class="material-symbols-outlined callout-icon">info</span>
+            <div>계정 삭제는 복구되지 않습니다. 파트원 프로필(이름·담당 과제 등)을 유지하면서 로그인만 막으려면 삭제 대신 역할을 변경하거나 비밀번호를 초기화하세요.</div>
           </div>
         </div>
 
@@ -680,9 +790,8 @@
             설정 탭
           </div>
           <ul class="feature-list">
-            <li><strong>사용자 계정 관리</strong> (관리자 전용): 파트원 계정의 역할·관리자 권한 변경, 비밀번호 초기화가 가능합니다</li>
-            <li><strong>비밀번호 초기화</strong>: 임시 비밀번호가 자동 생성되며, 해당 계정은 다음 로그인 시 비밀번호 변경이 강제됩니다</li>
             <li><strong>과제 적용 대상 관리</strong>: 기존 항목을 삭제하거나 새 항목을 추가할 수 있으며, 변경 내용은 과제 등록·수정 모달에 즉시 반영됩니다</li>
+            <li><strong>데이터 초기화</strong> (관리자 전용): 목표·과제·인력·진행도 데이터를 전체 삭제할 수 있습니다 — 복구 불가이므로 주의</li>
           </ul>
           <div class="callout callout-warning">
             <span class="material-symbols-outlined callout-icon">info</span>
@@ -722,6 +831,8 @@ const toc = [
   { id: 'notify',    icon: 'notifications',   title: '알림' },
   { id: 'dashboard', icon: 'dashboard',       title: '대시보드' },
   { id: 'progress',  icon: 'assignment',      title: '주간 진행 현황' },
+  { id: 'history',   icon: 'history',         title: '과제 이력' },
+  { id: 'feedback',  icon: 'rate_review',     title: '피드백' },
   { id: 'markdown',  icon: 'edit_note',       title: '에디터 사용법' },
   { id: 'admin',     icon: 'settings',        title: '관리 도구' },
   { id: 'faq',       icon: 'help',            title: 'FAQ' },
@@ -792,6 +903,11 @@ const faqs = reactive([
   {
     q: '지난주 / 이번주 패널을 다시 2분할로 복원하려면?',
     a: '접힌 패널의 헤더 바(또는 접기 버튼)를 다시 클릭하면 2분할 상태로 복원됩니다. 접기 버튼이 토글 방식으로 작동하므로, 같은 버튼으로 접기와 펼치기를 반복할 수 있습니다.',
+    open: false,
+  },
+  {
+    q: '과제 이력은 어디서 볼 수 있나요?',
+    a: '주간 진행 현황의 과제 카드 상단 우측에 있는 "이력" 버튼(시계 아이콘)을 클릭하면 해당 과제의 전체 주차별 이력 페이지로 이동합니다. 이력 페이지에서 이슈나 의견/질문 카드를 클릭하면 해당 주차의 주간 진행 현황으로 바로 이동합니다.',
     open: false,
   },
   {
@@ -905,6 +1021,7 @@ const faqs = reactive([
 .icon-orange { color: var(--warning); }
 .icon-gray { color: var(--text-muted); }
 .icon-purple { color: #7c3aed; }
+.icon-teal { color: #0d9488; }
 .menu-card-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
 .menu-card-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
 
