@@ -145,13 +145,19 @@
                     {{ u.staff_name }}
                     <button style="background:none;border:none;cursor:pointer;padding:0;line-height:1" @click="unlinkStaff(u.username)">✕</button>
                   </span>
-                  <select v-else @change="linkStaff(u.username, $event.target.value)" class="role-select" style="max-width:110px">
-                    <option value="">연결 선택</option>
-                    <option
-                      v-for="s in allStaffList" :key="s.id" :value="s.id"
-                      :selected="s.name === u.name && allStaffList.filter(x => x.name === u.name).length === 1"
-                    >{{ s.name }}</option>
+                  <!-- 동명이인: 같은 이름의 staff만 드롭다운으로 선택 -->
+                  <select
+                    v-else-if="allStaffList.filter(s => s.name === u.name).length > 1"
+                    @change="linkStaff(u.username, $event.target.value)"
+                    class="role-select" style="max-width:110px"
+                  >
+                    <option value="">선택</option>
+                    <option v-for="s in allStaffList.filter(s => s.name === u.name)" :key="s.id" :value="s.id">
+                      {{ s.name }} ({{ s.id.slice(-4) }})
+                    </option>
                   </select>
+                  <!-- 이름 매칭 없음 -->
+                  <span v-else class="text-muted text-sm">미연결</span>
                 </td>
                 <td>
                   <input
@@ -312,6 +318,19 @@ async function fetchUsers() {
   try {
     const { data } = await axios.get('/api/auth/users')
     userList.value = data
+    // 파트원이고 staff 미연결이면서 이름 매칭 1개인 경우 자동 연결
+    const toLink = data.filter(u =>
+      u.role === 'member' && !u.staff_id &&
+      allStaffList.value.filter(s => s.name === u.name).length === 1
+    )
+    await Promise.all(toLink.map(u => {
+      const match = allStaffList.value.find(s => s.name === u.name)
+      return axios.put(`/api/auth/users/${u.username}/staff-link`, { staff_id: match.id })
+    }))
+    if (toLink.length > 0) {
+      const { data: refreshed } = await axios.get('/api/auth/users')
+      userList.value = refreshed
+    }
   } finally { usersLoading.value = false }
 }
 
@@ -337,8 +356,8 @@ async function removeTarget(t) {
 async function changeRole(username, role) {
   try {
     await axios.put(`/api/auth/users/${username}/role`, { role })
-    const u = userList.value.find(x => x.username === username)
-    if (u) u.role = role
+    // 역할 변경 후 재조회 (백엔드의 자동 staff 연결 결과 반영)
+    await fetchUsers()
     showToast('직책이 변경되었습니다')
   } catch (e) {
     showToast('직책 변경 실패: ' + (e.response?.data?.detail || e.message))
