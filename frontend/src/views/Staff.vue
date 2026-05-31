@@ -126,10 +126,7 @@
                   </div>
                 </td>
                 <td>
-                  <div style="display:flex;gap:8px">
-                    <button class="btn btn-ghost btn-xs" @click="editMember(member)">수정</button>
-                    <button class="btn btn-danger btn-xs" @click="deleteMember(member)">삭제</button>
-                  </div>
+                  <button class="btn btn-ghost btn-xs" @click="editMember(member)">수정</button>
                 </td>
               </tr>
             </tbody>
@@ -424,15 +421,6 @@ async function submitForm() {
   } catch (e) { toastError(e, selectedMember.value ? '수정 실패' : '추가 실패') }
 }
 
-async function deleteMember(member) {
-  if (!confirm(`"${member.name}" 계정을 삭제하시겠습니까?`)) return
-  try {
-    await axios.delete(`/api/staff/${member.username}`)
-    staff.value = staff.value.filter(s => s.username !== member.username)
-    showToast('삭제되었습니다')
-    emit('updated')
-  } catch (e) { toastError(e, '삭제 실패') }
-}
 
 const sortKey = ref('name')
 const sortOrder = ref('asc')

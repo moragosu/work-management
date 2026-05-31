@@ -295,9 +295,10 @@ test.describe('인력 직접 추가', () => {
     expect(res.status()).toBe(409)
   })
 
-  test('직접 추가된 인력 삭제', async ({ request }) => {
+  test('직접 추가된 인력 삭제는 staff API 아닌 사용자 관리 탭(auth)에서만 가능', async ({ request }) => {
+    // DELETE /api/staff 엔드포인트 제거됨 — 405 or 404 반환
     const res = await request.delete(`${BASE}/api/staff/${directUsername}`)
-    expect(res.status()).toBe(200)
+    expect([404, 405]).toContain(res.status())
   })
 })
 

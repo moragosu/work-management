@@ -123,12 +123,3 @@ def update_staff(username: str, update: StaffUpdate):
     return get_staff(username)
 
 
-@router.delete("/{username}")
-def delete_staff(username: str):
-    with data_store.get_conn() as conn:
-        result = conn.execute(
-            "DELETE FROM users WHERE username=? AND role='member'", (username,)
-        )
-        if result.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Staff member not found")
-    return {"deleted": username}
