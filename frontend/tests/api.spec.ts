@@ -273,6 +273,59 @@ test.describe('CSV export', () => {
   })
 })
 
+// ── 인력 직접 추가 (POST /api/staff) ─────────────────────────────────────────
+
+test.describe('인력 직접 추가', () => {
+  const directUsername = `direct_${Date.now()}`
+
+  test('관리자 없이도 인력 추가 가능 (임시계정 생성)', async ({ request }) => {
+    const res = await request.post(`${BASE}/api/staff`, {
+      data: { username: directUsername, name: '직접추가유저', job_title: '연구원', task_ids: [] },
+    })
+    expect(res.status()).toBe(201)
+    const created = await res.json()
+    expect(created.username).toBe(directUsername)
+    expect(created.job_title).toBe('연구원')
+  })
+
+  test('중복 username 추가 불가', async ({ request }) => {
+    const res = await request.post(`${BASE}/api/staff`, {
+      data: { username: directUsername, name: '중복', task_ids: [] },
+    })
+    expect(res.status()).toBe(409)
+  })
+
+  test('직접 추가된 인력 삭제', async ({ request }) => {
+    const res = await request.delete(`${BASE}/api/staff/${directUsername}`)
+    expect(res.status()).toBe(200)
+  })
+})
+
+// ── 이슈 댓글 ─────────────────────────────────────────────────────────────────
+
+test.describe('이슈 댓글', () => {
+  test('이슈 생성 후 댓글 추가', async ({ request }) => {
+    // 이슈 목록에서 기존 이슈 하나 사용
+    const issuesRes = await request.get(`${BASE}/api/issues`)
+    const issues = await issuesRes.json()
+    if (issues.length === 0) return
+
+    const issueId = issues[0].id
+    const res = await request.post(`${BASE}/api/issues/${issueId}/comments`, {
+      headers: await authHeader(memberToken),
+      data: { comment: '<p>테스트 댓글</p>', comment_by: '테스트유저', parent_id: null },
+    })
+    expect(res.status()).toBe(201)
+    const comment = await res.json()
+    expect(comment.comment).toContain('테스트 댓글')
+
+    // 댓글 삭제
+    await request.delete(`${BASE}/api/issues/${issueId}/comments/${comment.id}`, {
+      headers: await authHeader(memberToken),
+    })
+  })
+})
+
 // ── 정리 ─────────────────────────────────────────────────────────────────────
 
 test.afterAll(async ({ request }) => {
