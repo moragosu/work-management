@@ -110,11 +110,12 @@
               <span class="material-symbols-outlined block-icon icon-issue">warning</span>
               이슈
             </div>
-            <div v-for="iss in visibleIssues(entry)" :key="iss.id" class="history-item issue-item">
+            <div v-for="iss in visibleIssues(entry)" :key="iss.id" class="history-item issue-item clickable" @click="goToIssue(entry.week, iss.id)">
               <div class="item-meta">
                 <span class="meta-tid">{{ iss.task_id }}</span>
                 <span class="badge badge-gray">{{ iss.assignee }}</span>
                 <span class="meta-date">{{ iss.created_at }}</span>
+                <span class="goto-hint"><span class="material-symbols-outlined">open_in_new</span></span>
               </div>
               <TiptapPreview :modelValue="iss.issue" />
 
@@ -144,7 +145,7 @@
               <span class="material-symbols-outlined block-icon icon-qa">forum</span>
               의견/질문
             </div>
-            <div v-for="q in visibleQuestions(entry)" :key="q.id" class="history-item qa-item">
+            <div v-for="q in visibleQuestions(entry)" :key="q.id" class="history-item qa-item clickable" @click="goToQuestion(entry.week, q.id)">
               <div class="item-meta">
                 <span class="meta-tid">{{ q.task_id }}</span>
                 <span class="badge badge-gray">{{ q.questioner }}</span>
@@ -152,6 +153,7 @@
                   → {{ q.targets.join(', ') }}
                 </span>
                 <span class="meta-date">{{ q.created_at?.slice(0, 10) }}</span>
+                <span class="goto-hint"><span class="material-symbols-outlined">open_in_new</span></span>
               </div>
               <TiptapPreview :modelValue="q.question" />
 
@@ -193,17 +195,26 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { formatWeekLabel, getWeekDateRange } from '../utils/week.js'
 import TiptapPreview from '../components/TiptapPreview.vue'
 
 const route = useRoute()
+const router = useRouter()
 const loading = ref(true)
 const task = ref(null)
 const weeks = ref([])
 const activeSubTask = ref(null)
 const openWeeks = ref(new Set())
+
+function goToIssue(week, issueId) {
+  router.push({ path: '/progress', query: { week, focusIssueId: issueId } })
+}
+
+function goToQuestion(week, questionId) {
+  router.push({ path: '/progress', query: { week, focusQuestion: questionId } })
+}
 
 async function fetchHistory() {
   loading.value = true
@@ -377,6 +388,21 @@ onMounted(fetchHistory)
 }
 .issue-item { border-left: 3px solid var(--warning); }
 .qa-item { border-left: 3px solid var(--primary); }
+.clickable {
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.clickable:hover { background: var(--gray-50, #f9fafb); box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+.goto-hint {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.15s;
+  font-size: 16px;
+}
+.clickable:hover .goto-hint { opacity: 1; }
 
 .item-meta {
   display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
