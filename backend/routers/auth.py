@@ -144,7 +144,7 @@ def get_staff_unlinked(_admin: dict = Depends(require_admin)):
         linked_ids = [r["staff_id"] for r in conn.execute(
             "SELECT staff_id FROM users WHERE staff_id IS NOT NULL"
         ).fetchall()]
-        rows = conn.execute("SELECT id, name FROM staff ORDER BY name").fetchall()
+        rows = conn.execute("SELECT id, name, user_id FROM staff ORDER BY name").fetchall()
     all_staff = [dict(r) for r in rows]
     return all_staff
 

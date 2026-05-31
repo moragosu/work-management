@@ -153,7 +153,7 @@
                   >
                     <option value="">선택</option>
                     <option v-for="s in allStaffList.filter(s => s.name === u.name)" :key="s.id" :value="s.id">
-                      {{ s.name }} ({{ s.id.slice(-4) }})
+                      {{ s.name }} ({{ s.user_id || '미연결' }})
                     </option>
                   </select>
                   <!-- 이름 매칭 없음 -->
