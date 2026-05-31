@@ -82,7 +82,7 @@
               <tr v-for="member in sortedStaff" :key="member.id">
                 <td style="white-space:nowrap">
                   <div style="font-weight:600">{{ member.name }}</div>
-                  <div style="font-size:10px;color:var(--text-muted);margin-top:2px;font-family:monospace">{{ member.id }}</div>
+                  <div v-if="member.user_id" style="font-size:11px;color:var(--text-muted);margin-top:2px">{{ member.user_id }}</div>
                 </td>
                 <td>
                   <input

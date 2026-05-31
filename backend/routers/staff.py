@@ -18,6 +18,7 @@ class StaffMember(BaseModel):
     okrs: str = ""  # 연결된 Objective IDs (콤마 구분)
     selected_tasks: str = ""  # 선택된 과제 IDs (콤마 구분) - 새로 추가
     task_ids: List[str] = []  # 연결된 과제 IDs
+    user_id: Optional[str] = None  # 연결된 계정 ID
 
 
 class StaffUpdate(BaseModel):
@@ -45,14 +46,28 @@ def _save(staff: list):
 def list_staff(search: Optional[str] = Query(None)):
     staff = _load()
 
-    # role이 파트원(member)이 아닌 계정의 이름을 제외 (is_admin 무관, role만 기준)
+    # role이 파트원(member)이 아닌 계정의 이름을 제외 + user_id 조인
     with data_store.get_conn() as conn:
         excluded_names = {
             row["name"] for row in conn.execute(
                 "SELECT name FROM users WHERE role != 'member'"
             ).fetchall()
         }
+        staff_ids = [s["id"] for s in staff if s.get("id")]
+        if staff_ids:
+            placeholders = ",".join("?" * len(staff_ids))
+            user_id_map = {
+                row["id"]: row["user_id"]
+                for row in conn.execute(
+                    f"SELECT id, user_id FROM staff WHERE id IN ({placeholders})",
+                    staff_ids,
+                ).fetchall()
+            }
+        else:
+            user_id_map = {}
     staff = [s for s in staff if s.get("name") not in excluded_names]
+    for s in staff:
+        s["user_id"] = user_id_map.get(s.get("id"))
 
     if search:
         q = search.lower()
