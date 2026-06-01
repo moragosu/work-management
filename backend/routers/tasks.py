@@ -52,8 +52,12 @@ def _save(tasks: list) -> None:
 
 
 def _cascade_delete_ids(ids_to_remove: set, task_name: str = "") -> None:
-    """users.task_ids 및 progress에서 해당 ID들 제거."""
+    """users.task_ids, progress, questions, issues에서 해당 ID들 제거."""
+    placeholders = ",".join("?" * len(ids_to_remove))
+    id_list = list(ids_to_remove)
+
     with data_store.get_conn() as conn:
+        # users.task_ids 갱신
         rows = conn.execute(
             "SELECT username, task_ids FROM users WHERE role='member'"
         ).fetchall()
@@ -68,6 +72,33 @@ def _cascade_delete_ids(ids_to_remove: set, task_name: str = "") -> None:
                     "UPDATE users SET task_ids=? WHERE username=?",
                     (json.dumps(new_ids, ensure_ascii=False), row["username"])
                 )
+
+        # 질문·답변·대댓글 삭제
+        q_ids = [r["id"] for r in conn.execute(
+            f"SELECT id FROM questions WHERE task_id IN ({placeholders})", id_list
+        ).fetchall()]
+        if q_ids:
+            q_ph = ",".join("?" * len(q_ids))
+            a_ids = [r["id"] for r in conn.execute(
+                f"SELECT id FROM answers WHERE question_id IN ({q_ph})", q_ids
+            ).fetchall()]
+            if a_ids:
+                a_ph = ",".join("?" * len(a_ids))
+                conn.execute(f"DELETE FROM answer_replies WHERE answer_id IN ({a_ph})", a_ids)
+            conn.execute(f"DELETE FROM answers WHERE question_id IN ({q_ph})", q_ids)
+            conn.execute(f"DELETE FROM questions WHERE id IN ({q_ph})", q_ids)
+
+        # 이슈·댓글 삭제
+        i_ids = [r["id"] for r in conn.execute(
+            f"SELECT id FROM issues WHERE task_id IN ({placeholders})", id_list
+        ).fetchall()]
+        if i_ids:
+            i_ph = ",".join("?" * len(i_ids))
+            conn.execute(f"DELETE FROM issue_comments WHERE issue_id IN ({i_ph})", i_ids)
+            conn.execute(f"DELETE FROM issues WHERE id IN ({i_ph})", i_ids)
+
+        # confluence_links 삭제
+        conn.execute(f"DELETE FROM confluence_links WHERE task_id IN ({placeholders})", id_list)
 
     progress_data = data_store.load("progress.json")
     changed = False
