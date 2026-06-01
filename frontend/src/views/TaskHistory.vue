@@ -98,7 +98,7 @@
                 class="confluence-link"
               >
                 <span class="material-symbols-outlined" style="font-size:14px">open_in_new</span>
-                <span class="link-tid">{{ lnk.task_id }}</span>
+                <span class="link-tid">{{ subTaskLabel(lnk.task_id) }}</span>
                 <span class="link-url">{{ lnk.url }}</span>
               </a>
             </div>
@@ -112,7 +112,7 @@
             </div>
             <div v-for="iss in visibleIssues(entry)" :key="iss.id" class="history-item issue-item clickable" @click="goToIssue(entry.week, iss.id)">
               <div class="item-meta">
-                <span class="meta-tid">{{ iss.task_id }}</span>
+                <span class="meta-tid">{{ subTaskLabel(iss.task_id) }}</span>
                 <span class="badge badge-gray">{{ iss.assignee }}</span>
                 <span class="meta-date">{{ iss.created_at }}</span>
                 <span class="goto-hint"><span class="material-symbols-outlined">open_in_new</span></span>
@@ -147,7 +147,7 @@
             </div>
             <div v-for="q in visibleQuestions(entry)" :key="q.id" class="history-item qa-item clickable" @click="goToQuestion(entry.week, q.id)">
               <div class="item-meta">
-                <span class="meta-tid">{{ q.task_id }}</span>
+                <span class="meta-tid">{{ subTaskLabel(q.task_id) }}</span>
                 <span class="badge badge-gray">{{ q.questioner }}</span>
                 <span v-if="q.targets?.length" class="meta-targets">
                   → {{ q.targets.join(', ') }}
@@ -234,6 +234,17 @@ function toggleWeek(week) {
   else openWeeks.value.add(week)
 }
 function isOpen(week) { return openWeeks.value.has(week) }
+
+const subTaskNameMap = computed(() => {
+  const map = {}
+  for (const st of task.value?.sub_tasks ?? []) map[st.id] = st.name
+  return map
+})
+
+function subTaskLabel(taskId) {
+  const name = subTaskNameMap.value[taskId]
+  return name ? `${taskId} · ${name}` : taskId
+}
 
 const filteredWeeks = computed(() => {
   if (!activeSubTask.value) return weeks.value
