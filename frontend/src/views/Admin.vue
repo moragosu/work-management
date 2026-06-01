@@ -67,21 +67,6 @@
         <StaffView :embedded="true" ref="staffViewRef" @updated="fetchStaff" />
       </div>
 
-      <!-- ── Reset Tab (admin only) ── -->
-      <div v-if="activeTab === 'reset'">
-        <div class="card card-body">
-          <h3 class="reset-heading">⚠️ 데이터 초기화</h3>
-          <p class="text-muted text-sm reset-desc">삭제된 데이터는 복구할 수 없습니다.</p>
-          <div class="reset-actions">
-            <button class="btn btn-danger btn-sm" @click="resetData('objectives')" data-tooltip="등록된 목표(OKR)를 모두 삭제 — 복구 불가">목표 전체 삭제</button>
-            <button class="btn btn-danger btn-sm" @click="resetData('tasks')" data-tooltip="등록된 과제를 모두 삭제 — 복구 불가">과제 전체 삭제</button>
-            <button class="btn btn-danger btn-sm" @click="resetData('staff')" data-tooltip="등록된 파트원 정보를 모두 삭제 — 복구 불가">인력 전체 삭제</button>
-            <button class="btn btn-danger btn-sm" @click="resetData('progress')" data-tooltip="주간 진행 현황 및 이슈를 모두 삭제 — 복구 불가">진행도 전체 삭제</button>
-            <button class="btn btn-danger" @click="resetData('all')" data-tooltip="⚠️ 모든 데이터 영구 삭제 — 절대 복구 불가">⚠️ 모든 데이터 삭제</button>
-          </div>
-        </div>
-      </div>
-
       <!-- ── Settings Tab ── -->
       <div v-if="activeTab === 'settings'">
         <div class="card card-body">
@@ -99,6 +84,21 @@
               <input v-model="newTarget" class="form-control" placeholder="새 항목 입력 (예: HA)" @keyup.enter="addTarget" />
               <button class="btn btn-primary btn-sm" @click="addTarget" :disabled="!newTarget.trim() || taskTargets.includes(newTarget.trim())">추가</button>
             </div>
+          </div>
+
+          <div class="settings-group">
+            <label class="form-label">대시보드 기본 주차</label>
+            <div class="week-radio-group mt-16">
+              <label class="week-radio-label">
+                <input type="radio" v-model="dashboardDefaultWeek" value="last" @change="saveDashboardDefaultWeek" />
+                지난주
+              </label>
+              <label class="week-radio-label">
+                <input type="radio" v-model="dashboardDefaultWeek" value="this" @change="saveDashboardDefaultWeek" />
+                이번주
+              </label>
+            </div>
+            <div class="text-sm text-muted" style="margin-top:6px">대시보드 초기 진입 시 의견/질문, 이슈, 활동 현황 패널에 표시되는 기본 주차입니다.</div>
           </div>
 
           <div class="form-group">
@@ -213,7 +213,6 @@ const tabs = computed(() => {
   ]
   if (auth.isAdmin) {
     baseTabs.push({ key: 'users', label: '👤 사용자 관리' })
-    baseTabs.push({ key: 'reset', label: '🗑 초기화' })
   }
   return baseTabs
 })
@@ -232,6 +231,7 @@ const reusableTaskIds = ref([])
 const staffViewRef = ref(null)
 const taskTargets = ref(['MX', 'VD', 'DA', '공통'])
 const newTarget = ref('')
+const dashboardDefaultWeek = ref('last')
 
 // ── 사용자 관리 ──
 const userList = ref([])
@@ -284,6 +284,7 @@ async function fetchSettings() {
   try {
     const { data } = await axios.get('/api/settings')
     if (Array.isArray(data.task_targets)) taskTargets.value = data.task_targets
+    if (data.dashboard_default_week) dashboardDefaultWeek.value = data.dashboard_default_week
   } catch { /* 기본값 유지 */ }
 }
 
@@ -297,6 +298,11 @@ async function fetchUsers() {
 
 async function saveSettings() {
   await axios.put('/api/settings', { task_targets: taskTargets.value })
+}
+
+async function saveDashboardDefaultWeek() {
+  await axios.put('/api/settings', { dashboard_default_week: dashboardDefaultWeek.value })
+  showToast('저장되었습니다')
 }
 
 async function addTarget() {
@@ -390,10 +396,6 @@ onMounted(async () => {
 <style scoped>
 .tab-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 
-.reset-heading { margin-bottom: 16px; color: var(--danger); }
-.reset-desc { margin-bottom: 20px; }
-.reset-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-
 .settings-heading { margin-bottom: 24px; }
 .settings-group { margin-bottom: 32px; }
 .info-list { margin-top: 8px; }
@@ -416,6 +418,9 @@ onMounted(async () => {
 .target-chip-del:hover { background: var(--primary); color: #fff; }
 .target-add-form { display: flex; gap: 8px; align-items: center; }
 .target-add-form .form-control { max-width: 200px; }
+
+.week-radio-group { display: flex; gap: 20px; }
+.week-radio-label { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
 
 .users-table {
   width: 100%;

@@ -708,7 +708,18 @@ async function refresh() {
   }
 }
 
-onMounted(() => { refresh(); loadNotice() })
+async function loadDefaultWeek() {
+  try {
+    const { data } = await axios.get('/api/settings')
+    if (data.dashboard_default_week) {
+      qWeekFilter.value = data.dashboard_default_week
+      issWeekFilter.value = data.dashboard_default_week
+      activityWeek.value = data.dashboard_default_week
+    }
+  } catch { /* 기본값('last') 유지 */ }
+}
+
+onMounted(() => { loadDefaultWeek(); refresh(); loadNotice() })
 </script>
 
 <style scoped>
