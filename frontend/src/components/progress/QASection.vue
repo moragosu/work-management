@@ -73,7 +73,7 @@
           <span class="text-muted text-sm">답변 대기중</span>
         </div>
         <div class="qa-actions">
-          <button v-if="!readonlyQuestion" class="btn btn-ghost btn-xs" @click="startAddAnswer(qa.id)" data-tooltip="이 질문에 답변 작성">답변 달기</button>
+          <button v-if="!readonlyQuestion" class="btn-add-action" @click="startAddAnswer(qa.id)" data-tooltip="이 질문에 답변 작성">답변 달기</button>
         </div>
       </div>
 
@@ -164,7 +164,7 @@
 
       <!-- 답변 추가 버튼 (기존 답변이 있을 때) -->
       <div v-if="qa.answers.length > 0 && addingAnswerToId !== qa.id && !readonlyQuestion" style="padding-left:8px;margin-top:4px">
-        <button class="btn btn-ghost btn-xs" @click="startAddAnswer(qa.id)" data-tooltip="기존 답변에 추가로 답변 작성">+ 답변 추가</button>
+        <button class="btn-add-action" @click="startAddAnswer(qa.id)" data-tooltip="기존 답변에 추가로 답변 작성">+ 답변 추가</button>
       </div>
     </div>
 
@@ -199,7 +199,7 @@
       </div>
     </div>
     <div v-else-if="!readonlyQuestion && auth.isLoggedIn" class="mt-8">
-      <button class="btn btn-ghost btn-sm" @click="openAddQuestion" data-tooltip="이 과제에 의견/질문 등록">+ 의견/질문 추가</button>
+      <button class="btn-add-action" @click="openAddQuestion" data-tooltip="이 과제에 의견/질문 등록">+ 의견/질문 추가</button>
     </div>
 
   </div>
