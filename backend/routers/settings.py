@@ -10,6 +10,7 @@ DEFAULT_SETTINGS = {
     "task_targets": ["MX", "VD", "DA", "공통"],
     "questioners": [],
     "notice": "",
+    "dashboard_default_week": "last",
 }
 
 
@@ -31,16 +32,20 @@ def get_settings():
 
 
 class SettingsUpdate(BaseModel):
-    task_targets: List[str]
+    task_targets: Optional[List[str]] = None
     questioners: Optional[List[str]] = None
+    dashboard_default_week: Optional[str] = None
 
 
 @router.put("")
 def update_settings(update: SettingsUpdate):
     data = _load()
-    data["task_targets"] = [t.strip() for t in update.task_targets if t.strip()]
+    if update.task_targets is not None:
+        data["task_targets"] = [t.strip() for t in update.task_targets if t.strip()]
     if update.questioners is not None:
         data["questioners"] = [q.strip() for q in update.questioners if q.strip()]
+    if update.dashboard_default_week in ("this", "last"):
+        data["dashboard_default_week"] = update.dashboard_default_week
     _save(data)
     return data
 
