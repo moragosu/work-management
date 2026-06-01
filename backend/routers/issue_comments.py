@@ -35,7 +35,7 @@ def list_comments(issue_id: str):
 
 @router.post("/{issue_id}/comments", status_code=201)
 def create_comment(issue_id: str, body: CommentCreate, user: dict = Depends(get_current_user)):
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     new_c = {
         "id": short_uuid("C"),
         "issue_id": issue_id,
@@ -63,7 +63,7 @@ def update_comment(issue_id: str, comment_id: str, body: CommentUpdate, user: di
             raise HTTPException(status_code=404, detail="Comment not found")
         if not user.get("is_admin") and row["created_by"] != user["username"]:
             raise HTTPException(status_code=403, detail="본인이 작성한 댓글만 수정할 수 있습니다")
-        updated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
+        updated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         conn.execute(
             "UPDATE issue_comments SET comment=?, updated_at=? WHERE id=?",
             (body.comment, updated_at, comment_id),

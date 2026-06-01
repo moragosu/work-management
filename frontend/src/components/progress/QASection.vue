@@ -95,7 +95,7 @@
               <TiptapPreview :modelValue="ans.answer" />
               <div class="author-row">
                 <span class="badge badge-gray">{{ ans.answer_by }}</span>
-                <span class="meta-date">{{ ans.updated_at ?? ans.created_at }}</span>
+                <span class="meta-date">{{ (ans.updated_at ?? ans.created_at)?.slice(0, 19) }}</span>
                 <span v-if="ans.updated_at" class="meta-edited">수정됨</span>
               </div>
             </template>
@@ -125,7 +125,7 @@
               <TiptapPreview :modelValue="rep.reply" />
               <div class="author-row">
                 <span class="badge badge-gray">{{ rep.reply_by }}</span>
-                <span class="meta-date">{{ rep.updated_at ?? rep.created_at }}</span>
+                <span class="meta-date">{{ (rep.updated_at ?? rep.created_at)?.slice(0, 19) }}</span>
                 <span v-if="rep.updated_at" class="meta-edited">수정됨</span>
               </div>
             </template>

@@ -125,13 +125,13 @@
                   <div class="comment-meta">
                     <span class="material-symbols-outlined" style="font-size:12px;color:var(--text-muted)">subdirectory_arrow_right</span>
                     <span class="badge badge-gray">{{ c.comment_by }}</span>
-                    <span class="meta-date">{{ c.created_at?.slice(0, 10) }}</span>
+                    <span class="meta-date">{{ c.created_at?.slice(0, 19) }}</span>
                   </div>
                   <TiptapPreview :modelValue="c.comment" />
                   <div v-for="r in c.replies" :key="r.id" class="reply">
                     <span class="material-symbols-outlined" style="font-size:11px;color:var(--text-muted)">subdirectory_arrow_right</span>
                     <span class="badge badge-gray">{{ r.comment_by }}</span>
-                    <span class="meta-date">{{ r.created_at?.slice(0, 10) }}</span>
+                    <span class="meta-date">{{ r.created_at?.slice(0, 19) }}</span>
                     <TiptapPreview :modelValue="r.comment" />
                   </div>
                 </div>
@@ -152,7 +152,7 @@
                 <span v-if="q.targets?.length" class="meta-targets">
                   → {{ q.targets.join(', ') }}
                 </span>
-                <span class="meta-date">{{ q.created_at?.slice(0, 10) }}</span>
+                <span class="meta-date">{{ q.created_at?.slice(0, 19) }}</span>
                 <span class="goto-hint"><span class="material-symbols-outlined">open_in_new</span></span>
               </div>
               <TiptapPreview :modelValue="q.question" />
@@ -167,13 +167,13 @@
                 <div class="answer-meta">
                   <span class="inline-badge badge-answered">A</span>
                   <span class="badge badge-gray">{{ a.answer_by }}</span>
-                  <span class="meta-date">{{ a.created_at?.slice(0, 10) }}</span>
+                  <span class="meta-date">{{ a.created_at?.slice(0, 19) }}</span>
                 </div>
                 <TiptapPreview :modelValue="a.answer" />
                 <div v-for="r in a.replies" :key="r.id" class="reply">
                   <span class="material-symbols-outlined" style="font-size:11px;color:var(--text-muted)">subdirectory_arrow_right</span>
                   <span class="badge badge-gray">{{ r.reply_by }}</span>
-                  <span class="meta-date">{{ r.created_at?.slice(0, 10) }}</span>
+                  <span class="meta-date">{{ r.created_at?.slice(0, 19) }}</span>
                   <TiptapPreview :modelValue="r.reply" />
                 </div>
               </div>

@@ -87,7 +87,7 @@ def create_question(body: QuestionCreate, user: dict = Depends(get_current_user)
         "targets": body.targets,
         "questioner": body.questioner or "",
         "created_by": user["username"],
-        "created_at": date.today().isoformat(),
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
     questions.append(new_q)
     _save(questions, answers)
@@ -147,7 +147,7 @@ def create_answer(body: AnswerCreate, user: dict = Depends(get_current_user)):
         "answer_by": body.answer_by,
         "images": body.images,
         "created_by": user["username"],
-        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
     answers.append(new_a)
     _save(questions, answers)
@@ -174,7 +174,7 @@ def update_answer(answer_id: str, body: AnswerUpdate, user: dict = Depends(get_c
             a["answer"] = body.answer
             a["answer_by"] = body.answer_by
             a["images"] = body.images
-            a["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+            a["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             _save(questions, answers)
             return a
     raise HTTPException(status_code=404, detail="Answer not found")
@@ -234,7 +234,7 @@ def create_reply(answer_id: str, body: ReplyCreate, user: dict = Depends(get_cur
             "reply": body.reply,
             "reply_by": body.reply_by,
             "created_by": user["username"],
-            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "updated_at": None,
         }
         conn.execute(
@@ -252,7 +252,7 @@ def update_reply(answer_id: str, reply_id: str, body: ReplyUpdate, user: dict = 
             raise HTTPException(status_code=404, detail="Reply not found")
         if not user.get("is_admin") and row["created_by"] != user["username"]:
             raise HTTPException(status_code=403, detail="본인이 작성한 답글만 수정할 수 있습니다")
-        updated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
+        updated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         conn.execute(
             "UPDATE answer_replies SET reply=?, updated_at=? WHERE id=?",
             (body.reply, updated_at, reply_id),

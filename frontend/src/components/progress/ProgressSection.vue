@@ -27,7 +27,7 @@
         </div>
         <div class="flex gap-4 mt-8" style="align-items:center">
           <span v-if="iss.assignee" class="badge badge-gray">{{ iss.assignee }}</span>
-          <span class="meta-date">{{ iss.updated_at ?? iss.created_at }}</span>
+          <span class="meta-date">{{ (iss.updated_at ?? iss.created_at)?.slice(0, 19) }}</span>
           <span v-if="iss.updated_at" class="meta-edited">수정됨</span>
           <div style="margin-left:auto;display:flex;gap:4px">
             <button class="btn btn-ghost btn-xs" @click="copyLink(iss)" data-tooltip="링크 복사 — 메신저 공유용">
@@ -43,7 +43,7 @@
           <div v-for="c in (iss.comments || [])" :key="c.id" class="comment-item">
             <div class="comment-meta-row">
               <span class="badge badge-gray">{{ c.comment_by }}</span>
-              <span class="meta-date">{{ c.updated_at ?? c.created_at }}</span>
+              <span class="meta-date">{{ (c.updated_at ?? c.created_at)?.slice(0, 19) }}</span>
               <span v-if="c.updated_at" class="meta-edited">수정됨</span>
               <div v-if="!readonly" class="comment-actions" style="margin-left:auto">
                 <button class="btn btn-ghost btn-xs" @click="startReplyToComment(iss.id, c.id)">↩ 답글</button>
@@ -58,7 +58,7 @@
               <div class="reply-body">
                 <div class="comment-meta-row">
                   <span class="badge badge-gray">{{ r.comment_by }}</span>
-                  <span class="meta-date">{{ r.updated_at ?? r.created_at }}</span>
+                  <span class="meta-date">{{ (r.updated_at ?? r.created_at)?.slice(0, 19) }}</span>
                   <span v-if="r.updated_at" class="meta-edited">수정됨</span>
                   <div v-if="!readonly" class="comment-actions" style="margin-left:auto">
                     <button v-if="r.created_by === auth.user?.username || auth.isAdmin" class="btn btn-ghost btn-xs" @click="startEditComment(iss.id, r)">수정</button>

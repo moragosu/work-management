@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date
+from datetime import datetime
 import json
 import re
 import data_store
@@ -67,7 +67,7 @@ def list_issues(
 @router.post("", status_code=201)
 def create_issue(body: IssueCreate, user: dict = Depends(get_current_user)):
     items = _load()
-    today = date.today().isoformat()
+    today = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     new_item = {
         "id": short_uuid("I"),
         "task_id": body.task_id,
@@ -107,7 +107,7 @@ def update_issue(issue_id: str, body: IssueUpdate):
     for i, item in enumerate(items):
         if item["id"] == issue_id:
             patch = body.model_dump(exclude_none=True)
-            items[i] = {**item, **patch, "updated_at": date.today().isoformat()}
+            items[i] = {**item, **patch, "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
             _save(items)
             return items[i]
     raise HTTPException(status_code=404, detail="Issue not found")
