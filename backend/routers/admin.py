@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 import csv
 import io
+import json
 from datetime import date
 import data_store
 from utils.id_generator import short_uuid
@@ -170,7 +171,11 @@ async def import_progress(file: UploadFile = File(...)):
 def cleanup_orphans():
     """삭제된 과제에 연결된 질문·이슈·댓글·링크를 일괄 정리."""
     with data_store.get_conn() as conn:
-        valid_task_ids = {r["id"] for r in conn.execute("SELECT id FROM tasks").fetchall()}
+        valid_task_ids = set()
+        for r in conn.execute("SELECT id, sub_tasks FROM tasks").fetchall():
+            valid_task_ids.add(r["id"])
+            for st in json.loads(r["sub_tasks"] or "[]"):
+                valid_task_ids.add(st["id"])
 
         # 고아 질문 수집
         orphan_q_ids = [
