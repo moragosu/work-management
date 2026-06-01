@@ -136,6 +136,18 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
     }
 
+    location ^~ /docs {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
+
+    location ^~ /openapi.json {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
+
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?)$ {
         expires 7d;
         add_header Cache-Control "public, immutable";
