@@ -6,7 +6,7 @@
     </div>
 
     <!-- 등록된 이슈 목록 -->
-    <div v-for="iss in issues" :key="iss.id" :id="'issue-' + iss.id" class="issue-item">
+    <div v-for="iss in issues" :key="iss.id" class="issue-item">
       <template v-if="editingId === iss.id">
         <div class="form-group">
           <label class="form-label">등록자</label>
@@ -22,7 +22,7 @@
         </div>
       </template>
       <template v-else>
-        <div class="issue-box">
+        <div :id="'issue-' + iss.id" class="issue-box">
           <TiptapPreview :modelValue="iss.issue" />
         </div>
         <div class="flex gap-4 mt-8" style="align-items:center">
@@ -89,7 +89,10 @@
                 <button class="btn btn-primary btn-xs" @click="submitComment(iss.id, null)" :disabled="!hasContent(newCommentText)">등록</button>
               </div>
             </div>
-            <button v-else-if="commentingIssueId !== iss.id" class="btn btn-ghost btn-xs mt-4" @click="startComment(iss.id)">+ 댓글</button>
+            <button v-else-if="commentingIssueId !== iss.id" class="btn-comment-add mt-4" @click="startComment(iss.id)">
+              <span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">chat_bubble_outline</span>
+              댓글
+            </button>
           </div>
         </div>
       </template>
@@ -104,7 +107,12 @@
       </div>
     </div>
 
-    <button v-if="!adding && !readonly" class="btn btn-ghost btn-sm mt-4" @click="openAdd" data-tooltip="이번 주 진행 현황 및 이슈를 등록합니다">+ 등록</button>
+    <div v-if="!adding && !readonly" class="issue-add-row">
+      <button class="btn-issue-add" @click="openAdd" data-tooltip="이번 주 진행 현황 및 이슈를 등록합니다">
+        <span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px">add_circle</span>
+        진행 현황 및 이슈 등록
+      </button>
+    </div>
   </div>
 
   <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
@@ -333,4 +341,46 @@ async function deleteComment(issueId, commentId) {
   padding-left: 8px;
 }
 .comment-editor-form { margin-top: 8px; }
+
+.btn-comment-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--text-secondary, #6b7280);
+  background: transparent;
+  border: 1px dashed var(--outline, #d1d5db);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.btn-comment-add:hover {
+  color: var(--primary, #2563eb);
+  border-color: var(--primary, #2563eb);
+}
+
+.issue-add-row {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--outline, #e5e7eb);
+}
+.btn-issue-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--warning, #d97706);
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-issue-add:hover {
+  background: #fef3c7;
+  border-color: #f59e0b;
+}
 </style>
