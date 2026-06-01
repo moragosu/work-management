@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date
+import json
 import data_store
 from utils.id_generator import short_uuid
 from dependencies import get_current_user
@@ -74,14 +75,25 @@ def create_issue(body: IssueCreate, user: dict = Depends(get_current_user)):
     }
     items.append(new_item)
     _save(items)
-    # 알림: 담당자에게
-    recipient = data_store.get_username_for_notification(body.assignee)
-    data_store.insert_notification(
-        recipient, "issue_assigned",
-        "담당 과제에 이슈가 등록되었습니다",
-        body.issue[:50],
-        f"/progress?week={body.week}&focusIssueId={new_item['id']}",
-    )
+
+    # 알림: 해당 과제 멤버 전원에게 (이슈 작성자 본인 제외)
+    link = f"/progress?week={body.week}&focusIssueId={new_item['id']}"
+    preview = body.issue[:50]
+    notified = set()
+    with data_store.get_conn() as conn:
+        task_row = conn.execute("SELECT members FROM tasks WHERE id=?", (body.task_id,)).fetchone()
+    if task_row:
+        members = json.loads(task_row["members"] or "[]")
+        for m in members:
+            username = m.get("username") or data_store.get_username_for_notification(m.get("name", ""))
+            if username and username != user["username"] and username not in notified:
+                data_store.insert_notification(
+                    username, "issue_assigned",
+                    "담당 과제에 이슈가 등록되었습니다",
+                    preview,
+                    link,
+                )
+                notified.add(username)
     return new_item
 
 
