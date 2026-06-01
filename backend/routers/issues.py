@@ -103,7 +103,7 @@ def delete_issue(issue_id: str, user: dict = Depends(get_current_user)):
     target = next((i for i in items if i["id"] == issue_id), None)
     if not target:
         raise HTTPException(status_code=404, detail="Issue not found")
-    if user["role"] != "admin" and target.get("created_by") != user["username"]:
+    if not user.get("is_admin") and target.get("created_by") != user["username"]:
         raise HTTPException(status_code=403, detail="본인이 작성한 이슈만 삭제할 수 있습니다")
     _save([i for i in items if i["id"] != issue_id])
     return {"deleted": issue_id}
