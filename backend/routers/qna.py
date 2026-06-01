@@ -126,7 +126,7 @@ def delete_question(question_id: str, user: dict = Depends(get_current_user)):
     target = next((q for q in questions if q["id"] == question_id), None)
     if not target:
         raise HTTPException(status_code=404, detail="Question not found")
-    if user["role"] != "admin" and target.get("created_by") != user["username"]:
+    if not user.get("is_admin") and target.get("created_by") != user["username"]:
         raise HTTPException(status_code=403, detail="본인이 작성한 질문만 삭제할 수 있습니다")
     questions = [q for q in questions if q["id"] != question_id]
     answers = [a for a in answers if a["question_id"] != question_id]
