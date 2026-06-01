@@ -25,7 +25,7 @@
           <div class="card-body stat-card">
             <span class="material-symbols-outlined stat-icon" :class="weekIssues.length ? 'stat-icon-yellow' : 'stat-icon-green'">warning</span>
             <div class="stat-value" :style="weekIssues.length ? 'color:var(--warning)' : 'color:var(--success)'">{{ weekIssues.length }}</div>
-            <div class="stat-label">이번 주 이슈</div>
+            <div class="stat-label">이번 주 진행 현황 및 이슈</div>
           </div>
         </div>
         <div class="card stat-accent stat-accent-blue" data-tooltip="이번 주 컨플루언스 링크 등록 현황" data-tooltip-pos="bottom">
@@ -128,7 +128,7 @@
               <span class="panel-icon" style="background:#fff7ed;color:var(--warning)">
                 <span class="material-symbols-outlined">construction</span>
               </span>
-              이슈
+              진행 현황 및 이슈
             </div>
             <div class="q-filter-group" @click.stop>
               <button class="q-filter-btn" :class="{ active: issWeekFilter === 'last' }" @click="issWeekFilter = 'last'">지난주</button>
@@ -142,7 +142,7 @@
           <div class="card-body panel-body">
             <div v-if="actionLoading" class="loading-center" style="padding:24px"><div class="spinner"></div></div>
             <div v-else-if="filteredIssues.length === 0" class="panel-empty">
-              등록된 이슈가 없습니다 👍
+              등록된 진행 현황 및 이슈가 없습니다 👍
             </div>
             <ul v-else class="panel-list" :class="{ 'panel-list-expanded': panelExpanded.issues }">
               <li v-for="p in filteredIssues" :key="p.id" class="panel-item panel-item-link" @click="openModal('issue', p)">
@@ -231,7 +231,7 @@
             <span class="panel-count-badge">과제 {{ flatTaskRows.length }}건</span>
             <div class="matrix-legend-inline">
               <span class="material-symbols-outlined matrix-legend-icon matrix-icon-link">link</span><span>컨플루언스</span>
-              <span class="material-symbols-outlined matrix-legend-icon matrix-icon-issue">warning</span><span>이슈</span>
+              <span class="material-symbols-outlined matrix-legend-icon matrix-icon-issue">warning</span><span>진행 현황 및 이슈</span>
               <span class="matrix-count matrix-count-legend">N</span><span>의견/질문</span>
             </div>
             <span class="material-symbols-outlined section-chevron" :class="{ open: matrixOpen }">expand_more</span>
@@ -310,7 +310,7 @@
     <div v-if="modal.visible" class="dash-modal-overlay" @click.self="modal.visible = false">
       <div class="dash-modal">
         <div class="dash-modal-header">
-          <span>{{ modal.type === 'issue' ? '이슈 상세' : '질문 상세' }}</span>
+          <span>{{ modal.type === 'issue' ? '진행 현황 및 이슈 상세' : '질문 상세' }}</span>
           <button class="dash-modal-close" @click="modal.visible = false">
             <span class="material-symbols-outlined">close</span>
           </button>
@@ -638,6 +638,7 @@ const modal = reactive({ visible: false, type: '', item: null })
 function stripMarkdown(text) {
   if (!text) return ''
   return text
+    .replace(/<[^>]+>/g, '')
     .replace(/^#{1,6}\s+/gm, '')
     .replace(/\*\*(.+?)\*\*/g, '$1')
     .replace(/\*(.+?)\*/g, '$1')
@@ -645,6 +646,7 @@ function stripMarkdown(text) {
     .replace(/^[-*+]\s+/gm, '')
     .replace(/^>\s+/gm, '')
     .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+    .replace(/!\[.*?\]\(.*?\)/g, '')
     .replace(/\n+/g, ' ')
     .trim()
 }
