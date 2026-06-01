@@ -2,7 +2,6 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 import csv
 import io
-import json
 from datetime import date
 import data_store
 from utils.id_generator import short_uuid
@@ -163,74 +162,6 @@ async def import_progress(file: UploadFile = File(...)):
         items.append(item)
     data_store.save("progress.json", {"progress_items": items})
     return {"imported": len(items)}
-
-
-# ── 고아 데이터 정리 ───────────────────────────────────────────────────────────
-
-@router.post("/cleanup-orphans", dependencies=[Depends(require_admin)])
-def cleanup_orphans():
-    """삭제된 과제에 연결된 질문·이슈·댓글·링크를 일괄 정리."""
-    with data_store.get_conn() as conn:
-        valid_task_ids = set()
-        for r in conn.execute("SELECT id, sub_tasks FROM tasks").fetchall():
-            valid_task_ids.add(r["id"])
-            for st in json.loads(r["sub_tasks"] or "[]"):
-                valid_task_ids.add(st["id"])
-
-        # 고아 질문 수집
-        orphan_q_ids = [
-            r["id"] for r in conn.execute("SELECT id FROM questions").fetchall()
-            if r["id"] and conn.execute("SELECT task_id FROM questions WHERE id=?", (r["id"],)).fetchone()["task_id"] not in valid_task_ids
-        ]
-        # 더 효율적인 방식으로 재조회
-        all_questions = conn.execute("SELECT id, task_id FROM questions").fetchall()
-        orphan_q_ids = [r["id"] for r in all_questions if r["task_id"] not in valid_task_ids]
-
-        deleted_questions = len(orphan_q_ids)
-        deleted_answers = 0
-        deleted_replies = 0
-        if orphan_q_ids:
-            q_ph = ",".join("?" * len(orphan_q_ids))
-            orphan_a_ids = [r["id"] for r in conn.execute(
-                f"SELECT id FROM answers WHERE question_id IN ({q_ph})", orphan_q_ids
-            ).fetchall()]
-            deleted_answers = len(orphan_a_ids)
-            if orphan_a_ids:
-                a_ph = ",".join("?" * len(orphan_a_ids))
-                deleted_replies = conn.execute(
-                    f"DELETE FROM answer_replies WHERE answer_id IN ({a_ph})", orphan_a_ids
-                ).rowcount
-                conn.execute(f"DELETE FROM answers WHERE id IN ({a_ph})", orphan_a_ids)
-            conn.execute(f"DELETE FROM questions WHERE id IN ({q_ph})", orphan_q_ids)
-
-        # 고아 이슈 수집
-        all_issues = conn.execute("SELECT id, task_id FROM issues").fetchall()
-        orphan_i_ids = [r["id"] for r in all_issues if r["task_id"] not in valid_task_ids]
-        deleted_issues = len(orphan_i_ids)
-        deleted_comments = 0
-        if orphan_i_ids:
-            i_ph = ",".join("?" * len(orphan_i_ids))
-            deleted_comments = conn.execute(
-                f"DELETE FROM issue_comments WHERE issue_id IN ({i_ph})", orphan_i_ids
-            ).rowcount
-            conn.execute(f"DELETE FROM issues WHERE id IN ({i_ph})", orphan_i_ids)
-
-        # 고아 confluence_links 삭제
-        all_links = conn.execute("SELECT id, task_id FROM confluence_links WHERE task_id IS NOT NULL").fetchall()
-        orphan_l_ids = [r["id"] for r in all_links if r["task_id"] not in valid_task_ids]
-        deleted_links = len(orphan_l_ids)
-        if orphan_l_ids:
-            l_ph = ",".join("?" * len(orphan_l_ids))
-            conn.execute(f"DELETE FROM confluence_links WHERE id IN ({l_ph})", orphan_l_ids)
-
-    return {
-        "deleted_questions": deleted_questions,
-        "deleted_answers": deleted_answers,
-        "deleted_replies": deleted_replies,
-        "deleted_issues": deleted_issues,
-        "deleted_comments": deleted_comments,
-        "deleted_links": deleted_links,
-    }
 
 
 # ── Reset ─────────────────────────────────────────────────────────────────────
