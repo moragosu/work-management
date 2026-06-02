@@ -366,8 +366,8 @@ def _sync_task_ids_absorb(absorbed_id: str, sub_ids: set, parent_id: str):
                 )
 
 
-def _sync_task_ids_promote(sub_task_id: str, parent_id: str, remaining_sub_ids: set):
-    """promote 시: 해당 부모의 다른 소과제가 없는 유저에게서 parent_id 제거."""
+def _sync_task_ids_promote(sub_task_id: str, parent_id: str, remaining_sub_ids: set, parent_direct_member_usernames: set):
+    """promote 시: 해당 부모의 다른 소과제도 없고 직접 담당자도 아닌 유저에게서 parent_id 제거."""
     with data_store.get_conn() as conn:
         for row in conn.execute("SELECT username, task_ids FROM users").fetchall():
             try:
@@ -376,8 +376,12 @@ def _sync_task_ids_promote(sub_task_id: str, parent_id: str, remaining_sub_ids: 
                 ids = []
             if parent_id not in ids:
                 continue
-            still_needs_parent = any(sid in ids for sid in remaining_sub_ids)
-            if not still_needs_parent and parent_id in ids:
+            # 남은 소과제가 있거나 모과제 직접 담당자면 유지
+            still_needs_parent = (
+                any(sid in ids for sid in remaining_sub_ids)
+                or row["username"] in parent_direct_member_usernames
+            )
+            if not still_needs_parent:
                 ids.remove(parent_id)
                 conn.execute(
                     "UPDATE users SET task_ids=? WHERE username=?",
@@ -479,8 +483,9 @@ def promote_sub_task(task_id: str, body: PromoteBody):
     new_tasks.append(new_task)
     _save(new_tasks)
 
-    # users.task_ids 동기화: 이 소과제의 다른 형제가 없는 유저는 parent_id 제거
-    _sync_task_ids_promote(task_id, body.parent_id, remaining_sub_ids)
+    # users.task_ids 동기화: 다른 형제 소과제도 없고 직접 담당자도 아닌 유저에서 parent_id 제거
+    parent_direct_members = {m["username"] for m in parent.get("members", []) if m.get("username")}
+    _sync_task_ids_promote(task_id, body.parent_id, remaining_sub_ids, parent_direct_members)
 
     # OKR 동기화: 분리된 과제는 objective 없음 → old_obj 제거
     member_usernames = {m["username"] for m in st.get("members", []) if m.get("username")}
