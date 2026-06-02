@@ -369,8 +369,8 @@ function sanitize(html) {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
   color: var(--color-text-secondary, #888);
   border: 1.5px solid currentColor;
   line-height: 1;
@@ -384,7 +384,7 @@ function sanitize(html) {
 }
 
 .expand-trigger {
-  font-size: 16px;
+  font-size: var(--fs-h3);
   color: var(--color-text-secondary, #888);
   cursor: pointer;
   vertical-align: middle;
@@ -411,7 +411,7 @@ function sanitize(html) {
   border-bottom: 1px solid #c7deff;
 }
 .img-picker-label {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--color-text-secondary, #666);
   margin-right: 4px;
   flex-shrink: 0;
@@ -423,9 +423,9 @@ function sanitize(html) {
   padding: 4px 10px;
   border-radius: 6px;
   border: 1px solid #a0c4ff;
-  background: #fff;
-  font-size: 13px;
-  font-weight: 600;
+  background: var(--surface);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
   color: #2563eb;
   cursor: pointer;
   transition: background 0.12s, border-color 0.12s;
@@ -435,15 +435,15 @@ function sanitize(html) {
   border-color: #2563eb;
 }
 .img-size-hint {
-  font-size: 10px;
-  font-weight: 400;
+  font-size: var(--fs-3xs);
+  font-weight: var(--fw-regular);
   color: #60a5fa;
 }
 .img-border-toggle {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: #374151;
   cursor: pointer;
   margin-left: 4px;
@@ -451,14 +451,14 @@ function sanitize(html) {
 .img-cancel-btn {
   margin-left: auto;
   padding: 3px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   border: 1px solid #e5e7eb;
   background: transparent;
-  font-size: 12px;
-  color: #6b7280;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
   cursor: pointer;
 }
-.img-cancel-btn:hover { background: #f3f4f6; }
+.img-cancel-btn:hover { background: var(--gray-100); }
 
 .help-panel {
   background: var(--color-bg-secondary, #f8f9fa);
@@ -482,11 +482,11 @@ function sanitize(html) {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--fs-sm);
 }
 .help-item code {
   font-family: monospace;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   background: var(--color-bg-code, #eef0f3);
   padding: 1px 5px;
   border-radius: 3px;
@@ -496,18 +496,18 @@ function sanitize(html) {
 }
 .help-item span {
   color: var(--color-text-secondary, #666);
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 .upload-error-msg {
   background: #fef2f2;
   border: 1px solid #fca5a5;
   border-top: none;
   color: #b91c1c;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   padding: 6px 12px;
 }
 .help-tip {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--color-text-secondary, #888);
   margin: 0;
   padding-top: 8px;
@@ -526,8 +526,8 @@ function sanitize(html) {
   padding: 24px;
 }
 .expand-modal {
-  background: #fff;
-  border-radius: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
   width: 100%;
   max-width: 960px;
   height: 90vh;
@@ -546,12 +546,12 @@ function sanitize(html) {
   align-items: center;
   justify-content: space-between;
   padding: 14px 20px;
-  border-bottom: 1px solid var(--outline, #e5e7eb);
+  border-bottom: 1px solid var(--outline);
   flex-shrink: 0;
 }
 .expand-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
   color: var(--text-primary, #111);
 }
 .expand-header-actions {
@@ -569,11 +569,11 @@ function sanitize(html) {
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--text-muted);
   transition: background 0.12s;
 }
-.expand-close-btn:hover { background: #f3f4f6; }
-.expand-close-btn .material-symbols-outlined { font-size: 18px; }
+.expand-close-btn:hover { background: var(--gray-100); }
+.expand-close-btn .material-symbols-outlined { font-size: var(--fs-h2); }
 
 .expand-body {
   flex: 1;
@@ -585,7 +585,7 @@ function sanitize(html) {
   justify-content: flex-end;
   gap: 8px;
   padding: 12px 20px;
-  border-top: 1px solid var(--outline, #e5e7eb);
+  border-top: 1px solid var(--outline);
   flex-shrink: 0;
 }
 </style>

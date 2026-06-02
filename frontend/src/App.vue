@@ -148,12 +148,12 @@ function onMouseOut(e) {
 .global-tooltip {
   position: fixed;
   z-index: 9999;
-  background: #1a1a2e;
+  background: var(--text-primary);
   color: #fff;
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   line-height: 1.4;
   padding: 5px 10px;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
   pointer-events: none;
   box-shadow: 0 2px 8px rgba(0,0,0,0.22);
@@ -179,7 +179,7 @@ function onMouseOut(e) {
   max-width: 92vw;
   max-height: 92vh;
   object-fit: contain;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: default;
   box-shadow: 0 8px 40px rgba(0,0,0,0.5);
 }
@@ -215,16 +215,16 @@ function onMouseOut(e) {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  height: 56px;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  height: var(--topbar-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--outline);
   flex-shrink: 0;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .page-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #111;
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
   letter-spacing: -0.2px;
 }
 .header-right {
@@ -235,7 +235,7 @@ function onMouseOut(e) {
 .header-divider {
   width: 1px;
   height: 24px;
-  background: #e5e7eb;
+  background: var(--outline);
 }
 .user-info {
   display: flex;
@@ -248,29 +248,29 @@ function onMouseOut(e) {
   border-radius: 50%;
   background: linear-gradient(135deg, #2563eb, #7c3aed);
   color: #fff;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 .user-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
 }
 .logout-btn {
   background: none;
   border: none;
   cursor: pointer;
-  color: #9ca3af;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   padding: 6px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   transition: background 0.15s, color 0.15s;
 }
-.logout-btn:hover { background: #f3f4f6; color: #374151; }
-.logout-btn .material-symbols-outlined { font-size: 18px; }
+.logout-btn:hover { background: var(--gray-100); color: var(--text-primary); }
+.logout-btn .material-symbols-outlined { font-size: var(--fs-h2); }
 </style>

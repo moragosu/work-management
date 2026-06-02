@@ -88,11 +88,11 @@ function toggleBorder() {
   background: #fffbeb;
   border: 1px solid #fde68a;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   flex-wrap: wrap;
   user-select: none;
 }
-.bar-label { color: var(--text-secondary, #555); font-size: 12px; }
+.bar-label { color: var(--text-secondary, #555); font-size: var(--fs-xs); }
 .bar-sep { color: var(--text-muted, #9ca3af); }
 .bar-div { color: var(--outline, #d1d5db); padding: 0 2px; }
 .bar-input {
@@ -100,7 +100,7 @@ function toggleBorder() {
   padding: 2px 6px;
   border: 1px solid var(--outline, #e5e7eb);
   border-radius: 4px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   text-align: right;
   outline: none;
 }
@@ -110,7 +110,7 @@ function toggleBorder() {
   border: 1px solid var(--outline, #e5e7eb);
   border-radius: 4px;
   background: #fff;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   cursor: pointer;
   color: var(--text-primary, #111);
   transition: all 0.1s;

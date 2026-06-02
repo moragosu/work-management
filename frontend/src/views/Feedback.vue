@@ -225,7 +225,7 @@ onMounted(fetchAll)
   border-radius: 20px;
   border: 1px solid var(--outline);
   background: var(--surface);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   cursor: pointer;
   color: var(--text-secondary);
   transition: all 0.15s;
@@ -236,7 +236,7 @@ onMounted(fetchAll)
 .dot-bug { background: var(--danger); }
 .dot-feature { background: var(--primary); }
 .dot-other { background: var(--text-muted); }
-.filter-chip-count { font-size: 11px; background: var(--gray-100); border-radius: 10px; padding: 1px 6px; color: var(--text-muted); }
+.filter-chip-count { font-size: var(--fs-2xs); background: var(--gray-100); border-radius: 10px; padding: 1px 6px; color: var(--text-muted); }
 .filter-chip.active .filter-chip-count { background: var(--primary-light); color: var(--primary); }
 
 .empty-state {
@@ -246,7 +246,7 @@ onMounted(fetchAll)
   gap: 12px;
   padding: 60px 0;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
 .empty-icon { font-size: 40px; color: var(--gray-300); }
 
@@ -267,8 +267,8 @@ onMounted(fetchAll)
   flex-wrap: wrap;
 }
 .feedback-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
   color: var(--text-primary);
   flex: 1;
   min-width: 0;
@@ -285,9 +285,9 @@ onMounted(fetchAll)
   display: inline-flex;
   align-items: center;
   padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
   white-space: nowrap;
 }
 .cat-bug     { background: var(--danger-light);   color: var(--danger); }
@@ -302,8 +302,8 @@ onMounted(fetchAll)
   display: flex; align-items: center; justify-content: center;
 }
 .fb-modal {
-  background: #fff;
-  border-radius: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
   width: 600px;
   max-width: 92vw;
   max-height: 85vh;
@@ -319,7 +319,7 @@ onMounted(fetchAll)
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 20px 12px;
   border-bottom: 1px solid var(--outline);
-  font-weight: 600; font-size: 15px;
+  font-weight: var(--fw-semibold); font-size: var(--fs-base);
   flex-shrink: 0;
 }
 .fb-modal-body { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
@@ -332,6 +332,6 @@ onMounted(fetchAll)
 
 .cat-radio-group { display: flex; gap: 8px; flex-wrap: wrap; }
 .cat-radio { cursor: pointer; }
-.cat-radio .category-badge { padding: 5px 14px; font-size: 13px; border: 2px solid transparent; transition: border-color 0.15s; }
+.cat-radio .category-badge { padding: 5px 14px; font-size: var(--fs-sm); border: 2px solid transparent; transition: border-color 0.15s; }
 .cat-radio.active .category-badge { border-color: currentColor; }
 </style>

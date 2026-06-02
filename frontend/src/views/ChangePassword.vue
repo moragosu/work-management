@@ -2,8 +2,8 @@
   <div class="auth-wrap">
     <div class="auth-card">
       <div class="auth-logo">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="#2563eb" stroke="none"/>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary)">
+          <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
         </svg>
         <span>설비혁신파트 협업 시스템</span>
       </div>
@@ -84,12 +84,12 @@ async function submit() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--background, #f8fafc);
+  background: var(--bg-main);
 }
 .auth-card {
-  background: var(--surface, #fff);
-  border: 1px solid var(--outline, #e5e7eb);
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
   padding: 36px 40px;
   width: 360px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.07);
@@ -98,20 +98,20 @@ async function submit() {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary, #555);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
   margin-bottom: 20px;
 }
 .auth-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text, #111);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
   margin: 0 0 8px;
 }
 .auth-desc {
-  font-size: 13px;
-  color: var(--text-muted, #888);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
   margin: 0 0 24px;
   line-height: 1.6;
 }
@@ -120,33 +120,33 @@ async function submit() {
 }
 .form-group label {
   display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary, #555);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
   margin-bottom: 6px;
 }
 .form-group input {
   width: 100%;
   padding: 9px 12px;
-  border: 1px solid var(--outline, #e5e7eb);
+  border: 1px solid var(--outline);
   border-radius: 6px;
-  font-size: 14px;
-  background: var(--background, #f8fafc);
-  color: var(--text, #111);
+  font-size: var(--fs-md);
+  background: var(--bg-main);
+  color: var(--text-primary);
   box-sizing: border-box;
   outline: none;
   transition: border-color 0.15s;
 }
-.form-group input:focus { border-color: var(--primary, #2563eb); background: #fff; }
+.form-group input:focus { border-color: var(--primary); background: var(--surface); }
 .auth-error {
-  font-size: 13px;
-  color: var(--danger, #ef4444);
+  font-size: var(--fs-sm);
+  color: var(--danger);
   margin-bottom: 12px;
 }
 .auth-btn {
   width: 100%;
   padding: 10px;
-  font-size: 15px;
+  font-size: var(--fs-base);
   margin-top: 4px;
 }
 </style>

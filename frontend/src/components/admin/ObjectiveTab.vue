@@ -346,19 +346,19 @@ async function deleteKr(krId) {
 
 <style scoped>
 .staff-filter-bar { gap: 6px; margin-bottom: 12px; }
-.filter-label-sm { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+.filter-label-sm { font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--text-muted); white-space: nowrap; }
 .staff-chip {
   display: inline-flex; align-items: center; padding: 3px 10px;
   border-radius: 999px; border: 1px solid var(--outline);
-  font-size: 12px; font-family: inherit; cursor: pointer;
+  font-size: var(--fs-xs); font-family: inherit; cursor: pointer;
   background: var(--surface); color: var(--text-secondary); transition: all 0.15s;
 }
 .staff-chip:hover { border-color: var(--primary); color: var(--primary); }
-.staff-chip-active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); font-weight: 600; }
+.staff-chip-active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); font-weight: var(--fw-semibold); }
 
 .reusable-ids { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 .reusable-chip {
-  padding: 2px 10px; border-radius: 12px; font-size: 12px; cursor: pointer;
+  padding: 2px 10px; border-radius: var(--radius-lg); font-size: var(--fs-xs); cursor: pointer;
   border: 1px solid var(--primary); color: var(--primary); background: transparent;
   transition: background 0.15s;
 }
@@ -373,5 +373,5 @@ async function deleteKr(krId) {
 .member-chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .task-list { display: flex; flex-direction: column; gap: 4px; }
 .task-list-item { display: flex; align-items: center; gap: 6px; }
-.task-name { color: var(--text-primary); font-size: 13px; line-height: 1.4; }
+.task-name { color: var(--text-primary); font-size: var(--fs-sm); line-height: 1.4; }
 </style>

@@ -406,13 +406,13 @@ onMounted(async () => {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 4px 10px; border-radius: 999px;
   background: var(--primary-light); color: var(--primary);
-  border: 1px solid var(--primary); font-size: 13px; font-weight: 600;
+  border: 1px solid var(--primary); font-size: var(--fs-sm); font-weight: var(--fw-semibold);
 }
 .target-chip-del {
   display: flex; align-items: center; justify-content: center;
   width: 16px; height: 16px; border-radius: 50%;
   border: none; background: transparent; color: var(--primary);
-  cursor: pointer; font-size: 11px; padding: 0;
+  cursor: pointer; font-size: var(--fs-2xs); padding: 0;
   transition: background 0.15s;
 }
 .target-chip-del:hover { background: var(--primary); color: #fff; }
@@ -420,12 +420,12 @@ onMounted(async () => {
 .target-add-form .form-control { max-width: 200px; }
 
 .week-radio-group { display: flex; gap: 20px; }
-.week-radio-label { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
+.week-radio-label { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-md); cursor: pointer; }
 
 .users-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
 .users-table th, .users-table td {
   padding: 10px 12px;
@@ -433,8 +433,8 @@ onMounted(async () => {
   text-align: left;
 }
 .users-table th {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
   color: var(--text-muted);
   background: var(--gray-50);
 }
@@ -443,9 +443,9 @@ onMounted(async () => {
   padding: 4px 8px;
   border: 1px solid var(--outline);
   border-radius: 6px;
-  font-size: 13px;
-  background: var(--background);
-  color: var(--text);
+  font-size: var(--fs-sm);
+  background: var(--bg-main);
+  color: var(--text-primary);
   cursor: pointer;
 }
 .modal-backdrop {
@@ -455,22 +455,22 @@ onMounted(async () => {
   z-index: 1000;
 }
 .modal-card {
-  background: var(--surface, #fff);
-  border-radius: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
   padding: 28px 32px;
   width: 340px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.15);
 }
 .temp-pw-box {
-  background: var(--background, #f8fafc);
-  border: 1px solid var(--outline, #e5e7eb);
-  border-radius: 8px;
+  background: var(--bg-main);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
   padding: 14px 16px;
   font-size: 22px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   letter-spacing: 3px;
   text-align: center;
-  color: var(--primary, #2563eb);
+  color: var(--primary);
   font-family: monospace;
 }
 </style>

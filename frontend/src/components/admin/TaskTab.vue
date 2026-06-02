@@ -472,19 +472,19 @@ onMounted(async () => {
 
 <style scoped>
 .staff-filter-bar { gap: 6px; margin-bottom: 12px; }
-.filter-label-sm { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+.filter-label-sm { font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--text-muted); white-space: nowrap; }
 .staff-chip {
   display: inline-flex; align-items: center; padding: 3px 10px;
   border-radius: 999px; border: 1px solid var(--outline);
-  font-size: 12px; font-family: inherit; cursor: pointer;
+  font-size: var(--fs-xs); font-family: inherit; cursor: pointer;
   background: var(--surface); color: var(--text-secondary); transition: all 0.15s;
 }
 .staff-chip:hover { border-color: var(--primary); color: var(--primary); }
-.staff-chip-active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); font-weight: 600; }
+.staff-chip-active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); font-weight: var(--fw-semibold); }
 
 .reusable-ids { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 .reusable-chip {
-  padding: 2px 10px; border-radius: 12px; font-size: 12px; cursor: pointer;
+  padding: 2px 10px; border-radius: var(--radius-lg); font-size: var(--fs-xs); cursor: pointer;
   border: 1px solid var(--primary); color: var(--primary); background: transparent;
   transition: background 0.15s;
 }
@@ -500,9 +500,9 @@ onMounted(async () => {
 
 .sub-count-badge {
   display: inline-flex; align-items: center; justify-content: center;
-  min-width: 16px; height: 16px; border-radius: 8px;
+  min-width: 16px; height: 16px; border-radius: var(--radius-md);
   background: var(--primary); color: #fff;
-  font-size: 10px; font-weight: 700; padding: 0 4px;
+  font-size: var(--fs-3xs); font-weight: var(--fw-bold); padding: 0 4px;
   margin-left: 4px; vertical-align: middle;
 }
 
@@ -515,17 +515,17 @@ onMounted(async () => {
 .sub-task-input { flex: 1; }
 .done-toggle {
   display: flex; align-items: center; gap: 4px;
-  font-size: 12px; color: var(--text-muted); cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  font-size: var(--fs-xs); color: var(--text-muted); cursor: pointer; white-space: nowrap; flex-shrink: 0;
 }
 
 .bulk-toolbar {
   display: flex; align-items: center; gap: 8px;
   padding: 8px 12px; margin-bottom: 8px;
   background: var(--primary-light); border: 1px solid var(--primary);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
-.bulk-count { font-size: 13px; font-weight: 600; color: var(--primary); white-space: nowrap; }
-.bulk-select { max-width: 140px; padding: 4px 8px; font-size: 13px; height: auto; }
+.bulk-count { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--primary); white-space: nowrap; }
+.bulk-select { max-width: 140px; padding: 4px 8px; font-size: var(--fs-sm); height: auto; }
 .row-selected { background: var(--primary-light) !important; }
 
 .expand-btn {
@@ -537,7 +537,7 @@ onMounted(async () => {
   border: none;
   background: none;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
   padding: 0;
   transition: background 0.15s, color 0.15s;
@@ -545,7 +545,7 @@ onMounted(async () => {
 }
 .expand-btn:hover { background: var(--gray-100); color: var(--text-primary); }
 .expand-icon {
-  font-size: 16px;
+  font-size: var(--fs-h3);
   transition: transform 0.2s;
 }
 .expand-icon.collapsed { transform: rotate(-90deg); }
@@ -564,16 +564,16 @@ onMounted(async () => {
 }
 .sub-task-row-indent {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   flex-shrink: 0;
 }
 .sub-task-row-badge {
   display: inline-flex;
   align-items: center;
   padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 700;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
   font-family: monospace;
   background: color-mix(in srgb, var(--color-primary, #4f8ef7) 10%, transparent);
   color: var(--color-primary, #4f8ef7);
@@ -581,7 +581,7 @@ onMounted(async () => {
 }
 .sub-task-row-done .sub-task-row-badge {
   background: color-mix(in srgb, #22c55e 10%, transparent);
-  color: #16a34a;
+  color: var(--success);
   border-color: color-mix(in srgb, #22c55e 25%, transparent);
 }
 .sub-task-done-pill {
@@ -589,13 +589,13 @@ onMounted(async () => {
   align-items: center;
   padding: 1px 6px;
   border-radius: 999px;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--fs-3xs);
+  font-weight: var(--fw-semibold);
   background: color-mix(in srgb, #22c55e 15%, transparent);
-  color: #16a34a;
+  color: var(--success);
 }
 .sub-task-row-name {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-secondary);
   padding-left: 24px !important;
 }

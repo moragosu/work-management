@@ -91,7 +91,7 @@ function insertImageAtCursor(url) {
   display: block;
   width: 100%;
   padding: 8px 12px;
-  font-size: 14px;
+  font-size: var(--fs-md);
   line-height: 1.6;
   color: var(--text-primary);
   background: var(--surface);
@@ -122,11 +122,11 @@ function insertImageAtCursor(url) {
 .rich-inline-img {
   max-width: 100%;
   height: auto;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   margin: 6px 0;
   display: block;
   cursor: zoom-in;
 }
-.rich-content { line-height: 1.6; font-size: 14px; word-break: break-word; }
-.rich-content img { max-width: 100%; height: auto; border-radius: 4px; margin: 6px 0; display: block; }
+.rich-content { line-height: 1.6; font-size: var(--fs-md); word-break: break-word; }
+.rich-content img { max-width: 100%; height: auto; border-radius: var(--radius-sm); margin: 6px 0; display: block; }
 </style>

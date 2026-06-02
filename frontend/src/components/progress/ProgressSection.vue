@@ -302,12 +302,12 @@ async function deleteComment(issueId, commentId) {
 .comment-section {
   margin-top: 10px;
   padding-top: 8px;
-  border-top: 1px dashed var(--outline, #e5e7eb);
+  border-top: 1px dashed var(--outline);
 }
 .comment-item {
   margin-bottom: 8px;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--outline, #e5e7eb);
+  border-bottom: 1px solid var(--outline);
 }
 .comment-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
 .comment-meta-row {
@@ -315,7 +315,7 @@ async function deleteComment(issueId, commentId) {
   align-items: center;
   gap: 6px;
   margin-bottom: 4px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 .comment-meta-row:hover .comment-actions { opacity: 1; }
 .comment-actions { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; }
@@ -328,7 +328,7 @@ async function deleteComment(issueId, commentId) {
 .reply-indent-line {
   width: 2px;
   flex-shrink: 0;
-  background: var(--outline, #e5e7eb);
+  background: var(--outline);
   border-radius: 1px;
   align-self: stretch;
   min-height: 20px;
@@ -345,6 +345,6 @@ async function deleteComment(issueId, commentId) {
 .issue-add-row {
   margin-top: 12px;
   padding-top: 10px;
-  border-top: 1px solid var(--outline, #e5e7eb);
+  border-top: 1px solid var(--outline);
 }
 </style>

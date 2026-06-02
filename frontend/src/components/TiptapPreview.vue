@@ -38,31 +38,31 @@ const renderedHtml = computed(() => {
 
 <style scoped>
 .tiptap-preview {
-  font-size: 14px;
+  font-size: var(--fs-md);
   line-height: 1.7;
   color: var(--text-primary, #111);
   word-break: break-word;
 }
 :deep(p) { margin: 0 0 6px; }
 :deep(p:last-child) { margin-bottom: 0; }
-:deep(h1) { font-size: 1.4em; font-weight: 700; margin: 8px 0 4px; }
-:deep(h2) { font-size: 1.2em; font-weight: 700; margin: 8px 0 4px; }
-:deep(h3) { font-size: 1.05em; font-weight: 700; margin: 6px 0 3px; }
-:deep(h4) { font-size: 0.95em; font-weight: 700; margin: 6px 0 3px; }
-:deep(h5) { font-size: 0.9em;  font-weight: 600; margin: 6px 0 3px; }
-:deep(h6) { font-size: 0.85em; font-weight: 600; margin: 6px 0 3px; color: var(--text-secondary, #555); }
+:deep(h1) { font-size: 1.4em; font-weight: var(--fw-bold); margin: 8px 0 4px; }
+:deep(h2) { font-size: 1.2em; font-weight: var(--fw-bold); margin: 8px 0 4px; }
+:deep(h3) { font-size: 1.05em; font-weight: var(--fw-bold); margin: 6px 0 3px; }
+:deep(h4) { font-size: 0.95em; font-weight: var(--fw-bold); margin: 6px 0 3px; }
+:deep(h5) { font-size: 0.9em;  font-weight: var(--fw-semibold); margin: 6px 0 3px; }
+:deep(h6) { font-size: 0.85em; font-weight: var(--fw-semibold); margin: 6px 0 3px; color: var(--text-secondary); }
 :deep(ul), :deep(ol) { padding-left: 20px; margin: 4px 0; }
 :deep(li) { margin: 2px 0; }
 :deep(blockquote) {
-  border-left: 3px solid var(--primary, #2563eb);
+  border-left: 3px solid var(--primary);
   margin: 6px 0; padding: 4px 12px;
-  color: var(--text-secondary, #555);
-  background: var(--gray-50, #f9fafb);
+  color: var(--text-secondary);
+  background: var(--gray-50);
 }
 :deep(code) {
-  background: var(--gray-100, #f3f4f6);
+  background: var(--gray-100);
   padding: 1px 4px; border-radius: 3px;
-  font-family: monospace; font-size: 13px;
+  font-family: monospace; font-size: var(--fs-sm);
 }
 :deep(pre) {
   background: #1e293b; color: #e2e8f0;
@@ -70,16 +70,16 @@ const renderedHtml = computed(() => {
   margin: 6px 0; overflow-x: auto;
 }
 :deep(pre code) { background: transparent; color: inherit; padding: 0; }
-:deep(img) { max-width: 100%; height: auto; border-radius: 4px; }
-:deep(a) { color: var(--primary, #2563eb); text-decoration: underline; }
-:deep(hr) { border: none; border-top: 2px solid var(--outline, #e5e7eb); margin: 10px 0; }
+:deep(img) { max-width: 100%; height: auto; border-radius: var(--radius-sm); }
+:deep(a) { color: var(--primary); text-decoration: underline; }
+:deep(hr) { border: none; border-top: 2px solid var(--outline); margin: 10px 0; }
 :deep(s) { text-decoration: line-through; }
 :deep(u) { text-decoration: underline; }
 :deep(mark) { background: #fde68a; border-radius: 2px; padding: 0 2px; }
 :deep(sub) { font-size: 0.75em; vertical-align: sub; }
 :deep(sup) { font-size: 0.75em; vertical-align: super; }
-:deep(table) { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 13px; }
-:deep(th), :deep(td) { border: 1px solid var(--outline, #e5e7eb); padding: 5px 10px; }
-:deep(th) { background: var(--gray-50, #f9fafb); font-weight: 600; }
+:deep(table) { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: var(--fs-sm); }
+:deep(th), :deep(td) { border: 1px solid var(--outline); padding: 5px 10px; }
+:deep(th) { background: var(--gray-50); font-weight: var(--fw-semibold); }
 :deep(input[type="checkbox"]) { margin-right: 4px; }
 </style>

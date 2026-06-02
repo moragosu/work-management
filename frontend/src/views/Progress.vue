@@ -824,8 +824,8 @@ watch(() => route.query, async (q, prev) => {
 .gap-6 { gap: 6px; }
 
 .filter-label-sm {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -864,16 +864,16 @@ watch(() => route.query, async (q, prev) => {
   min-width: 180px;
   gap: 2px;
 }
-.week-nav-label { font-size: 14px; font-weight: 700; color: var(--text-primary); letter-spacing: 0.01em; }
-.week-nav-range { font-size: 11px; color: var(--text-muted); letter-spacing: 0.03em; }
+.week-nav-label { font-size: var(--fs-md); font-weight: var(--fw-bold); color: var(--text-primary); letter-spacing: 0.01em; }
+.week-nav-range { font-size: var(--fs-2xs); color: var(--text-muted); letter-spacing: 0.03em; }
 .week-nav-current { border-color: var(--color-primary, #4f8ef7); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary, #4f8ef7) 15%, transparent); }
 .week-nav-current .week-nav-btn { color: var(--color-primary, #4f8ef7); }
 .week-nav-current .week-nav-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary, #4f8ef7) 8%, transparent); }
 .week-nav-current .week-nav-info { border-color: var(--color-primary, #4f8ef7); }
 .week-nav-current .week-nav-label { color: var(--color-primary, #4f8ef7); }
 .week-current-badge {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--fs-3xs);
+  font-weight: var(--fw-semibold);
   padding: 1px 6px;
   border-radius: 999px;
   background: var(--color-primary, #4f8ef7);
@@ -882,7 +882,7 @@ watch(() => route.query, async (q, prev) => {
   line-height: 1.6;
 }
 .week-today-btn {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   padding: 4px 10px;
   border-radius: 6px;
   color: var(--color-primary, #4f8ef7);
@@ -890,27 +890,27 @@ watch(() => route.query, async (q, prev) => {
 }
 .panel-toggle-group {
   display: flex;
-  border: 1px solid var(--outline, #e5e7eb);
-  border-radius: 8px;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 .panel-toggle-btn {
   padding: 5px 14px;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
   border: none;
-  background: var(--surface, #fff);
-  color: var(--text-secondary, #555);
+  background: var(--surface);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
-  border-right: 1px solid var(--outline, #e5e7eb);
+  border-right: 1px solid var(--outline);
 }
 .panel-toggle-btn:last-child { border-right: none; }
-.panel-toggle-btn:hover { background: var(--gray-50, #f9fafb); }
+.panel-toggle-btn:hover { background: var(--gray-50); }
 .panel-toggle-btn.active {
-  background: var(--primary, #2563eb);
+  background: var(--primary);
   color: #fff;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 /* ── 인력 칩 ── */
@@ -920,7 +920,7 @@ watch(() => route.query, async (q, prev) => {
   padding: 3px 10px;
   border-radius: 999px;
   border: 1px solid var(--outline);
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-family: inherit;
   cursor: pointer;
   background: var(--surface);
@@ -928,7 +928,7 @@ watch(() => route.query, async (q, prev) => {
   transition: all 0.15s;
 }
 .staff-chip:hover { border-color: var(--primary); color: var(--primary); }
-.staff-chip-active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); font-weight: 600; }
+.staff-chip-active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); font-weight: var(--fw-semibold); }
 
 .member-badges { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 
@@ -948,12 +948,12 @@ watch(() => route.query, async (q, prev) => {
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background: var(--gray-50, #f9fafb);
+  background: var(--gray-50);
   border: 1px solid var(--outline);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-bottom: 12px;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
   color: var(--text-secondary);
   position: sticky;
   top: 0;
@@ -970,10 +970,10 @@ watch(() => route.query, async (q, prev) => {
   transition: background 0.15s;
 }
 .panel-header-clickable:hover {
-  background: var(--gray-100, #f3f4f6);
+  background: var(--gray-100);
 }
 .panel-collapse-icon {
-  font-size: 18px;
+  font-size: var(--fs-h2);
   color: var(--text-muted);
   flex-shrink: 0;
 }
@@ -985,7 +985,7 @@ watch(() => route.query, async (q, prev) => {
   flex-shrink: 0;
   align-self: stretch;
   min-height: 120px;
-  background: var(--gray-50, #f9fafb);
+  background: var(--gray-50);
   border: 1px solid var(--outline);
   border-radius: 6px;
   cursor: pointer;
@@ -993,7 +993,7 @@ watch(() => route.query, async (q, prev) => {
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 .panel-restore-btn:hover {
-  background: var(--primary-light, #eff6ff);
+  background: var(--primary-light);
   color: var(--primary, #4f8ef7);
   border-color: var(--primary, #4f8ef7);
 }
@@ -1004,14 +1004,14 @@ watch(() => route.query, async (q, prev) => {
   margin-bottom: 16px;
   border-bottom: 1px solid var(--outline);
 }
-.link-text { flex: 1; font-size: 14px; word-break: break-all; }
+.link-text { flex: 1; font-size: var(--fs-md); word-break: break-all; }
 
 .sub-task-section {
   margin-top: 16px;
   padding: 16px;
   border: 1px solid var(--outline);
   border-left: 3px solid var(--color-primary, #4f8ef7);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--gray-50, #fafafa);
   transition: opacity 0.2s;
 }
@@ -1053,8 +1053,8 @@ watch(() => route.query, async (q, prev) => {
   align-items: center;
   padding: 2px 7px;
   border-radius: 5px;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
   font-family: monospace;
   background: color-mix(in srgb, var(--color-primary, #4f8ef7) 12%, transparent);
   color: var(--color-primary, #4f8ef7);
@@ -1066,8 +1066,8 @@ watch(() => route.query, async (q, prev) => {
   color: var(--color-success, #22c55e);
 }
 .sub-task-name {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
   color: var(--text-primary);
   word-break: break-all;
 }
@@ -1081,11 +1081,11 @@ watch(() => route.query, async (q, prev) => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   white-space: nowrap;
 }
 .sub-collapse-icon {
-  font-size: 18px;
+  font-size: var(--fs-h2);
   color: var(--text-muted);
   flex-shrink: 0;
   transition: transform 0.2s;
@@ -1097,8 +1097,8 @@ watch(() => route.query, async (q, prev) => {
   align-items: center;
   padding: 1px 7px;
   border-radius: 999px;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--fs-3xs);
+  font-weight: var(--fw-semibold);
   flex-shrink: 0;
 }
 .subtask-sum-issue {
@@ -1111,7 +1111,7 @@ watch(() => route.query, async (q, prev) => {
 }
 
 .subtask-toggle-all {
-  font-size: 11px;
+  font-size: var(--fs-2xs);
   padding: 2px 8px;
   color: var(--text-muted);
   border-color: var(--outline);
@@ -1127,8 +1127,8 @@ watch(() => route.query, async (q, prev) => {
   border: 1px solid var(--outline);
   background: var(--surface);
   color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
   cursor: pointer;
   flex-shrink: 0;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
@@ -1151,7 +1151,7 @@ watch(() => route.query, async (q, prev) => {
   background: #eff6ff;
   border: 1px solid #bfdbfe;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: #1d4ed8;
 }
 .link-help-step {
@@ -1169,8 +1169,8 @@ watch(() => route.query, async (q, prev) => {
   border-radius: 50%;
   background: #2563eb;
   color: #fff;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: var(--fs-3xs);
+  font-weight: var(--fw-bold);
   flex-shrink: 0;
 }
 
@@ -1185,18 +1185,18 @@ watch(() => route.query, async (q, prev) => {
   border-radius: 6px;
 }
 .sub-task-link-icon {
-  font-size: 15px;
+  font-size: var(--fs-base);
   color: var(--text-muted);
   flex-shrink: 0;
 }
 .sub-task-link-text {
   flex: 1;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   word-break: break-all;
 }
 .sub-task-link-input {
   flex: 1;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   padding: 4px 8px;
   height: auto;
 }
@@ -1205,8 +1205,8 @@ watch(() => route.query, async (q, prev) => {
 <style>
 .md-preview-inline.md-editor-previewOnly { background: transparent !important; padding: 0 !important; }
 .md-preview-inline .md-editor-preview-wrapper { padding: 4px 0 !important; }
-.md-preview-inline .md-editor-preview { font-size: 14px; line-height: 1.6; color: var(--text-primary); }
+.md-preview-inline .md-editor-preview { font-size: var(--fs-md); line-height: 1.6; color: var(--text-primary); }
 .md-preview-inline .md-editor-preview > p:first-child { margin-top: 0; }
 .md-preview-inline .md-editor-preview > p:last-child { margin-bottom: 0; }
-.md-preview-inline .md-editor-preview img { max-width: 100%; border-radius: 4px; margin: 6px 0; display: block; }
+.md-preview-inline .md-editor-preview img { max-width: 100%; border-radius: var(--radius-sm); margin: 6px 0; display: block; }
 </style>

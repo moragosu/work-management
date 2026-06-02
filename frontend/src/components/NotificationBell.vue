@@ -185,18 +185,18 @@ onUnmounted(() => {
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: 1px solid var(--outline, #e5e7eb);
-  background: var(--surface, #fff);
+  border: 1px solid var(--outline);
+  background: var(--surface);
   cursor: pointer;
-  border-radius: 8px;
-  color: var(--text-secondary, #555);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   transition: background 0.15s, color 0.15s, box-shadow 0.15s;
 }
 .bell-btn:hover {
-  background: var(--primary-light, #eff6ff);
-  color: var(--primary, #2563eb);
-  border-color: var(--primary, #2563eb);
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
   box-shadow: 0 2px 6px rgba(37,99,235,0.15);
 }
 .bell-btn .material-symbols-outlined { font-size: 22px; }
@@ -204,13 +204,13 @@ onUnmounted(() => {
   position: absolute;
   top: 3px;
   right: 3px;
-  background: #ef4444;
+  background: var(--error);
   color: #fff;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: var(--fs-3xs);
+  font-weight: var(--fw-bold);
   min-width: 16px;
   height: 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -220,9 +220,9 @@ onUnmounted(() => {
 
 .bell-dropdown {
   width: 340px;
-  background: var(--surface, #fff);
-  border: 1px solid var(--outline, #e5e7eb);
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
   box-shadow: 0 8px 32px rgba(0,0,0,0.13);
   overflow: hidden;
 }
@@ -231,28 +231,28 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 13px 16px 11px;
-  border-bottom: 1px solid var(--outline, #e5e7eb);
+  border-bottom: 1px solid var(--outline);
 }
 .bell-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 8px;
 }
 .bell-unread-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--primary, #2563eb);
-  background: var(--primary-light, #eff6ff);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  color: var(--primary);
+  background: var(--primary-light);
   padding: 2px 7px;
   border-radius: 10px;
 }
 .bell-empty {
   text-align: center;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   padding: 28px 16px;
 }
 .bell-list { max-height: 420px; overflow-y: auto; }
@@ -262,22 +262,22 @@ onUnmounted(() => {
   gap: 11px;
   padding: 12px 14px;
   cursor: pointer;
-  border-bottom: 1px solid var(--outline, #e5e7eb);
+  border-bottom: 1px solid var(--outline);
   transition: background 0.12s;
   position: relative;
 }
 .bell-item:last-child { border-bottom: none; }
-.bell-item:hover { background: var(--gray-50, #f9fafb); }
+.bell-item:hover { background: var(--gray-50); }
 .bell-item.unread {
-  border-left: 3px solid var(--primary, #2563eb);
-  background: var(--primary-light, #eff6ff);
+  border-left: 3px solid var(--primary);
+  background: var(--primary-light);
 }
-.bell-item-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+.bell-item-icon { font-size: var(--fs-h1); flex-shrink: 0; margin-top: 1px; }
 .bell-item-body { flex: 1; min-width: 0; }
 .bell-item-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
   margin-bottom: 2px;
   display: flex;
   align-items: center;
@@ -285,24 +285,24 @@ onUnmounted(() => {
   flex-wrap: wrap;
 }
 .bell-item-week {
-  font-size: 10px;
-  font-weight: 500;
+  font-size: var(--fs-3xs);
+  font-weight: var(--fw-medium);
   color: var(--text-muted);
-  background: var(--gray-100, #f3f4f6);
+  background: var(--gray-100);
   padding: 1px 6px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 .bell-item-pending {
-  font-size: 10px;
-  font-weight: 600;
-  color: #d97706;
-  background: #fef3c7;
+  font-size: var(--fs-3xs);
+  font-weight: var(--fw-semibold);
+  color: var(--warning);
+  background: var(--warning-light);
   border: 1px solid #fcd34d;
   padding: 1px 6px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
-.bell-item-msg { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
-.bell-item-time { font-size: 11px; color: var(--text-muted); }
+.bell-item-msg { font-size: var(--fs-xs); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+.bell-item-time { font-size: var(--fs-2xs); color: var(--text-muted); }
 .bell-item-del {
   flex-shrink: 0;
   background: none;
@@ -314,9 +314,9 @@ onUnmounted(() => {
   align-items: center;
   opacity: 0;
   transition: opacity 0.15s;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 .bell-item:hover .bell-item-del { opacity: 1; }
-.bell-item-del:hover { background: var(--gray-100, #f3f4f6); color: var(--text); }
-.bell-item-del .material-symbols-outlined { font-size: 15px; }
+.bell-item-del:hover { background: var(--gray-100); color: var(--text-primary); }
+.bell-item-del .material-symbols-outlined { font-size: var(--fs-base); }
 </style>

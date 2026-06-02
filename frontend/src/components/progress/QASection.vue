@@ -504,19 +504,19 @@ async function deleteReply(answerId, replyId) {
   top: 0;
   bottom: 0;
   width: 2px;
-  background: var(--outline, #e5e7eb);
+  background: var(--outline);
   border-radius: 1px;
 }
 .reply-text {
-  font-size: 13px;
-  color: var(--text);
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
   white-space: pre-wrap;
   word-break: break-word;
 }
 .badge-gray {
-  background: var(--gray-100, #f3f4f6);
-  color: var(--text-muted, #888);
-  border: 1px solid var(--outline, #e5e7eb);
+  background: var(--gray-100);
+  color: var(--text-muted);
+  border: 1px solid var(--outline);
 }
 
 /* 질문 대상자 */
@@ -528,19 +528,19 @@ async function deleteReply(answerId, replyId) {
   flex-wrap: wrap;
 }
 .target-label {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
   color: var(--text-muted);
   white-space: nowrap;
 }
 .target-chips { display: flex; gap: 4px; flex-wrap: wrap; }
 .target-chip {
   padding: 3px 10px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--outline);
   background: var(--surface);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--fs-xs);
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
@@ -548,24 +548,24 @@ async function deleteReply(answerId, replyId) {
   background: var(--primary-light);
   color: var(--primary);
   border-color: var(--primary);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 .badge-pending {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #d97706;
-  background: #fef3c7;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  color: var(--warning);
+  background: var(--warning-light);
   border: 1px solid #fcd34d;
   padding: 2px 7px;
   border-radius: 10px;
 }
 .target-required-hint {
-  font-size: 12px;
-  color: #d97706;
-  font-weight: 500;
+  font-size: var(--fs-xs);
+  color: var(--warning);
+  font-weight: var(--fw-medium);
 }
 .target-chip-leader {
   border-color: #8b5cf6;
@@ -575,11 +575,11 @@ async function deleteReply(answerId, replyId) {
   background: #f3effe;
   border-color: #8b5cf6;
   color: #8b5cf6;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 .target-group-sep {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-xs);
   align-self: center;
   padding: 0 2px;
 }

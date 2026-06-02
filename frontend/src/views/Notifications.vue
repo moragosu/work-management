@@ -106,15 +106,15 @@ onMounted(load)
   margin-bottom: 20px;
 }
 .page-header h1 {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
   margin: 0;
 }
 .empty-state {
   text-align: center;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-md);
   padding: 40px 0;
 }
 .notif-list { display: flex; flex-direction: column; gap: 8px; }
@@ -125,25 +125,25 @@ onMounted(load)
   padding: 14px 16px;
   background: var(--surface);
   border: 1px solid var(--outline);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: background 0.15s;
 }
-.notif-item:hover { background: var(--gray-50, #f9fafb); }
+.notif-item:hover { background: var(--gray-50); }
 .notif-item.unread {
-  border-left: 3px solid var(--primary, #2563eb);
-  background: var(--primary-light, #eff6ff);
+  border-left: 3px solid var(--primary);
+  background: var(--primary-light);
 }
 .notif-icon {
-  font-size: 20px;
-  color: var(--primary, #2563eb);
+  font-size: var(--fs-h1);
+  color: var(--primary);
   flex-shrink: 0;
   margin-top: 2px;
 }
 .notif-body { flex: 1; min-width: 0; }
-.notif-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
-.notif-msg { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.notif-time { font-size: 11px; color: var(--text-muted); }
+.notif-title { font-size: var(--fs-md); font-weight: var(--fw-semibold); color: var(--text-primary); margin-bottom: 3px; }
+.notif-msg { font-size: var(--fs-sm); color: var(--text-secondary); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notif-time { font-size: var(--fs-2xs); color: var(--text-muted); }
 .notif-del {
   flex-shrink: 0;
   background: none;
@@ -157,5 +157,5 @@ onMounted(load)
   transition: opacity 0.15s;
 }
 .notif-item:hover .notif-del { opacity: 1; }
-.notif-del .material-symbols-outlined { font-size: 16px; }
+.notif-del .material-symbols-outlined { font-size: var(--fs-h3); }
 </style>

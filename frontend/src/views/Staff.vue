@@ -475,33 +475,33 @@ defineExpose({ openAddModal })
 
 <style scoped>
 .staff-filter-bar { gap: 6px; }
-.filter-label-sm { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+.filter-label-sm { font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--text-muted); white-space: nowrap; }
 .staff-chip {
   display: inline-flex; align-items: center; padding: 3px 10px;
-  border-radius: 999px; border: 1px solid var(--outline); font-size: 12px;
+  border-radius: 999px; border: 1px solid var(--outline); font-size: var(--fs-xs);
   font-family: inherit; cursor: pointer; background: var(--surface); color: var(--text-secondary);
   transition: all 0.15s;
 }
 .staff-chip:hover { border-color: var(--primary); color: var(--primary); }
-.staff-chip-active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); font-weight: 600; }
+.staff-chip-active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); font-weight: var(--fw-semibold); }
 .objective-task-list { display: flex; flex-direction: column; gap: 8px; }
 .objective-item { display: flex; flex-direction: column; gap: 4px; }
 .objective-header { display: flex; align-items: center; gap: 8px; }
 .task-list { margin-left: 24px; display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
 .task-item { display: flex; align-items: center; gap: 8px; line-height: 1.4; }
-.task-name { font-size: 12px; color: var(--text-muted); }
-.objective-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.task-name { font-size: var(--fs-xs); color: var(--text-muted); }
+.objective-label { font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); }
 .task-group-list { display: flex; flex-direction: column; gap: 16px; max-height: 400px; overflow-y: auto; padding: 8px; }
 .objective-group { border: 1px solid var(--outline); border-radius: 6px; padding: 12px; }
 .objective-group .objective-header { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--outline); }
 .objective-select-all { display: flex; align-items: center; gap: 8px; cursor: pointer; width: 100%; }
 .objective-select-all input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
 .objective-task-count { margin-left: auto; }
-.objective-name { font-weight: 600; margin-left: 8px; }
+.objective-name { font-weight: var(--fw-semibold); margin-left: 8px; }
 .task-checkboxes { display: flex; flex-direction: column; gap: 8px; }
-.task-checkbox-label { display: flex; align-items: flex-start; gap: 8px; padding: 6px 10px; background: var(--gray-50); border-radius: 4px; cursor: pointer; font-size: 14px; }
+.task-checkbox-label { display: flex; align-items: flex-start; gap: 8px; padding: 6px 10px; background: var(--gray-50); border-radius: var(--radius-sm); cursor: pointer; font-size: var(--fs-md); }
 .task-checkbox-label:hover { background: var(--gray-100); }
 .task-checkbox-label input { margin-top: 4px; }
-.sub-task-checkbox-label { margin-left: 20px; background: transparent; border-left: 2px solid var(--outline); border-radius: 0 4px 4px 0; font-size: 13px; color: var(--text-secondary); }
-.sub-task-item { margin-left: 20px; border-left: 2px solid var(--outline); padding-left: 8px; font-size: 12px; color: var(--text-muted); }
+.sub-task-checkbox-label { margin-left: 20px; background: transparent; border-left: 2px solid var(--outline); border-radius: 0 4px 4px 0; font-size: var(--fs-sm); color: var(--text-secondary); }
+.sub-task-item { margin-left: 20px; border-left: 2px solid var(--outline); padding-left: 8px; font-size: var(--fs-xs); color: var(--text-muted); }
 </style>

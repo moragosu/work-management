@@ -33,7 +33,7 @@ onMounted(async () => {
   height: 60vh;
   gap: 16px;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
 .spin {
   font-size: 36px;
