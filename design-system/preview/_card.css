@@ -1,0 +1,32 @@
+/* Shared helpers for preview specimen cards */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+* { box-sizing: border-box; }
+.material-symbols-outlined{
+  font-family:'Material Symbols Outlined';
+  font-weight:normal; font-style:normal; line-height:1;
+  letter-spacing:normal; text-transform:none; white-space:nowrap;
+  direction:ltr; -webkit-font-smoothing:antialiased;
+  font-feature-settings:'liga';
+  font-variation-settings:'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.mfilled{ font-variation-settings:'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: #ffffff;
+  color: var(--text-primary);
+  padding: 22px 24px;
+}
+.row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+.col { display: flex; flex-direction: column; gap: 10px; }
+.swatch { display: flex; flex-direction: column; gap: 6px; }
+.chip {
+  height: 56px; border-radius: var(--radius-md);
+  border: 1px solid rgba(0,0,0,0.06);
+  display: flex; align-items: flex-end; padding: 7px 9px;
+}
+.meta { font-size: 11px; line-height: 1.35; color: var(--text-secondary); }
+.meta b { display: block; font-size: 12px; color: var(--text-primary); font-weight: 600; }
+.mono { font-family: var(--font-mono); }
+.cap { font-size: 11px; font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px; }

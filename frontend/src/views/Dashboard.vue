@@ -1274,7 +1274,7 @@ onMounted(() => { loadDefaultWeek(); refresh(); loadNotice() })
   flex-shrink: 0;
 }
 .badge-purple {
-  background: #ede9fe;
-  color: #6d28d9;
+  background: var(--purple-light);
+  color: var(--purple);
 }
 </style>

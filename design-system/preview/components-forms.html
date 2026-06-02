@@ -1,0 +1,18 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css"><link rel="stylesheet" href="_card.css">
+<style>
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;letter-spacing:.02em;text-transform:uppercase}
+.form-control{width:100%;padding:8px;border:1px solid var(--outline-strong);border-radius:4px;font-size:14px;color:var(--text-primary);outline:none;background:var(--surface);font-family:var(--font-sans)}
+.form-control.foc{border-color:var(--primary);box-shadow:0 0 0 3px rgba(30,54,177,.12)}
+.toggle{width:36px;height:20px;background:var(--gray-300);border-radius:10px;position:relative;flex-shrink:0}
+.toggle.on{background:var(--primary)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on::after{left:auto;right:3px}
+</style></head>
+<body>
+<div class="row" style="gap:20px;align-items:flex-end">
+  <div style="width:200px"><label class="form-label">아이디</label><input class="form-control" value="seol.innovate"></div>
+  <div style="width:200px"><label class="form-label">제목 (focus)</label><input class="form-control foc" value="이번 주 진행 현황"></div>
+  <div style="display:flex;flex-direction:column;gap:6px"><label class="form-label">알림</label><div style="display:flex;gap:10px;align-items:center"><div class="toggle on"></div><div class="toggle"></div></div></div>
+</div>
+</body></html>

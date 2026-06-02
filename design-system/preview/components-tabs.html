@@ -1,0 +1,19 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css"><link rel="stylesheet" href="_card.css">
+<style>
+.tabs{display:flex;gap:2px;border-bottom:2px solid var(--outline);margin-bottom:18px}
+.tab{padding:8px 16px;border:none;background:none;font-size:14px;font-weight:500;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:var(--font-sans)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.fg{display:inline-flex;border:1px solid var(--outline);border-radius:8px;overflow:hidden}
+.fb{font-size:11px;padding:3px 10px;background:none;border:none;border-right:1px solid var(--outline);color:var(--text-secondary);cursor:pointer;font-family:var(--font-sans)}
+.fb:last-child{border-right:none}
+.fb.active{background:var(--primary-light);color:var(--primary);font-weight:600}
+</style></head>
+<body>
+<div class="tabs"><button class="tab active">목표</button><button class="tab">과제</button><button class="tab">파트원</button></div>
+<div class="row" style="gap:10px;align-items:center">
+  <div class="fg"><button class="fb active">지난주</button><button class="fb">이번주</button></div>
+  <div class="fg"><button class="fb active">미답변</button><button class="fb">답변완료</button><button class="fb">전체</button></div>
+  <span class="meta">Tabs · segmented week/status filters</span>
+</div>
+</body></html>

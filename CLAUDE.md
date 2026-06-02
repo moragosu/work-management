@@ -121,3 +121,27 @@ dist/             프론트엔드 빌드 결과 (운영 서빙용)
 | `staff_accounts.json` | username 매핑 파일 (`default_password` + staff 배열) |
 
 신규 계정은 `force_password_change=1`로 생성되어 첫 로그인 시 비밀번호 변경을 강제한다.
+
+---
+
+## 디자인 시스템
+
+이 저장소의 모든 UI 작업은 `design-system/`의 규칙을 따른다.
+
+- **토큰**: `design-system/colors_and_type.css` — 색상·타입스케일·여백·라운드·그림자 CSS 변수 정의. `frontend/src/style.css`의 `:root`에 이미 통합되어 있다.
+- **스펙**: `design-system/README.md` — 카피 톤·비주얼 파운데이션·아이코노그래피 전체 규칙.
+- **컴포넌트 참조**: `design-system/ui_kits/work-management/` — React로 작성된 **시각 참조**. 실제 앱은 Vue이므로 JSX를 그대로 복사하지 말고, 동일한 클래스명·구조·값으로 Vue SFC에 구현한다.
+- **통합 가이드**: `design-system/CLAUDE_CODE_GUIDE.md` — 단계별 적용 절차 및 붙여넣기용 프롬프트.
+
+### 지켜야 할 규칙 (위반 금지)
+
+| 항목 | 규칙 |
+|------|------|
+| 색상 | `--primary`, `--success`, `--warning` 등 기존 토큰만 사용. 임의의 hex 값 신규 추가 금지 |
+| 타입스케일 | `--fs-md`(14px), `--fs-sm`(13px), `--fs-xs`(12px) 등 변수 사용. 하드코딩 금지 |
+| 아이콘 | Material Symbols Outlined 전용. 두 번째 아이콘 패밀리·직접 그린 SVG 추가 금지 |
+| 폰트 | Pretendard (`--font-sans`). 새 폰트 추가 금지 |
+| 여백 | `--space-xs`(4px) ~ `--space-2xl`(48px) 4배수 스케일 사용 |
+| 라디우스 | 버튼·입력 `--radius-sm`(4px), 카드 `--radius-md`(8px), 모달 `--radius-lg`(12px) |
+| 컴포넌트 클래스 | `.card`, `.btn`, `.badge`, `.form-control`, `.tabs`, `.q-filter-group` 등 기존 글로벌 클래스 재사용 |
+| 언어·카피 | 100% 한국어, 합쇼체(-습니다). 이모지는 긍정 빈 상태(👍)에만 |

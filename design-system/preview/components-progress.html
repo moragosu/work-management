@@ -1,0 +1,17 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css"><link rel="stylesheet" href="_card.css">
+<style>
+.bar{height:6px;background:var(--gray-200);border-radius:9999px;overflow:hidden}
+.fill{height:100%;border-radius:9999px}
+.row2{display:flex;align-items:center;gap:8px}
+.num{font-size:13px;font-weight:600;min-width:18px;text-align:right}
+.dual{display:flex;overflow:hidden}
+</style></head>
+<body>
+<div class="col" style="gap:13px;max-width:420px">
+  <div class="row2"><span class="num">8</span><div class="bar" style="flex:1"><div class="fill" style="width:80%;background:var(--primary)"></div></div><span class="meta" style="width:90px">담당 과제</span></div>
+  <div class="row2"><span class="num">3</span><div class="bar" style="flex:1"><div class="fill" style="width:45%;background:var(--orange)"></div></div><span class="meta" style="width:90px">이슈</span></div>
+  <div class="row2"><span class="num" style="color:#059669">5</span><div class="bar dual" style="flex:1"><div class="fill" style="width:70%;background:var(--success)"></div><div class="fill" style="width:30%;background:#f97316"></div></div><span class="num" style="color:#f97316">2</span><span class="meta" style="width:70px">답변/미답변</span></div>
+  <div class="row2"><span class="meta" style="width:60px">컨플루언스</span><div class="bar" style="flex:1;height:4px"><div class="fill" style="width:62%;background:var(--primary)"></div></div></div>
+</div>
+</body></html>
