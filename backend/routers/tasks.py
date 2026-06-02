@@ -333,12 +333,65 @@ def _sync_staff_okrs(member_usernames: set, old_obj_id: str, new_obj_id: str, al
             )
 
 
-class AbsorbBody(BaseModel):
-    parent_id: str
+import re as _re
+
+# ── 편입·분리 공통 헬퍼 ─────────────────────────────────────────────────────────
+
+def _rename_task_id(old_id: str, new_id: str) -> None:
+    """DB 내 모든 task_id 참조를 old_id → new_id로 단일 트랜잭션에서 업데이트."""
+    if old_id == new_id:
+        return
+    with data_store.get_conn() as conn:
+        conn.execute("UPDATE issues            SET task_id=? WHERE task_id=?", (new_id, old_id))
+        conn.execute("UPDATE questions         SET task_id=? WHERE task_id=?", (new_id, old_id))
+        conn.execute("UPDATE confluence_links  SET task_id=? WHERE task_id=?", (new_id, old_id))
+        # users.task_ids (JSON 배열)
+        for row in conn.execute("SELECT username, task_ids FROM users").fetchall():
+            try:
+                ids = json.loads(row["task_ids"] or "[]")
+            except (json.JSONDecodeError, TypeError):
+                ids = []
+            if old_id in ids:
+                ids[ids.index(old_id)] = new_id
+                conn.execute(
+                    "UPDATE users SET task_ids=? WHERE username=?",
+                    (json.dumps(ids, ensure_ascii=False), row["username"]),
+                )
+        # staff.selected_tasks (콤마 문자열)
+        for row in conn.execute("SELECT id, selected_tasks FROM staff WHERE selected_tasks != ''").fetchall():
+            parts = [s.strip() for s in row["selected_tasks"].split(",")]
+            if old_id in parts:
+                parts[parts.index(old_id)] = new_id
+                conn.execute(
+                    "UPDATE staff SET selected_tasks=? WHERE id=?",
+                    (", ".join(parts), row["id"]),
+                )
+    # progress_items: JSON 파일 기반 (트랜잭션 외부, 마지막 처리)
+    progress = data_store.load("progress.json")
+    changed = False
+    for item in progress.get("progress_items", []):
+        if item.get("task_id") == old_id:
+            item["task_id"] = new_id
+            changed = True
+    if changed:
+        data_store.save("progress.json", progress)
 
 
-class PromoteBody(BaseModel):
-    parent_id: str  # 어느 부모에서 분리할지
+def _next_sub_task_id(parent_id: str, parent_subs: list) -> str:
+    """모과제 소과제 목록에서 다음 순번 ID 반환."""
+    prefix = f"{parent_id}-"
+    nums = [int(s["id"][len(prefix):]) for s in parent_subs
+            if s["id"].startswith(prefix) and s["id"][len(prefix):].isdigit()]
+    return f"{parent_id}-{max(nums, default=0) + 1}"
+
+
+def _reusable_sub_task_ids(parent_id: str, parent_subs: list) -> list:
+    """모과제 소과제 목록에서 빈 번호(재사용 가능) 목록 반환."""
+    prefix = f"{parent_id}-"
+    nums = {int(s["id"][len(prefix):]) for s in parent_subs
+            if s["id"].startswith(prefix) and s["id"][len(prefix):].isdigit()}
+    max_n = max(nums, default=0)
+    return [f"{parent_id}-{n}" for n in range(1, max_n + 1) if n not in nums]
 
 
 def _collect_member_usernames(task: dict) -> set:
@@ -349,16 +402,15 @@ def _collect_member_usernames(task: dict) -> set:
     return usernames
 
 
-def _sync_task_ids_absorb(absorbed_id: str, sub_ids: set, parent_id: str):
-    """absorb 시: absorbed_id / sub_ids 보유 유저에게 parent_id 추가."""
-    trigger_ids = {absorbed_id} | sub_ids
+def _add_parent_to_task_ids(new_sub_id: str, parent_id: str) -> None:
+    """new_sub_id 보유 유저에게 parent_id 추가."""
     with data_store.get_conn() as conn:
         for row in conn.execute("SELECT username, task_ids FROM users").fetchall():
             try:
                 ids = json.loads(row["task_ids"] or "[]")
             except (json.JSONDecodeError, TypeError):
                 ids = []
-            if any(tid in ids for tid in trigger_ids) and parent_id not in ids:
+            if new_sub_id in ids and parent_id not in ids:
                 ids.append(parent_id)
                 conn.execute(
                     "UPDATE users SET task_ids=? WHERE username=?",
@@ -366,8 +418,9 @@ def _sync_task_ids_absorb(absorbed_id: str, sub_ids: set, parent_id: str):
                 )
 
 
-def _sync_task_ids_promote(sub_task_id: str, parent_id: str, remaining_sub_ids: set, parent_direct_member_usernames: set):
-    """promote 시: 해당 부모의 다른 소과제도 없고 직접 담당자도 아닌 유저에게서 parent_id 제거."""
+def _remove_parent_from_task_ids(new_task_id: str, parent_id: str,
+                                  remaining_sub_ids: set, parent_direct_usernames: set) -> None:
+    """분리 후: 다른 형제 소과제도 없고 직접 담당자도 아닌 유저에서 parent_id 제거."""
     with data_store.get_conn() as conn:
         for row in conn.execute("SELECT username, task_ids FROM users").fetchall():
             try:
@@ -376,12 +429,11 @@ def _sync_task_ids_promote(sub_task_id: str, parent_id: str, remaining_sub_ids: 
                 ids = []
             if parent_id not in ids:
                 continue
-            # 남은 소과제가 있거나 모과제 직접 담당자면 유지
-            still_needs_parent = (
+            still_needs = (
                 any(sid in ids for sid in remaining_sub_ids)
-                or row["username"] in parent_direct_member_usernames
+                or row["username"] in parent_direct_usernames
             )
-            if not still_needs_parent:
+            if not still_needs:
                 ids.remove(parent_id)
                 conn.execute(
                     "UPDATE users SET task_ids=? WHERE username=?",
@@ -389,44 +441,82 @@ def _sync_task_ids_promote(sub_task_id: str, parent_id: str, remaining_sub_ids: 
                 )
 
 
+# ── 편입·분리 Model ────────────────────────────────────────────────────────────
+
+class AbsorbBody(BaseModel):
+    parent_id: str
+    new_sub_id: str   # 프론트에서 선택한 새 소과제 ID (예: T5-3)
+
+
+class PromoteBody(BaseModel):
+    parent_id: str
+    new_task_id: str  # 프론트에서 선택한 새 대과제 ID (예: T23)
+
+
+# ── 편입·분리 보조 엔드포인트 ──────────────────────────────────────────────────
+
+@router.get("/{parent_id}/reusable-sub-ids")
+def get_reusable_sub_ids(parent_id: str):
+    """편입 모달용: 모과제의 다음 소과제 ID와 재사용 가능 빈 번호 반환."""
+    tasks = _load()
+    parent = next((t for t in tasks if t["id"] == parent_id), None)
+    if not parent:
+        raise HTTPException(status_code=404, detail="Task not found")
+    subs = parent.get("sub_tasks", [])
+    return {
+        "next":     _next_sub_task_id(parent_id, subs),
+        "reusable": _reusable_sub_task_ids(parent_id, subs),
+    }
+
+
+# ── 편입 (absorb) ─────────────────────────────────────────────────────────────
+
 @router.post("/{task_id}/absorb")
 def absorb_task(task_id: str, body: AbsorbBody):
-    """대과제 task_id를 대과제 body.parent_id의 소과제로 편입."""
+    """대과제 task_id를 대과제 body.parent_id의 소과제로 편입. 새 소과제 ID 부여."""
+    # ── 기본 검증 ──
     if task_id == body.parent_id:
-        raise HTTPException(status_code=400, detail="자기 자신에게 편입할 수 없습니다")
+        raise HTTPException(400, "자기 자신에게 편입할 수 없습니다")
+
+    # new_sub_id 형식: {parent_id}-{양수}
+    expected_prefix = f"{body.parent_id}-"
+    suffix = body.new_sub_id[len(expected_prefix):]
+    if not body.new_sub_id.startswith(expected_prefix) or not suffix.isdigit() or int(suffix) <= 0:
+        raise HTTPException(400, f"소과제 ID 형식이 올바르지 않습니다 (예: {body.parent_id}-1)")
 
     tasks = _load()
-
     task   = next((t for t in tasks if t["id"] == task_id), None)
     parent = next((t for t in tasks if t["id"] == body.parent_id), None)
 
     if not task:
-        raise HTTPException(status_code=404, detail="편입할 과제를 찾을 수 없습니다")
+        raise HTTPException(404, "편입할 과제를 찾을 수 없습니다")
     if not parent:
-        raise HTTPException(status_code=404, detail="대상 모과제를 찾을 수 없습니다")
+        raise HTTPException(404, "대상 모과제를 찾을 수 없습니다")
 
-    # 순환 참조 방지: parent_id가 이미 task의 소과제인지 확인
-    task_sub_ids = {st["id"] for st in task.get("sub_tasks", [])}
-    if body.parent_id in task_sub_ids:
-        raise HTTPException(status_code=400, detail="순환 참조: 대상 과제가 이미 소과제입니다")
+    # 소과제 보유 과제 편입 불가
+    if task.get("sub_tasks"):
+        raise HTTPException(400, "소과제가 있는 과제는 편입할 수 없습니다. 소과제를 먼저 정리하세요.")
+
+    # new_sub_id 중복 체크
+    all_sub_ids = {st["id"] for t in tasks for st in t.get("sub_tasks", [])}
+    if body.new_sub_id in all_sub_ids:
+        raise HTTPException(400, "이미 사용 중인 소과제 ID입니다")
 
     old_obj = task.get("objective_id", "")
     new_obj = parent.get("objective_id", "")
 
-    # task 자체 → 소과제로 변환 (members 포함)
+    # 새 소과제 엔트리 (새 ID 사용)
     new_sub = {
-        "id":      task["id"],
+        "id":      body.new_sub_id,
         "name":    task["name"],
         "done":    False,
         "members": task.get("members", []),
     }
 
-    # parent의 sub_tasks에 task + task의 기존 소과제 일괄 추가 (flatten)
-    parent_subs = list(parent.get("sub_tasks", []))
-    parent_subs.append(new_sub)
-    parent_subs.extend(task.get("sub_tasks", []))
+    # parent sub_tasks에 추가
+    parent_subs = list(parent.get("sub_tasks", [])) + [new_sub]
 
-    # tasks 저장: task 제거, parent 업데이트
+    # ① tasks 저장 (task 제거, parent 업데이트)
     new_tasks = [t for t in tasks if t["id"] != task_id]
     for i, t in enumerate(new_tasks):
         if t["id"] == body.parent_id:
@@ -434,35 +524,48 @@ def absorb_task(task_id: str, body: AbsorbBody):
             break
     _save(new_tasks)
 
-    # users.task_ids 동기화
-    _sync_task_ids_absorb(task_id, task_sub_ids, body.parent_id)
+    # ② DB 참조 업데이트: old task_id → new_sub_id (단일 트랜잭션 + progress_items)
+    _rename_task_id(task_id, body.new_sub_id)
 
-    # OKR 동기화
-    member_usernames = _collect_member_usernames(task)
+    # ③ parent_id를 new_sub_id 보유 유저의 task_ids에 추가
+    _add_parent_to_task_ids(body.new_sub_id, body.parent_id)
+
+    # ④ OKR 동기화
+    member_usernames = {m["username"] for m in task.get("members", []) if m.get("username")}
     if member_usernames and old_obj != new_obj:
         _sync_staff_okrs(member_usernames, old_obj, new_obj, new_tasks)
 
     return next(t for t in new_tasks if t["id"] == body.parent_id)
 
 
+# ── 분리 (promote) ────────────────────────────────────────────────────────────
+
 @router.post("/{task_id}/promote")
 def promote_sub_task(task_id: str, body: PromoteBody):
-    """소과제 task_id를 독립 대과제로 분리."""
+    """소과제 task_id를 독립 대과제로 분리. 새 대과제 ID 부여."""
+    # new_task_id 형식: T{양수}
+    if not _re.fullmatch(r"T\d+", body.new_task_id):
+        raise HTTPException(400, "과제 ID 형식이 올바르지 않습니다 (예: T23)")
+
     tasks = _load()
+
+    # new_task_id 중복 체크
+    if any(t["id"] == body.new_task_id for t in tasks):
+        raise HTTPException(400, "이미 사용 중인 과제 ID입니다")
 
     parent = next((t for t in tasks if t["id"] == body.parent_id), None)
     if not parent:
-        raise HTTPException(status_code=404, detail="모과제를 찾을 수 없습니다")
+        raise HTTPException(404, "모과제를 찾을 수 없습니다")
 
     st = next((s for s in parent.get("sub_tasks", []) if s["id"] == task_id), None)
     if not st:
-        raise HTTPException(status_code=404, detail="해당 소과제를 찾을 수 없습니다")
+        raise HTTPException(404, "해당 소과제를 찾을 수 없습니다")
 
     old_obj = parent.get("objective_id", "")
 
-    # 새 독립 과제 생성 (objective 없음, target은 모과제 상속)
+    # 새 대과제 생성 (objective 없음, target 모과제 상속)
     new_task = {
-        "id":           task_id,
+        "id":           body.new_task_id,
         "name":         st["name"],
         "objective_id": "",
         "target":       parent.get("target", ""),
@@ -471,9 +574,10 @@ def promote_sub_task(task_id: str, body: PromoteBody):
     }
 
     # parent에서 소과제 제거
-    remaining_subs = [s for s in parent.get("sub_tasks", []) if s["id"] != task_id]
+    remaining_subs    = [s for s in parent.get("sub_tasks", []) if s["id"] != task_id]
     remaining_sub_ids = {s["id"] for s in remaining_subs}
 
+    # ① tasks 저장
     new_tasks = []
     for t in tasks:
         if t["id"] == body.parent_id:
@@ -483,11 +587,17 @@ def promote_sub_task(task_id: str, body: PromoteBody):
     new_tasks.append(new_task)
     _save(new_tasks)
 
-    # users.task_ids 동기화: 다른 형제 소과제도 없고 직접 담당자도 아닌 유저에서 parent_id 제거
-    parent_direct_members = {m["username"] for m in parent.get("members", []) if m.get("username")}
-    _sync_task_ids_promote(task_id, body.parent_id, remaining_sub_ids, parent_direct_members)
+    # ② DB 참조 업데이트: old sub_task_id → new_task_id
+    _rename_task_id(task_id, body.new_task_id)
 
-    # OKR 동기화: 분리된 과제는 objective 없음 → old_obj 제거
+    # ③ counter 동기화 (재사용 ID 선택 시 counter는 내려가지 않음)
+    sync_counter("T", body.new_task_id, new_tasks)
+
+    # ④ parent_id 제거: 형제 없고 직접 담당자도 아닌 유저에서
+    parent_direct = {m["username"] for m in parent.get("members", []) if m.get("username")}
+    _remove_parent_from_task_ids(body.new_task_id, body.parent_id, remaining_sub_ids, parent_direct)
+
+    # ⑤ OKR 동기화: 분리 과제는 objective 없음 → old_obj 제거
     member_usernames = {m["username"] for m in st.get("members", []) if m.get("username")}
     if member_usernames and old_obj:
         _sync_staff_okrs(member_usernames, old_obj, "", new_tasks)
