@@ -18,11 +18,13 @@ class SubTask(BaseModel):
     id: str
     name: str
     done: bool = False
+    members: List[TaskMember] = []
 
 
 class SubTaskUpdate(BaseModel):
     name: Optional[str] = None
     done: Optional[bool] = None
+    members: Optional[List[TaskMember]] = None
 
 
 class Task(BaseModel):
@@ -312,8 +314,13 @@ def _sync_staff_okrs(member_usernames: set, old_obj_id: str, new_obj_id: str, al
             okrs = [x.strip() for x in (row["okrs"] or "").split(",") if x.strip()]
             if old_obj_id:
                 still_connected = any(
-                    t.get("objective_id") == old_obj_id and
-                    any(m.get("username") == username for m in t.get("members", []))
+                    t.get("objective_id") == old_obj_id and (
+                        any(m.get("username") == username for m in t.get("members", [])) or
+                        any(
+                            any(m.get("username") == username for m in st.get("members", []))
+                            for st in t.get("sub_tasks", [])
+                        )
+                    )
                     for t in all_tasks
                 )
                 if not still_connected and old_obj_id in okrs:
@@ -324,6 +331,163 @@ def _sync_staff_okrs(member_usernames: set, old_obj_id: str, new_obj_id: str, al
                 "UPDATE users SET okrs=? WHERE username=?",
                 (",".join(okrs), username)
             )
+
+
+class AbsorbBody(BaseModel):
+    parent_id: str
+
+
+class PromoteBody(BaseModel):
+    parent_id: str  # 어느 부모에서 분리할지
+
+
+def _collect_member_usernames(task: dict) -> set:
+    """대과제(+소과제) 전체 멤버 username 수집."""
+    usernames = {m["username"] for m in task.get("members", []) if m.get("username")}
+    for st in task.get("sub_tasks", []):
+        usernames |= {m["username"] for m in st.get("members", []) if m.get("username")}
+    return usernames
+
+
+def _sync_task_ids_absorb(absorbed_id: str, sub_ids: set, parent_id: str):
+    """absorb 시: absorbed_id / sub_ids 보유 유저에게 parent_id 추가."""
+    trigger_ids = {absorbed_id} | sub_ids
+    with data_store.get_conn() as conn:
+        for row in conn.execute("SELECT username, task_ids FROM users").fetchall():
+            try:
+                ids = json.loads(row["task_ids"] or "[]")
+            except (json.JSONDecodeError, TypeError):
+                ids = []
+            if any(tid in ids for tid in trigger_ids) and parent_id not in ids:
+                ids.append(parent_id)
+                conn.execute(
+                    "UPDATE users SET task_ids=? WHERE username=?",
+                    (json.dumps(ids, ensure_ascii=False), row["username"]),
+                )
+
+
+def _sync_task_ids_promote(sub_task_id: str, parent_id: str, remaining_sub_ids: set):
+    """promote 시: 해당 부모의 다른 소과제가 없는 유저에게서 parent_id 제거."""
+    with data_store.get_conn() as conn:
+        for row in conn.execute("SELECT username, task_ids FROM users").fetchall():
+            try:
+                ids = json.loads(row["task_ids"] or "[]")
+            except (json.JSONDecodeError, TypeError):
+                ids = []
+            if parent_id not in ids:
+                continue
+            still_needs_parent = any(sid in ids for sid in remaining_sub_ids)
+            if not still_needs_parent and parent_id in ids:
+                ids.remove(parent_id)
+                conn.execute(
+                    "UPDATE users SET task_ids=? WHERE username=?",
+                    (json.dumps(ids, ensure_ascii=False), row["username"]),
+                )
+
+
+@router.post("/{task_id}/absorb")
+def absorb_task(task_id: str, body: AbsorbBody):
+    """대과제 task_id를 대과제 body.parent_id의 소과제로 편입."""
+    if task_id == body.parent_id:
+        raise HTTPException(status_code=400, detail="자기 자신에게 편입할 수 없습니다")
+
+    tasks = _load()
+
+    task   = next((t for t in tasks if t["id"] == task_id), None)
+    parent = next((t for t in tasks if t["id"] == body.parent_id), None)
+
+    if not task:
+        raise HTTPException(status_code=404, detail="편입할 과제를 찾을 수 없습니다")
+    if not parent:
+        raise HTTPException(status_code=404, detail="대상 모과제를 찾을 수 없습니다")
+
+    # 순환 참조 방지: parent_id가 이미 task의 소과제인지 확인
+    task_sub_ids = {st["id"] for st in task.get("sub_tasks", [])}
+    if body.parent_id in task_sub_ids:
+        raise HTTPException(status_code=400, detail="순환 참조: 대상 과제가 이미 소과제입니다")
+
+    old_obj = task.get("objective_id", "")
+    new_obj = parent.get("objective_id", "")
+
+    # task 자체 → 소과제로 변환 (members 포함)
+    new_sub = {
+        "id":      task["id"],
+        "name":    task["name"],
+        "done":    False,
+        "members": task.get("members", []),
+    }
+
+    # parent의 sub_tasks에 task + task의 기존 소과제 일괄 추가 (flatten)
+    parent_subs = list(parent.get("sub_tasks", []))
+    parent_subs.append(new_sub)
+    parent_subs.extend(task.get("sub_tasks", []))
+
+    # tasks 저장: task 제거, parent 업데이트
+    new_tasks = [t for t in tasks if t["id"] != task_id]
+    for i, t in enumerate(new_tasks):
+        if t["id"] == body.parent_id:
+            new_tasks[i] = {**t, "sub_tasks": parent_subs}
+            break
+    _save(new_tasks)
+
+    # users.task_ids 동기화
+    _sync_task_ids_absorb(task_id, task_sub_ids, body.parent_id)
+
+    # OKR 동기화
+    member_usernames = _collect_member_usernames(task)
+    if member_usernames and old_obj != new_obj:
+        _sync_staff_okrs(member_usernames, old_obj, new_obj, new_tasks)
+
+    return next(t for t in new_tasks if t["id"] == body.parent_id)
+
+
+@router.post("/{task_id}/promote")
+def promote_sub_task(task_id: str, body: PromoteBody):
+    """소과제 task_id를 독립 대과제로 분리."""
+    tasks = _load()
+
+    parent = next((t for t in tasks if t["id"] == body.parent_id), None)
+    if not parent:
+        raise HTTPException(status_code=404, detail="모과제를 찾을 수 없습니다")
+
+    st = next((s for s in parent.get("sub_tasks", []) if s["id"] == task_id), None)
+    if not st:
+        raise HTTPException(status_code=404, detail="해당 소과제를 찾을 수 없습니다")
+
+    old_obj = parent.get("objective_id", "")
+
+    # 새 독립 과제 생성 (objective 없음, target은 모과제 상속)
+    new_task = {
+        "id":           task_id,
+        "name":         st["name"],
+        "objective_id": "",
+        "target":       parent.get("target", ""),
+        "members":      st.get("members", []),
+        "sub_tasks":    [],
+    }
+
+    # parent에서 소과제 제거
+    remaining_subs = [s for s in parent.get("sub_tasks", []) if s["id"] != task_id]
+    remaining_sub_ids = {s["id"] for s in remaining_subs}
+
+    new_tasks = []
+    for t in tasks:
+        if t["id"] == body.parent_id:
+            new_tasks.append({**t, "sub_tasks": remaining_subs})
+        else:
+            new_tasks.append(t)
+    new_tasks.append(new_task)
+    _save(new_tasks)
+
+    # users.task_ids 동기화: 이 소과제의 다른 형제가 없는 유저는 parent_id 제거
+    _sync_task_ids_promote(task_id, body.parent_id, remaining_sub_ids)
+
+    # OKR 동기화: 분리된 과제는 objective 없음 → old_obj 제거
+    member_usernames = {m["username"] for m in st.get("members", []) if m.get("username")}
+    if member_usernames and old_obj:
+        _sync_staff_okrs(member_usernames, old_obj, "", new_tasks)
+
+    return new_task
 
 
 @router.delete("/{task_id}")
