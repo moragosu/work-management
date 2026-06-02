@@ -103,7 +103,8 @@
                 </td>
                 <td>
                   <div class="flex gap-8">
-                    <button class="btn btn-ghost btn-xs" @click="router.push(`/tasks/${t.id}/history`)" data-tooltip="주차별 이력 보기">이력</button>
+                    <button v-if="!t.sub_tasks?.length" class="btn btn-ghost btn-xs" @click="router.push(`/tasks/${t.id}/history`)" data-tooltip="주차별 이력 보기">이력</button>
+                    <button class="btn btn-ghost btn-xs" @click="openAbsorbModal(t)" data-tooltip="다른 과제의 소과제로 편입">편입</button>
                     <button class="btn btn-ghost btn-xs" @click="openModal(t)" data-tooltip="과제 정보 수정">수정</button>
                     <button class="btn btn-danger btn-xs" @click="deleteTask(t)" data-tooltip="과제 삭제">삭제</button>
                   </div>
@@ -132,7 +133,12 @@
                   </div>
                   <span v-else class="text-muted text-sm">미배정</span>
                 </td>
-                <td></td>
+                <td>
+                  <div class="flex gap-8">
+                    <button class="btn btn-ghost btn-xs" @click="router.push(`/tasks/${t.id}/history`)" :data-tooltip="`이력 보기 (${t.name})`">이력</button>
+                    <button class="btn btn-ghost btn-xs" @click="promoteSubTask(st, t)" data-tooltip="독립 과제로 분리">분리</button>
+                  </div>
+                </td>
               </tr>
             </template>
           </tbody>
@@ -240,6 +246,46 @@
         <div class="modal-footer">
           <button class="btn btn-ghost" @click="showMemberModal = false">닫기</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 편입 모달 -->
+  <div v-if="showAbsorbModal" class="modal-overlay" @click.self="showAbsorbModal = false">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3>소과제로 편입</h3>
+        <button class="modal-close" @click="showAbsorbModal = false">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm" style="margin-bottom:12px">
+          <span class="badge badge-blue">{{ absorbingTask?.id }}</span>
+          <span style="margin-left:6px;font-weight:600">{{ absorbingTask?.name }}</span>
+          을(를) 아래 과제의 소과제로 편입합니다.
+        </p>
+        <div class="form-group">
+          <label class="form-label">편입할 모과제 선택</label>
+          <select v-model="absorbParentId" class="form-control">
+            <option value="">선택하세요</option>
+            <option
+              v-for="t in absorbCandidates"
+              :key="t.id"
+              :value="t.id"
+            >{{ t.id }}: {{ t.name }}</option>
+          </select>
+        </div>
+        <div v-if="absorbParentId" class="text-sm text-muted" style="margin-top:8px">
+          <template v-if="absorbingTask?.sub_tasks?.length">
+            ⚠️ 소과제 {{ absorbingTask.sub_tasks.length }}개도 함께 편입됩니다.
+          </template>
+          <template v-if="absorbingTask?.objective_id !== absorbCandidates.find(t=>t.id===absorbParentId)?.objective_id">
+            목표가 변경될 수 있습니다.
+          </template>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" @click="showAbsorbModal = false">취소</button>
+        <button class="btn btn-primary" @click="submitAbsorb" :disabled="!absorbParentId">편입</button>
       </div>
     </div>
   </div>
@@ -453,6 +499,43 @@ async function removeMember(staffId) {
     showToast('삭제되었습니다')
     emit('refresh')
   } catch (e) { toastError(e, '인력 삭제 실패') }
+}
+
+// ── 편입 (absorb) ──
+const showAbsorbModal = ref(false)
+const absorbingTask = ref(null)
+const absorbParentId = ref('')
+
+const absorbCandidates = computed(() => {
+  if (!absorbingTask.value) return []
+  const subIds = new Set((absorbingTask.value.sub_tasks || []).map(st => st.id))
+  return props.tasks.filter(t => t.id !== absorbingTask.value.id && !subIds.has(t.id))
+})
+
+function openAbsorbModal(t) {
+  absorbingTask.value = t
+  absorbParentId.value = ''
+  showAbsorbModal.value = true
+}
+
+async function submitAbsorb() {
+  if (!absorbParentId.value) return
+  try {
+    await axios.post(`/api/tasks/${absorbingTask.value.id}/absorb`, { parent_id: absorbParentId.value })
+    showAbsorbModal.value = false
+    showToast(`${absorbingTask.value.name} → 소과제 편입 완료`)
+    emit('refresh')
+  } catch (e) { toastError(e, '편입 실패') }
+}
+
+// ── 분리 (promote) ──
+async function promoteSubTask(st, parentTask) {
+  if (!confirm(`"${st.name}"을(를) 독립 과제로 분리하시겠습니까?\n목표 연결은 해제되며 이후 수동으로 지정할 수 있습니다.`)) return
+  try {
+    await axios.post(`/api/tasks/${st.id}/promote`, { parent_id: parentTask.id })
+    showToast(`${st.name} → 독립 과제로 분리 완료`)
+    emit('refresh')
+  } catch (e) { toastError(e, '분리 실패') }
 }
 
 // ── focusTask (대시보드에서 이동 시) ──

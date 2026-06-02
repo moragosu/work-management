@@ -368,8 +368,23 @@ function toggleObjectiveTasks(objectiveId, sel) {
   getObjectiveTasks(objectiveId).forEach(t => updateTaskSelection(t.id, sel))
 }
 function updateTaskSelection(id, sel) {
-  if (sel) { if (!form.value.taskIds.includes(id)) form.value.taskIds.push(id) }
-  else { const i = form.value.taskIds.indexOf(id); if (i > -1) form.value.taskIds.splice(i, 1) }
+  if (sel) {
+    if (!form.value.taskIds.includes(id)) form.value.taskIds.push(id)
+    // 소과제 선택 시 모과제 자동 체크
+    const parent = tasks.value.find(t => (t.sub_tasks || []).some(st => st.id === id))
+    if (parent && !form.value.taskIds.includes(parent.id)) form.value.taskIds.push(parent.id)
+  } else {
+    const i = form.value.taskIds.indexOf(id)
+    if (i > -1) form.value.taskIds.splice(i, 1)
+    // 모과제 체크 해제 시 해당 모과제의 소과제도 모두 해제
+    const asParent = tasks.value.find(t => t.id === id)
+    if (asParent) {
+      ;(asParent.sub_tasks || []).forEach(st => {
+        const j = form.value.taskIds.indexOf(st.id)
+        if (j > -1) form.value.taskIds.splice(j, 1)
+      })
+    }
+  }
 }
 
 function debounceSave(member, field, value) {
