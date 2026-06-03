@@ -116,7 +116,7 @@
                 </td>
               </tr>
               <tr
-                v-for="st in (collapsedTaskIds.has(t.id) ? [] : (t.sub_tasks || []))"
+                v-for="st in (collapsedTaskIds.has(t.id) ? [] : [...(t.sub_tasks || [])].sort((a,b) => parseInt(a.id.split('-').at(-1)||0) - parseInt(b.id.split('-').at(-1)||0)))"
                 :key="st.id"
                 class="sub-task-row"
                 :class="{ 'sub-task-row-done': st.done }"

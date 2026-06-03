@@ -517,6 +517,8 @@ def absorb_task(task_id: str, body: AbsorbBody):
 
     # parent sub_tasks에 추가
     parent_subs = list(parent.get("sub_tasks", [])) + [new_sub]
+    # 소과제 ID 순 정렬 (접미 숫자 기준)
+    parent_subs.sort(key=lambda s: int(s["id"].split("-")[-1]) if s["id"].split("-")[-1].isdigit() else 0)
 
     # ① tasks 저장 (task 제거, parent 업데이트)
     new_tasks = [t for t in tasks if t["id"] != task_id]
