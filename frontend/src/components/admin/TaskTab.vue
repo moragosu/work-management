@@ -131,7 +131,7 @@
                 </td>
                 <td>
                   <select
-                    class="form-control sub-task-target-select"
+                    class="form-control inline sub-task-target-select"
                     :value="st.target || ''"
                     @change="updateSubTaskTarget(t.id, st.id, $event.target.value)"
                   >
