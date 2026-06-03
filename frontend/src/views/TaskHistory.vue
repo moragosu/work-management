@@ -224,6 +224,12 @@ async function fetchHistory() {
     weeks.value = data.weeks
     // 최근 2개 주차 기본 펼침
     data.weeks.slice(0, 2).forEach(w => openWeeks.value.add(w.week))
+    // URL ?sub=T1-1 이 있으면 해당 소과제 칩 자동 활성화
+    if (route.query.sub) {
+      const subId = String(route.query.sub)
+      const exists = data.task?.sub_tasks?.some(s => s.id === subId)
+      if (exists) activeSubTask.value = subId
+    }
   } finally {
     loading.value = false
   }
