@@ -8,7 +8,7 @@
     <template v-else-if="task">
       <!-- 헤더 -->
       <div class="page-header">
-        <button class="back-btn" @click="$router.back()">
+        <button class="back-btn" @click="route.query.back ? $router.push(decodeURIComponent(String(route.query.back))) : $router.back()">
           <span class="material-symbols-outlined">arrow_back</span>
         </button>
         <div class="header-content">
