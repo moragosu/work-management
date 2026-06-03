@@ -131,6 +131,13 @@
                         <span v-if="subTaskMembers(st.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
                       </div>
                       <button
+                        class="btn btn-ghost btn-xs"
+                        @click="router.push(`/tasks/${task.id}/history?sub=${st.id}&back=/progress`)"
+                        data-tooltip="소과제 이력 보기"
+                      >
+                        <span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">history</span>이력
+                      </button>
+                      <button
                         class="btn btn-xs sub-task-done-btn"
                         :class="st.done ? 'btn-success' : 'btn-ghost'"
                         @click="toggleSubTaskDone(task.id, st.id, !st.done)"
@@ -316,6 +323,13 @@
                         <span v-for="m in subTaskMembers(st.id)" :key="m.username" class="badge badge-gray" :title="m.job_title">{{ m.name }}</span>
                         <span v-if="subTaskMembers(st.id).length === 0" class="text-muted text-sm">담당자 미배정</span>
                       </div>
+                      <button
+                        class="btn btn-ghost btn-xs"
+                        @click="router.push(`/tasks/${task.id}/history?sub=${st.id}&back=/progress`)"
+                        data-tooltip="소과제 이력 보기"
+                      >
+                        <span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">history</span>이력
+                      </button>
                       <button
                         class="btn btn-xs sub-task-done-btn"
                         :class="st.done ? 'btn-success' : 'btn-ghost'"

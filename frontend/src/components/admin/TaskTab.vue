@@ -143,7 +143,7 @@
                 </td>
                 <td>
                   <div class="flex gap-8">
-                    <button class="btn btn-ghost btn-xs" @click="router.push(`/tasks/${t.id}/history?back=/admin%3Ftab%3Dtask`)" :data-tooltip="`이력 보기 (${t.name})`">이력</button>
+                    <button class="btn btn-ghost btn-xs" @click="router.push(`/tasks/${t.id}/history?sub=${st.id}&back=/admin%3Ftab%3Dtask`)" :data-tooltip="`${st.id} 이력 보기`">이력</button>
                     <button class="btn btn-ghost btn-xs" @click="openMoveModal(st, t)" data-tooltip="다른 과제로 이동">이동</button>
                     <button class="btn btn-ghost btn-xs" @click="promoteSubTask(st, t)" data-tooltip="독립 과제로 분리">분리</button>
                   </div>
