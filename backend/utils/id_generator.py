@@ -25,11 +25,9 @@ def next_counter_id(prefix: str, existing_items: list = None) -> str:
 
 
 def get_reusable_ids(items: list, prefix: str) -> list:
-    """카운터 범위 내에서 현재 존재하지 않는 (재사용 가능한) ID 목록 반환."""
+    """카운터 범위 내에서 현재 존재하지 않는 (재사용 가능한) ID 목록 반환.
+    카운터가 초기화되지 않았으면 현재 존재하는 최대 번호로 폴백."""
     counters = data_store.load(COUNTER_FILE)
-    max_counter = counters.get(prefix, 0)
-    if max_counter <= 0:
-        return []
     existing_nums = set()
     for item in items:
         try:
@@ -37,6 +35,12 @@ def get_reusable_ids(items: list, prefix: str) -> list:
             existing_nums.add(num)
         except (ValueError, KeyError):
             pass
+    max_counter = counters.get(prefix, 0)
+    if max_counter <= 0:
+        # 카운터 미초기화 → 현재 존재하는 최대 번호 기준으로 추정
+        max_counter = max(existing_nums, default=0)
+    if max_counter <= 0:
+        return []
     return [f"{prefix}{n}" for n in range(1, max_counter + 1) if n not in existing_nums]
 
 
