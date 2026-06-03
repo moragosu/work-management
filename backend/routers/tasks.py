@@ -507,12 +507,13 @@ def absorb_task(task_id: str, body: AbsorbBody):
     old_obj = task.get("objective_id", "")
     new_obj = parent.get("objective_id", "")
 
-    # 새 소과제 엔트리 (새 ID 사용)
+    # 새 소과제 엔트리 (새 ID 사용, 원래 target 유지)
     new_sub = {
         "id":      body.new_sub_id,
         "name":    task["name"],
         "done":    False,
         "members": task.get("members", []),
+        "target":  task.get("target", ""),
     }
 
     # parent sub_tasks에 추가

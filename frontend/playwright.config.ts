@@ -11,6 +11,11 @@ export default defineConfig({
       use: { baseURL: 'http://localhost:8001' },
     },
     {
+      name: 'absorb-promote',
+      testMatch: 'absorb-promote.spec.ts',
+      use: { baseURL: 'http://localhost:8001' },
+    },
+    {
       name: 'ui',
       testMatch: 'ui.spec.ts',
       use: {
