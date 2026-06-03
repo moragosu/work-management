@@ -19,12 +19,14 @@ class SubTask(BaseModel):
     name: str
     done: bool = False
     members: List[TaskMember] = []
+    target: str = ""
 
 
 class SubTaskUpdate(BaseModel):
     name: Optional[str] = None
     done: Optional[bool] = None
     members: Optional[List[TaskMember]] = None
+    target: Optional[str] = None
 
 
 class Task(BaseModel):

@@ -129,7 +129,16 @@
                     <span v-if="st.done" class="sub-task-done-pill">완료</span>
                   </div>
                 </td>
-                <td></td>
+                <td>
+                  <select
+                    class="form-control sub-task-target-select"
+                    :value="st.target || ''"
+                    @change="updateSubTaskTarget(t.id, st.id, $event.target.value)"
+                  >
+                    <option value="">-</option>
+                    <option v-for="tgt in props.taskTargets" :key="tgt" :value="tgt">{{ tgt }}</option>
+                  </select>
+                </td>
                 <td class="sub-task-row-name">{{ st.name || '(이름 없음)' }}</td>
                 <td></td>
                 <td>
@@ -330,19 +339,19 @@
         <div class="form-group">
           <label class="form-label">새 과제 ID</label>
           <input v-model="promoteNewTaskId" class="form-control" style="width:100px" readonly />
-          <div v-if="props.reusableIds.length" class="reusable-ids" style="margin-top:6px">
-            <span class="text-sm text-muted">재사용 가능:</span>
+          <div class="reusable-ids" style="margin-top:6px">
+            <span class="text-sm text-muted">{{ promoteReusableIds.length ? '재사용 가능:' : '' }}</span>
             <button
-              v-for="rid in props.reusableIds" :key="rid"
+              v-for="rid in promoteReusableIds" :key="rid"
               type="button" class="reusable-chip"
               :class="{ 'reusable-chip-active': promoteNewTaskId === rid }"
               @click="promoteNewTaskId = rid"
             >{{ rid }}</button>
             <button
               type="button" class="reusable-chip"
-              :class="{ 'reusable-chip-active': promoteNewTaskId === props.nextId }"
-              @click="promoteNewTaskId = props.nextId"
-            >{{ props.nextId }} (다음)</button>
+              :class="{ 'reusable-chip-active': promoteNewTaskId === promoteNextId }"
+              @click="promoteNewTaskId = promoteNextId"
+            >{{ promoteNextId }} (다음)</button>
           </div>
         </div>
       </div>
@@ -564,6 +573,14 @@ async function removeMember(staffId) {
   } catch (e) { toastError(e, '인력 삭제 실패') }
 }
 
+// ── 소과제 적용대상 업데이트 ──
+async function updateSubTaskTarget(taskId, subTaskId, target) {
+  try {
+    await axios.put(`/api/tasks/${taskId}/sub-tasks/${subTaskId}`, { target })
+    emit('refresh')
+  } catch (e) { toastError(e, '적용 대상 저장 실패') }
+}
+
 // ── 편입 (absorb) ──
 const showAbsorbModal   = ref(false)
 const absorbingTask     = ref(null)
@@ -618,16 +635,31 @@ async function submitAbsorb() {
 }
 
 // ── 분리 (promote) ──
-const showPromoteModal  = ref(false)
-const promotingSubTask  = ref(null)
-const promotingParent   = ref(null)
-const promoteNewTaskId  = ref('')
+const showPromoteModal     = ref(false)
+const promotingSubTask     = ref(null)
+const promotingParent      = ref(null)
+const promoteNewTaskId     = ref('')
+const promoteNextId        = ref('')
+const promoteReusableIds   = ref([])
 
-function promoteSubTask(st, parentTask) {
-  promotingSubTask.value = st
-  promotingParent.value  = parentTask
-  promoteNewTaskId.value = props.nextId
-  showPromoteModal.value = true
+async function promoteSubTask(st, parentTask) {
+  promotingSubTask.value   = st
+  promotingParent.value    = parentTask
+  promoteNewTaskId.value   = props.nextId
+  promoteNextId.value      = props.nextId
+  promoteReusableIds.value = []
+  showPromoteModal.value   = true
+
+  // 모달 열릴 때 최신 ID 정보 직접 조회 (props가 stale할 수 있으므로)
+  try {
+    const [{ data: nid }, { data: reusable }] = await Promise.all([
+      axios.get('/api/tasks/next-id'),
+      axios.get('/api/tasks/reusable-ids'),
+    ])
+    promoteNextId.value      = nid.next_id
+    promoteReusableIds.value = reusable.reusable_ids
+    if (promoteNewTaskId.value === props.nextId) promoteNewTaskId.value = nid.next_id
+  } catch { /* props 값 유지 */ }
 }
 
 async function submitPromote() {
@@ -686,6 +718,10 @@ onMounted(async () => {
   margin-bottom: 8px;
 }
 .member-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.sub-task-target-select {
+  padding: 2px 4px; font-size: var(--fs-xs); height: auto;
+  width: auto; min-width: 60px; color: var(--text-secondary);
+}
 
 .sub-count-badge {
   display: inline-flex; align-items: center; justify-content: center;
