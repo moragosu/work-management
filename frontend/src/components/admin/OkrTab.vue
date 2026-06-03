@@ -66,10 +66,7 @@
                   <div v-if="dropdownId === task.id" class="member-dropdown">
                     <div v-if="availableStaff(task.members).length === 0" class="dropdown-empty">추가할 인력이 없습니다</div>
                     <div v-for="s in availableStaff(task.members)" :key="s.id"
-                         class="dropdown-item" @click="addMember(task, s)">
-                      <span>{{ s.name }}</span>
-                      <span class="text-muted" style="font-size:11px">{{ s.job_title }}</span>
-                    </div>
+                         class="dropdown-item" @click="addMember(task, s)">{{ s.name }}</div>
                   </div>
                 </div>
               </div>
@@ -102,10 +99,7 @@
                     <div v-if="dropdownId === st.id" class="member-dropdown">
                       <div v-if="availableStaff(st.members).length === 0" class="dropdown-empty">추가할 인력이 없습니다</div>
                       <div v-for="s in availableStaff(st.members)" :key="s.id"
-                           class="dropdown-item" @click="addSubMember(task, st, s)">
-                        <span>{{ s.name }}</span>
-                        <span class="text-muted" style="font-size:11px">{{ s.job_title }}</span>
-                      </div>
+                           class="dropdown-item" @click="addSubMember(task, st, s)">{{ s.name }}</div>
                     </div>
                   </div>
                 </div>
@@ -155,9 +149,7 @@
                   <div v-if="dropdownId === task.id" class="member-dropdown">
                     <div v-if="availableStaff(task.members).length === 0" class="dropdown-empty">추가할 인력이 없습니다</div>
                     <div v-for="s in availableStaff(task.members)" :key="s.id"
-                         class="dropdown-item" @click="addMember(task, s)">
-                      <span>{{ s.name }}</span><span class="text-muted" style="font-size:11px">{{ s.job_title }}</span>
-                    </div>
+                         class="dropdown-item" @click="addMember(task, s)">{{ s.name }}</div>
                   </div>
                 </div>
               </div>
@@ -587,14 +579,16 @@ async function removeSubMember(task, st, username) {
   position: absolute; top: calc(100% + 4px); left: 0; z-index: 200;
   background: var(--surface); border: 1px solid var(--outline-strong);
   border-radius: var(--radius-sm); box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-  min-width: 150px; max-height: 200px; overflow-y: auto;
+  padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; max-width: 280px;
 }
 .dropdown-item {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 12px; font-size: 13px; cursor: pointer; gap: 8px;
-  transition: background 0.1s;
+  display: inline-flex; align-items: center;
+  padding: 4px 10px; font-size: 12px; cursor: pointer;
+  border: 1px solid var(--outline); border-radius: 999px;
+  background: var(--surface); color: var(--text-secondary);
+  transition: all 0.12s; white-space: nowrap;
 }
-.dropdown-item:hover { background: var(--gray-50); }
+.dropdown-item:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
 .dropdown-empty { padding: 10px 12px; font-size: 12px; color: var(--text-muted); }
 
 /* ── 미연결 섹션 ── */
