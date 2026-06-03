@@ -77,6 +77,7 @@
               <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
                 <h3 style="margin:0">{{ task.name }}</h3>
                 <span class="badge" :style="{ background: getObjectiveColor(task.objective_id) + '22', color: getObjectiveColor(task.objective_id), border: '1px solid ' + getObjectiveColor(task.objective_id) + '55' }">{{ task.objective_id }}: {{ getObjectiveName(task.objective_id) }}</span>
+                <span v-if="task.target" class="badge badge-target">{{ task.target }}</span>
                 <span v-if="task.sub_tasks && task.sub_tasks.length > 0" class="badge badge-outline" style="font-size:11px">소과제 {{ task.sub_tasks.length }}개</span>
                 <button
                   v-if="task.sub_tasks && task.sub_tasks.length > 0"
@@ -120,6 +121,7 @@
                       <span class="material-symbols-outlined sub-collapse-icon" :class="{ collapsed: !expandedSubTaskIds.has(st.id) }">expand_more</span>
                       <span class="sub-task-id-badge">{{ st.id }}</span>
                       <span class="sub-task-name">{{ st.name || '(이름 없음)' }}</span>
+                      <span v-if="st.target" class="badge badge-target" style="font-size:11px">{{ st.target }}</span>
                       <template v-if="!expandedSubTaskIds.has(st.id)">
                         <span v-if="(leftIssueMap[st.id] || []).length > 0" class="subtask-sum-badge subtask-sum-issue">이슈 {{ (leftIssueMap[st.id] || []).length }}건</span>
                         <span v-if="getLeftQuestionsForTask(st.id).length > 0" class="subtask-sum-badge subtask-sum-qa">의견/질문 {{ getLeftQuestionsForTask(st.id).length }}건</span>
@@ -259,6 +261,7 @@
               <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
                 <h3 style="margin:0">{{ task.name }}</h3>
                 <span class="badge" :style="{ background: getObjectiveColor(task.objective_id) + '22', color: getObjectiveColor(task.objective_id), border: '1px solid ' + getObjectiveColor(task.objective_id) + '55' }">{{ task.objective_id }}: {{ getObjectiveName(task.objective_id) }}</span>
+                <span v-if="task.target" class="badge badge-target">{{ task.target }}</span>
                 <span v-if="task.sub_tasks && task.sub_tasks.length > 0" class="badge badge-outline" style="font-size:11px">소과제 {{ task.sub_tasks.length }}개</span>
                 <button
                   v-if="task.sub_tasks && task.sub_tasks.length > 0"
@@ -313,6 +316,7 @@
                       <span class="material-symbols-outlined sub-collapse-icon" :class="{ collapsed: !expandedSubTaskIds.has(st.id) }">expand_more</span>
                       <span class="sub-task-id-badge">{{ st.id }}</span>
                       <span class="sub-task-name">{{ st.name || '(이름 없음)' }}</span>
+                      <span v-if="st.target" class="badge badge-target" style="font-size:11px">{{ st.target }}</span>
                       <template v-if="!expandedSubTaskIds.has(st.id)">
                         <span v-if="(issueMap[st.id] || []).length > 0" class="subtask-sum-badge subtask-sum-issue">이슈 {{ (issueMap[st.id] || []).length }}건</span>
                         <span v-if="getQuestionsForTask(st.id).length > 0" class="subtask-sum-badge subtask-sum-qa">의견/질문 {{ getQuestionsForTask(st.id).length }}건</span>
