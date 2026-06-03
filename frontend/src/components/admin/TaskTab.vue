@@ -144,6 +144,7 @@
                 <td>
                   <div class="flex gap-8">
                     <button class="btn btn-ghost btn-xs" @click="router.push(`/tasks/${t.id}/history?back=/admin%3Ftab%3Dtask`)" :data-tooltip="`이력 보기 (${t.name})`">이력</button>
+                    <button class="btn btn-ghost btn-xs" @click="openMoveModal(st, t)" data-tooltip="다른 과제로 이동">이동</button>
                     <button class="btn btn-ghost btn-xs" @click="promoteSubTask(st, t)" data-tooltip="독립 과제로 분리">분리</button>
                   </div>
                 </td>
@@ -356,6 +357,54 @@
       <div class="modal-footer">
         <button class="btn btn-ghost" @click="showPromoteModal = false">취소</button>
         <button class="btn btn-primary" @click="submitPromote" :disabled="!promoteNewTaskId">분리</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 소과제 이동 모달 -->
+  <div v-if="showMoveModal" class="modal-overlay" @click.self="showMoveModal = false">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3>소과제 이동</h3>
+        <button class="modal-close" @click="showMoveModal = false">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm" style="margin-bottom:12px">
+          <span class="badge badge-gray">{{ movingSubTask?.id }}</span>
+          <span style="margin-left:6px;font-weight:var(--fw-semibold)">{{ movingSubTask?.name }}</span>
+          을(를) 다른 과제의 소과제로 이동합니다.
+        </p>
+        <div class="form-group">
+          <label class="form-label">이동할 모과제 선택</label>
+          <select v-model="moveToParentId" class="form-control" @change="onMoveParentChange">
+            <option value="">선택하세요</option>
+            <option v-for="t in moveCandidates" :key="t.id" :value="t.id">
+              {{ t.id }}: {{ t.name }}
+            </option>
+          </select>
+        </div>
+        <div v-if="moveToParentId" class="form-group">
+          <label class="form-label">새 소과제 ID</label>
+          <input v-model="moveNewSubId" class="form-control" style="width:100px" readonly />
+          <div v-if="moveReusableIds.length" class="reusable-ids" style="margin-top:6px">
+            <span class="text-sm text-muted">빈 번호:</span>
+            <button v-for="rid in moveReusableIds" :key="rid" type="button"
+              class="reusable-chip" :class="{ 'reusable-chip-active': moveNewSubId === rid }"
+              @click="moveNewSubId = rid">{{ rid }}</button>
+            <button type="button" class="reusable-chip"
+              :class="{ 'reusable-chip-active': moveNewSubId === moveNextSubId }"
+              @click="moveNewSubId = moveNextSubId">{{ moveNextSubId }} (다음)</button>
+          </div>
+        </div>
+        <div v-if="moveToParentId" class="text-sm text-muted" style="margin-top:4px">
+          <template v-if="movingFromParent?.objective_id !== moveCandidates.find(t=>t.id===moveToParentId)?.objective_id">
+            ⚠️ 목표(Objective)가 변경됩니다.
+          </template>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" @click="showMoveModal = false">취소</button>
+        <button class="btn btn-primary" @click="submitMove" :disabled="!moveToParentId || !moveNewSubId">이동</button>
       </div>
     </div>
   </div>
@@ -663,6 +712,54 @@ async function submitPromote() {
     showToast(`${promotingSubTask.value.name} → ${promoteNewTaskId.value} 분리 완료`)
     emit('refresh')
   } catch (e) { toastError(e, '분리 실패') }
+}
+
+// ── 소과제 이동 (move) ──
+const showMoveModal    = ref(false)
+const movingSubTask    = ref(null)
+const movingFromParent = ref(null)
+const moveToParentId   = ref('')
+const moveNewSubId     = ref('')
+const moveNextSubId    = ref('')
+const moveReusableIds  = ref([])
+
+const moveCandidates = computed(() => {
+  if (!movingFromParent.value) return []
+  return props.tasks.filter(t => t.id !== movingFromParent.value.id)
+})
+
+function openMoveModal(st, parentTask) {
+  movingSubTask.value    = st
+  movingFromParent.value = parentTask
+  moveToParentId.value   = ''
+  moveNewSubId.value     = ''
+  moveNextSubId.value    = ''
+  moveReusableIds.value  = []
+  showMoveModal.value    = true
+}
+
+async function onMoveParentChange() {
+  if (!moveToParentId.value) { moveNewSubId.value = ''; return }
+  try {
+    const { data } = await axios.get(`/api/tasks/${moveToParentId.value}/reusable-sub-ids`)
+    moveNextSubId.value   = data.next
+    moveReusableIds.value = data.reusable
+    moveNewSubId.value    = data.next
+  } catch { moveNewSubId.value = '' }
+}
+
+async function submitMove() {
+  if (!moveToParentId.value || !moveNewSubId.value) return
+  try {
+    await axios.post(`/api/tasks/${movingSubTask.value.id}/move-sub-task`, {
+      from_parent_id: movingFromParent.value.id,
+      to_parent_id:   moveToParentId.value,
+      new_sub_id:     moveNewSubId.value,
+    })
+    showMoveModal.value = false
+    showToast(`${movingSubTask.value.id} → ${moveNewSubId.value} 이동 완료`)
+    emit('refresh')
+  } catch (e) { toastError(e, '이동 실패') }
 }
 
 // ── focusTask (대시보드에서 이동 시) ──
