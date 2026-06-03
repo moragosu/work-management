@@ -610,6 +610,84 @@ def promote_sub_task(task_id: str, body: PromoteBody):
     return new_task
 
 
+# ── 소과제 이동 (move) ────────────────────────────────────────────────────────
+
+class MoveSubTaskBody(BaseModel):
+    from_parent_id: str
+    to_parent_id: str
+    new_sub_id: str   # 대상 모과제 기준 새 소과제 ID (예: T3-2)
+
+
+@router.post("/{task_id}/move-sub-task")
+def move_sub_task(task_id: str, body: MoveSubTaskBody):
+    """소과제 task_id를 from_parent에서 to_parent로 이동. 새 소과제 ID 부여."""
+    if body.from_parent_id == body.to_parent_id:
+        raise HTTPException(400, "출발 모과제와 도착 모과제가 같습니다")
+
+    # new_sub_id 형식: {to_parent_id}-{양수}
+    expected_prefix = f"{body.to_parent_id}-"
+    suffix = body.new_sub_id[len(expected_prefix):]
+    if not body.new_sub_id.startswith(expected_prefix) or not suffix.isdigit() or int(suffix) <= 0:
+        raise HTTPException(400, f"소과제 ID 형식이 올바르지 않습니다 (예: {body.to_parent_id}-1)")
+
+    tasks = _load()
+    from_parent = next((t for t in tasks if t["id"] == body.from_parent_id), None)
+    to_parent   = next((t for t in tasks if t["id"] == body.to_parent_id), None)
+
+    if not from_parent:
+        raise HTTPException(404, "출발 모과제를 찾을 수 없습니다")
+    if not to_parent:
+        raise HTTPException(404, "도착 모과제를 찾을 수 없습니다")
+
+    st = next((s for s in from_parent.get("sub_tasks", []) if s["id"] == task_id), None)
+    if not st:
+        raise HTTPException(404, "해당 소과제를 찾을 수 없습니다")
+
+    # new_sub_id 중복 체크
+    all_sub_ids = {s["id"] for t in tasks for s in t.get("sub_tasks", [])}
+    if body.new_sub_id in all_sub_ids:
+        raise HTTPException(400, "이미 사용 중인 소과제 ID입니다")
+
+    old_obj = from_parent.get("objective_id", "")
+    new_obj = to_parent.get("objective_id", "")
+
+    # 새 소과제 엔트리 (새 ID, 기존 데이터 유지)
+    new_sub = {**st, "id": body.new_sub_id}
+
+    # from_parent에서 제거, to_parent에 추가
+    from_subs     = [s for s in from_parent.get("sub_tasks", []) if s["id"] != task_id]
+    to_subs       = list(to_parent.get("sub_tasks", [])) + [new_sub]
+    to_subs.sort(key=lambda s: int(s["id"].split("-")[-1]) if s["id"].split("-")[-1].isdigit() else 0)
+
+    new_tasks = []
+    for t in tasks:
+        if t["id"] == body.from_parent_id:
+            new_tasks.append({**t, "sub_tasks": from_subs})
+        elif t["id"] == body.to_parent_id:
+            new_tasks.append({**t, "sub_tasks": to_subs})
+        else:
+            new_tasks.append(t)
+    _save(new_tasks)
+
+    # ① DB 참조: old sub_id → new_sub_id
+    _rename_task_id(task_id, body.new_sub_id)
+
+    # ② to_parent_id를 new_sub_id 보유 유저에게 추가
+    _add_parent_to_task_ids(body.new_sub_id, body.to_parent_id)
+
+    # ③ from_parent_id: 형제 없고 직접 담당자 아닌 유저에서 제거
+    from_remaining = {s["id"] for s in from_subs}
+    from_direct    = {m["username"] for m in from_parent.get("members", []) if m.get("username")}
+    _remove_parent_from_task_ids(body.new_sub_id, body.from_parent_id, from_remaining, from_direct)
+
+    # ④ OKR 동기화
+    member_usernames = {m["username"] for m in st.get("members", []) if m.get("username")}
+    if member_usernames and old_obj != new_obj:
+        _sync_staff_okrs(member_usernames, old_obj, new_obj, new_tasks)
+
+    return next(t for t in new_tasks if t["id"] == body.to_parent_id)
+
+
 @router.delete("/{task_id}")
 def delete_task(task_id: str):
     tasks = _load()
