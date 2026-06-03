@@ -103,7 +103,7 @@
                 </td>
                 <td>
                   <div class="flex gap-8">
-                    <button v-if="!t.sub_tasks?.length" class="btn btn-ghost btn-xs" @click="router.push(`/tasks/${t.id}/history`)" data-tooltip="주차별 이력 보기">이력</button>
+                    <button v-if="!t.sub_tasks?.length" class="btn btn-ghost btn-xs" @click="router.push(`/tasks/${t.id}/history?back=/admin%3Ftab%3Dtask`)" data-tooltip="주차별 이력 보기">이력</button>
                     <button
                       class="btn btn-ghost btn-xs"
                       @click="openAbsorbModal(t)"
@@ -143,7 +143,7 @@
                 </td>
                 <td>
                   <div class="flex gap-8">
-                    <button class="btn btn-ghost btn-xs" @click="router.push(`/tasks/${t.id}/history`)" :data-tooltip="`이력 보기 (${t.name})`">이력</button>
+                    <button class="btn btn-ghost btn-xs" @click="router.push(`/tasks/${t.id}/history?back=/admin%3Ftab%3Dtask`)" :data-tooltip="`이력 보기 (${t.name})`">이력</button>
                     <button class="btn btn-ghost btn-xs" @click="promoteSubTask(st, t)" data-tooltip="독립 과제로 분리">분리</button>
                   </div>
                 </td>
