@@ -12,10 +12,28 @@
 
     <div class="page-body">
       <div class="tabs">
-        <button v-for="t in tabs" :key="t.key" class="tab" :class="{ active: activeTab === t.key }" @click="activeTab = t.key">
+        <button
+          v-for="t in tabs" :key="t.key"
+          class="tab" :class="{ active: activeTab === t.key, 'tab-legacy': t.legacy }"
+          @click="activeTab = t.key"
+          :data-tooltip="t.legacy ? 'OKR 현황 탭으로 통합 예정' : undefined"
+        >
           {{ t.label }}
+          <span v-if="t.legacy" class="legacy-badge">구버전</span>
         </button>
       </div>
+
+      <OkrTab
+        v-if="activeTab === 'okr'"
+        :objectives="objectives"
+        :tasks="tasks"
+        :staff-list="staffList"
+        :task-targets="taskTargets"
+        :loading="loading || taskLoading"
+        :next-obj-id="nextObjectiveId"
+        :next-task-id="nextTaskId"
+        @refresh="fetchAll"
+      />
 
       <ObjectiveTab
         v-if="activeTab === 'objective'"
@@ -197,6 +215,7 @@ import axios from 'axios'
 import StaffView from './Staff.vue'
 import ObjectiveTab from '../components/admin/ObjectiveTab.vue'
 import TaskTab from '../components/admin/TaskTab.vue'
+import OkrTab from '../components/admin/OkrTab.vue'
 import { useToast } from '../composables/useToast.js'
 import { parseIds } from '../utils/parseIds.js'
 import { useAuthStore } from '../stores/auth.js'
@@ -206,18 +225,19 @@ const auth = useAuthStore()
 
 const tabs = computed(() => {
   const baseTabs = [
-    { key: 'objective', label: '📊 목표' },
-    { key: 'task', label: '📋 과제' },
-    { key: 'staff', label: '👥 인력' },
-    { key: 'settings', label: '⚙️ 설정' },
+    { key: 'okr', label: '🗂 OKR 현황', legacy: false },
+    { key: 'objective', label: '📊 목표', legacy: true },
+    { key: 'task', label: '📋 과제', legacy: true },
+    { key: 'staff', label: '👥 인력', legacy: false },
+    { key: 'settings', label: '⚙️ 설정', legacy: false },
   ]
   if (auth.isAdmin) {
-    baseTabs.push({ key: 'users', label: '👤 사용자 관리' })
+    baseTabs.push({ key: 'users', label: '👤 사용자 관리', legacy: false })
   }
   return baseTabs
 })
 
-const activeTab = ref('objective')
+const activeTab = ref('okr')
 const objectives = ref([])
 const tasks = ref([])
 const staffList = ref([])
@@ -395,6 +415,16 @@ onMounted(async () => {
 
 <style scoped>
 .tab-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+
+.tab-legacy { opacity: 0.5; }
+.tab-legacy:hover { opacity: 0.75; }
+.tab-legacy.active { opacity: 1; }
+.legacy-badge {
+  display: inline-block; margin-left: 5px;
+  padding: 1px 5px; font-size: 9px; font-weight: 600;
+  background: var(--gray-200); color: var(--text-muted);
+  border-radius: 999px; vertical-align: middle;
+}
 
 .settings-heading { margin-bottom: 24px; }
 .settings-group { margin-bottom: 32px; }

@@ -10,6 +10,9 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 
+// 인라인 편집 자동 포커스 디렉티브
+app.directive('autofocus', { mounted: el => el.focus() })
+
 import { useAuthStore } from './stores/auth.js'
 const authStore = useAuthStore()
 authStore.initAxiosAuth()
