@@ -130,14 +130,8 @@
                   </div>
                 </td>
                 <td>
-                  <select
-                    class="form-control inline sub-task-target-select"
-                    :value="st.target || ''"
-                    @change="updateSubTaskTarget(t.id, st.id, $event.target.value)"
-                  >
-                    <option value="">-</option>
-                    <option v-for="tgt in props.taskTargets" :key="tgt" :value="tgt">{{ tgt }}</option>
-                  </select>
+                  <span v-if="st.target" :class="targetBadgeClass(st.target)">{{ st.target }}</span>
+                  <span v-else class="text-muted text-sm">-</span>
                 </td>
                 <td class="sub-task-row-name">{{ st.name || '(이름 없음)' }}</td>
                 <td></td>
@@ -212,6 +206,10 @@
               <div v-for="(st, idx) in form.sub_tasks" :key="idx" class="sub-task-edit-row">
                 <span class="badge badge-gray sub-task-id">{{ st.id }}</span>
                 <input v-model="st.name" class="form-control sub-task-input" placeholder="소과제명" />
+                <select v-model="st.target" class="form-control sub-task-target-select">
+                  <option value="">-</option>
+                  <option v-for="tgt in props.taskTargets" :key="tgt" :value="tgt">{{ tgt }}</option>
+                </select>
                 <label class="done-toggle" :title="st.done ? '완료 취소' : '완료로 표시'">
                   <input type="checkbox" v-model="st.done" />
                   <span>완료</span>
@@ -510,7 +508,7 @@ function addSubTask() {
   const existing = form.value.sub_tasks || []
   const nums = existing.map(st => parseInt(st.id.split('-').at(-1)) || 0)
   const next = Math.max(0, ...nums) + 1
-  form.value.sub_tasks = [...existing, { id: `${form.value.id}-${next}`, name: '', done: false }]
+  form.value.sub_tasks = [...existing, { id: `${form.value.id}-${next}`, name: '', done: false, target: '' }]
 }
 
 function removeSubTask(idx) {
@@ -571,14 +569,6 @@ async function removeMember(staffId) {
     showToast('삭제되었습니다')
     emit('refresh')
   } catch (e) { toastError(e, '인력 삭제 실패') }
-}
-
-// ── 소과제 적용대상 업데이트 ──
-async function updateSubTaskTarget(taskId, subTaskId, target) {
-  try {
-    await axios.put(`/api/tasks/${taskId}/sub-tasks/${subTaskId}`, { target })
-    emit('refresh')
-  } catch (e) { toastError(e, '적용 대상 저장 실패') }
 }
 
 // ── 편입 (absorb) ──
@@ -718,10 +708,7 @@ onMounted(async () => {
   margin-bottom: 8px;
 }
 .member-chips { display: flex; flex-wrap: wrap; gap: 4px; }
-.sub-task-target-select {
-  padding: 2px 4px; font-size: var(--fs-xs); height: auto;
-  width: auto; min-width: 60px; color: var(--text-secondary);
-}
+.sub-task-target-select { width: 80px; font-size: var(--fs-xs); padding: 2px 4px; height: auto; }
 
 .sub-count-badge {
   display: inline-flex; align-items: center; justify-content: center;
