@@ -273,37 +273,107 @@ test.describe('OKR 현황 탭 통합 테스트', () => {
     console.log('드래그 핸들 확인: 과제 행 + 소과제 행 모두 존재')
   })
 
-  // ── 16. 소과제 드래그앤드롭 이동 ──
-  test('소과제 드래그 → 다른 과제 블록에 드롭 시 이동 API 호출', async ({ page }) => {
-    // T1의 첫 소과제를 T2 블록으로 드래그
+  // ── 16. 소과제 DnD 이동 — DragEvent 직접 dispatch ──
+  test('소과제 드래그앤드롭 이동 — move-sub-task API 호출 확인', async ({ page }) => {
+    // API 인터셉트: 실제 데이터 변경 없이 요청 바디만 검증
+    let captured: any = null
+    await page.route('**/api/tasks/**/move-sub-task', async route => {
+      captured = JSON.parse(route.request().postData() || '{}')
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
+    })
+    // reusable-sub-ids mock (T2 기준)
+    await page.route('**/api/tasks/T2/reusable-sub-ids', async route => {
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ next: 'T2-4', reusable: [] }) })
+    })
+
+    // T1의 첫 소과제(T1-1) → T2 블록으로 DragEvent dispatch
     const sourceRow = page.locator('.subtask-row[draggable="true"]').first()
     const targetBlock = page.locator('.task-block').nth(1)
-
     await expect(sourceRow).toBeVisible()
     await expect(targetBlock).toBeVisible()
 
-    const sourceBox = await sourceRow.boundingBox()
-    const targetBox = await targetBlock.boundingBox()
-    if (!sourceBox || !targetBox) { console.log('요소 위치 측정 실패, 스킵'); return }
+    await page.screenshot({ path: '/tmp/dnd_before.png' })
 
-    // drag_indicator handle 위치에서 드래그 시작
-    await page.mouse.move(sourceBox.x + 8, sourceBox.y + sourceBox.height / 2)
-    await page.mouse.down()
-    await page.waitForTimeout(100)
-    await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 10 })
-    await page.waitForTimeout(200)
-    // drag-over 클래스 확인
-    const hasDragOver = await targetBlock.evaluate(el => el.classList.contains('drag-over'))
-    console.log(`drag-over 클래스 적용: ${hasDragOver}`)
-    await page.mouse.up()
+    await page.evaluate(([src, tgt]) => {
+      const dt = new DataTransfer()
+      src.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: dt }))
+      tgt.dispatchEvent(new DragEvent('dragover',  { bubbles: true, cancelable: true, dataTransfer: dt }))
+      tgt.dispatchEvent(new DragEvent('drop',      { bubbles: true, cancelable: true, dataTransfer: dt }))
+      src.dispatchEvent(new DragEvent('dragend',   { bubbles: true, cancelable: true }))
+    }, [await sourceRow.elementHandle(), await targetBlock.elementHandle()])
+
     await page.waitForTimeout(800)
+    await page.screenshot({ path: '/tmp/dnd_after_move.png' })
 
-    // 이동 완료 토스트 또는 오류 없음 확인 (실제 이동은 데이터 상태에 따라 다름)
-    const toast = page.locator('.toast, [class*="toast"]')
-    if (await toast.isVisible({ timeout: 1000 }).catch(() => false)) {
-      console.log(`토스트 메시지: ${await toast.textContent()}`)
-    } else {
-      console.log('토스트 없음 (같은 부모이거나 데이터 변경 없음)')
-    }
+    expect(captured).toBeTruthy()
+    expect(captured.from_parent_id).toBe('T1')
+    expect(captured.to_parent_id).toBe('T2')
+    expect(captured.new_sub_id).toBe('T2-4')
+    console.log(`이동 API 바디: ${JSON.stringify(captured)}`)
+  })
+
+  // ── 17. drag-over 클래스 표시 ──
+  test('소과제 드래그 중 대상 과제 블록에 drag-over 클래스 적용', async ({ page }) => {
+    const sourceRow = page.locator('.subtask-row[draggable="true"]').first()
+    const targetBlock = page.locator('.task-block').nth(1)
+    await expect(sourceRow).toBeVisible()
+
+    await page.evaluate(([src, tgt]) => {
+      const dt = new DataTransfer()
+      src.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: dt }))
+      tgt.dispatchEvent(new DragEvent('dragover',  { bubbles: true, cancelable: true, dataTransfer: dt }))
+    }, [await sourceRow.elementHandle(), await targetBlock.elementHandle()])
+
+    await page.waitForTimeout(100)
+    const hasDragOver = await targetBlock.evaluate(el => el.classList.contains('drag-over'))
+    console.log(`drag-over 클래스: ${hasDragOver}`)
+    expect(hasDragOver).toBe(true)
+
+    await page.screenshot({ path: '/tmp/dnd_dragover.png' })
+
+    // dragend로 해제
+    await page.evaluate(src => src.dispatchEvent(new DragEvent('dragend', { bubbles: true })),
+      await sourceRow.elementHandle())
+    await page.waitForTimeout(100)
+    const afterEnd = await targetBlock.evaluate(el => el.classList.contains('drag-over'))
+    console.log(`dragend 후 drag-over 해제: ${!afterEnd}`)
+    expect(afterEnd).toBe(false)
+  })
+
+  // ── 18. 과제 편입 DnD ──
+  test('과제 드래그앤드롭 편입 — absorb API 호출 확인', async ({ page }) => {
+    let captured: any = null
+    await page.route('**/api/tasks/**/absorb', async route => {
+      captured = JSON.parse(route.request().postData() || '{}')
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
+    })
+    await page.route('**/api/tasks/T1/reusable-sub-ids', async route => {
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ next: 'T1-5', reusable: [] }) })
+    })
+
+    // 소과제 없는 과제 행(T3 또는 T5)을 T1 블록으로 드래그
+    const sourceRow = page.locator('.task-row[draggable="true"]').first()
+    const targetBlock = page.locator('.task-block').first()
+
+    const sourceTaskId = await sourceRow.locator('.task-id-badge').textContent()
+    const targetTaskId = await targetBlock.locator('.task-row .task-id-badge').first().textContent()
+    console.log(`편입 드래그: ${sourceTaskId?.trim()} → ${targetTaskId?.trim()} 블록`)
+
+    await page.evaluate(([src, tgt]) => {
+      const dt = new DataTransfer()
+      src.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: dt }))
+      tgt.dispatchEvent(new DragEvent('dragover',  { bubbles: true, cancelable: true, dataTransfer: dt }))
+      tgt.dispatchEvent(new DragEvent('drop',      { bubbles: true, cancelable: true, dataTransfer: dt }))
+      src.dispatchEvent(new DragEvent('dragend',   { bubbles: true, cancelable: true }))
+    }, [await sourceRow.elementHandle(), await targetBlock.elementHandle()])
+
+    await page.waitForTimeout(800)
+    await page.screenshot({ path: '/tmp/dnd_after_absorb.png' })
+
+    expect(captured).toBeTruthy()
+    expect(captured.new_sub_id).toBeTruthy()
+    console.log(`편입 API 바디: ${JSON.stringify(captured)}`)
   })
 })
