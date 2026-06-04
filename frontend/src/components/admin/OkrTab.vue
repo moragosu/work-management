@@ -9,6 +9,10 @@
         <span class="stat-chip">인력 <strong>{{ staffList.length }}</strong>명</span>
       </div>
       <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" @click="exportCsv" data-tooltip="현재 필터 기준으로 CSV 내보내기">
+          <span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px">download</span>
+          CSV
+        </button>
         <button class="btn btn-ghost btn-sm" @click="toggleAllObj"
           :data-tooltip="allObjExpanded ? '모든 목표 섹션 접기' : '모든 목표 섹션 펼치기'">
           <span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px">{{ allObjExpanded ? 'unfold_less' : 'unfold_more' }}</span>
@@ -79,8 +83,8 @@
                 @dragend="onDragEnd">
                 <span class="material-symbols-outlined drag-handle" v-if="!task.sub_tasks?.length">drag_indicator</span>
                 <span class="task-id-badge">{{ task.id }}</span>
-                <span class="task-name">{{ task.name }}</span>
                 <span v-if="task.target" class="badge badge-target">{{ task.target }}</span>
+                <span class="task-name">{{ task.name }}</span>
                 <div class="member-chip-group">
                   <span v-for="m in task.members" :key="m.username" class="member-chip">
                     {{ m.name }}<button class="chip-del" @click="removeMember(task, m.username)">✕</button>
@@ -115,8 +119,8 @@
                   <span class="material-symbols-outlined drag-handle">drag_indicator</span>
                   <input type="checkbox" class="subtask-check" :checked="st.done" @change="toggleSubDone(task, st)" />
                   <span class="subtask-id-badge">{{ st.id }}</span>
-                  <span class="subtask-name" :class="{ done: st.done }">{{ st.name }}</span>
                   <span v-if="st.target" class="badge badge-target" style="font-size:10px">{{ st.target }}</span>
+                  <span class="subtask-name" :class="{ done: st.done }">{{ st.name }}</span>
                   <div class="member-chip-group">
                     <span v-for="m in st.members" :key="m.username" class="member-chip member-chip-sm">
                       {{ m.name }}<button class="chip-del" @click="removeSubMember(task, st, m.username)">✕</button>
@@ -522,6 +526,44 @@ const filteredObjectives = computed(() => {
     )
   )
 })
+
+// ── CSV 내보내기 ──────────────────────────────────────────────────────
+function exportCsv() {
+  const header = ['목표ID', '목표명', '과제ID', '과제명', '적용대상', '소과제ID', '소과제명', '완료', '담당자']
+  const rows = [header]
+  const members = arr => (arr || []).map(m => m.name).join('/')
+  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`
+
+  for (const obj of filteredObjectives.value) {
+    const objTasks = getTasksForObj(obj.id)
+    for (const task of objTasks) {
+      if (!task.sub_tasks?.length) {
+        rows.push([obj.id, obj.name, task.id, task.name, task.target || '', '', '', '', members(task.members)])
+      } else {
+        for (const st of task.sub_tasks) {
+          rows.push([obj.id, obj.name, task.id, task.name, task.target || '', st.id, st.name, st.done ? 'Y' : 'N', members(st.members)])
+        }
+      }
+    }
+  }
+  for (const task of unlinkedTasks.value) {
+    if (!task.sub_tasks?.length) {
+      rows.push(['(미연결)', '', task.id, task.name, task.target || '', '', '', '', members(task.members)])
+    } else {
+      for (const st of task.sub_tasks) {
+        rows.push(['(미연결)', '', task.id, task.name, task.target || '', st.id, st.name, st.done ? 'Y' : 'N', members(st.members)])
+      }
+    }
+  }
+
+  const csv = '﻿' + rows.map(r => r.map(q).join(',')).join('\n')
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })),
+    download: `OKR현황_${new Date().toISOString().slice(0, 10)}.csv`,
+  })
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
 
 // ── 이력 이동 ─────────────────────────────────────────────────────────
 function goHistory(taskId, subId = null) {

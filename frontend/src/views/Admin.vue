@@ -14,12 +14,10 @@
       <div class="tabs">
         <button
           v-for="t in tabs" :key="t.key"
-          class="tab" :class="{ active: activeTab === t.key, 'tab-legacy': t.legacy }"
+          class="tab" :class="{ active: activeTab === t.key }"
           @click="activeTab = t.key"
-          :data-tooltip="t.legacy ? 'OKR 현황 탭으로 통합 예정' : undefined"
         >
           {{ t.label }}
-          <span v-if="t.legacy" class="legacy-badge">구버전</span>
         </button>
       </div>
 
@@ -34,29 +32,6 @@
         :next-task-id="nextTaskId"
         :reusable-obj-ids="reusableObjectiveIds"
         :reusable-task-ids="reusableTaskIds"
-        @refresh="fetchAll"
-      />
-
-      <ObjectiveTab
-        v-if="activeTab === 'objective'"
-        :objectives="objectives"
-        :tasks="tasks"
-        :staff-list="staffList"
-        :loading="loading"
-        :next-id="nextObjectiveId"
-        :reusable-ids="reusableObjectiveIds"
-        @refresh="fetchAll"
-      />
-
-      <TaskTab
-        v-if="activeTab === 'task'"
-        :tasks="tasks"
-        :objectives="objectives"
-        :staff-list="staffList"
-        :loading="taskLoading"
-        :next-id="nextTaskId"
-        :reusable-ids="reusableTaskIds"
-        :task-targets="taskTargets"
         @refresh="fetchAll"
       />
 
@@ -215,8 +190,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import StaffView from './Staff.vue'
-import ObjectiveTab from '../components/admin/ObjectiveTab.vue'
-import TaskTab from '../components/admin/TaskTab.vue'
 import OkrTab from '../components/admin/OkrTab.vue'
 import { useToast } from '../composables/useToast.js'
 import { parseIds } from '../utils/parseIds.js'
@@ -227,14 +200,12 @@ const auth = useAuthStore()
 
 const tabs = computed(() => {
   const baseTabs = [
-    { key: 'okr', label: '🗂 OKR 현황', legacy: false },
-    { key: 'objective', label: '📊 목표', legacy: true },
-    { key: 'task', label: '📋 과제', legacy: true },
-    { key: 'staff', label: '👥 인력', legacy: false },
-    { key: 'settings', label: '⚙️ 설정', legacy: false },
+    { key: 'okr',      label: '🗂 OKR 현황' },
+    { key: 'staff',    label: '👥 인력' },
+    { key: 'settings', label: '⚙️ 설정' },
   ]
   if (auth.isAdmin) {
-    baseTabs.push({ key: 'users', label: '👤 사용자 관리', legacy: false })
+    baseTabs.push({ key: 'users', label: '👤 사용자 관리' })
   }
   return baseTabs
 })
@@ -418,15 +389,6 @@ onMounted(async () => {
 <style scoped>
 .tab-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 
-.tab-legacy { opacity: 0.5; }
-.tab-legacy:hover { opacity: 0.75; }
-.tab-legacy.active { opacity: 1; }
-.legacy-badge {
-  display: inline-block; margin-left: 5px;
-  padding: 1px 5px; font-size: 9px; font-weight: 600;
-  background: var(--gray-200); color: var(--text-muted);
-  border-radius: 999px; vertical-align: middle;
-}
 
 .settings-heading { margin-bottom: 24px; }
 .settings-group { margin-bottom: 32px; }
