@@ -32,6 +32,8 @@
         :loading="loading || taskLoading"
         :next-obj-id="nextObjectiveId"
         :next-task-id="nextTaskId"
+        :reusable-obj-ids="reusableObjectiveIds"
+        :reusable-task-ids="reusableTaskIds"
         @refresh="fetchAll"
       />
 
