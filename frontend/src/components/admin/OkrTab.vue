@@ -463,7 +463,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useToast } from '../../composables/useToast.js'
@@ -482,6 +482,12 @@ const props = defineProps({
 })
 const emit = defineEmits(['refresh'])
 const { toastMsg, showToast } = useToast(2000)
+
+// props.tasks의 로컬 사본 — DnD에서 직접 수정해 새로고침 없이 즉시 반영
+const localTasks = ref([])
+watch(() => props.tasks, val => {
+  localTasks.value = val.map(t => ({ ...t, sub_tasks: [...(t.sub_tasks || [])] }))
+}, { immediate: true })
 
 // ── 접기/펼치기 ───────────────────────────────────────────────────────
 const collapsedObjIds = ref(new Set())
@@ -618,8 +624,8 @@ onMounted(() => document.addEventListener('click', closeDropdown))
 onUnmounted(() => document.removeEventListener('click', closeDropdown))
 
 // ── helpers ───────────────────────────────────────────────────────────
-function getTasksForObj(objId) { return props.tasks.filter(t => t.objective_id === objId) }
-const unlinkedTasks = computed(() => props.tasks.filter(t => !t.objective_id))
+function getTasksForObj(objId) { return localTasks.value.filter(t => t.objective_id === objId) }
+const unlinkedTasks = computed(() => localTasks.value.filter(t => !t.objective_id))
 const unlinkedOpen  = ref(true)
 function availableStaff(currentMembers) {
   const taken = new Set((currentMembers || []).map(m => m.username))
@@ -780,19 +786,28 @@ async function onDropToTask(e, targetTask) {
   if (!ds) return
   if (ds.type === 'task' && ds.task.id === targetTask.id) return
   if (ds.type === 'subtask' && ds.parentTask.id === targetTask.id) return
-  const savedScrollY = window.scrollY
   try {
     const { data } = await axios.get(`/api/tasks/${targetTask.id}/reusable-sub-ids`)
     const newSubId = data.next
     if (ds.type === 'task') {
       await axios.post(`/api/tasks/${ds.task.id}/absorb`, { parent_id: targetTask.id, new_sub_id: newSubId })
-      showToast(`${ds.task.name} → ${newSubId} 편입 완료`)
+      // 편입: 독립 과제 → parent의 소과제로 로컬 즉시 반영
+      const taskIdx = localTasks.value.findIndex(t => t.id === ds.task.id)
+      const [movedTask] = localTasks.value.splice(taskIdx, 1)
+      const parentTask = localTasks.value.find(t => t.id === targetTask.id)
+      parentTask.sub_tasks.push({ id: newSubId, name: movedTask.name, done: false, members: movedTask.members || [], target: movedTask.target || '' })
+      showToast(`${movedTask.name} → ${newSubId} 편입 완료`)
     } else {
       await axios.post(`/api/tasks/${ds.st.id}/move-sub-task`, { from_parent_id: ds.parentTask.id, to_parent_id: targetTask.id, new_sub_id: newSubId })
+      // 이동: from_parent 소과제 제거 → to_parent 소과제로 추가
+      const fromTask = localTasks.value.find(t => t.id === ds.parentTask.id)
+      const toTask   = localTasks.value.find(t => t.id === targetTask.id)
+      const idx = fromTask.sub_tasks.findIndex(s => s.id === ds.st.id)
+      const [moved] = fromTask.sub_tasks.splice(idx, 1)
+      moved.id = newSubId
+      toTask.sub_tasks.push(moved)
       showToast(`${ds.st.id} → ${newSubId} 이동 완료`)
     }
-    emit('refresh')
-    setTimeout(() => window.scrollTo({ top: savedScrollY, behavior: 'instant' }), 150)
   } catch {
     showToast(ds.type === 'task' ? '편입 실패' : '이동 실패')
   }
@@ -808,7 +823,7 @@ const absorbReusableIds = ref([])
 
 const absorbCandidates = computed(() => {
   if (!absorbingTask.value) return []
-  return props.tasks.filter(t => t.id !== absorbingTask.value.id)
+  return localTasks.value.filter(t => t.id !== absorbingTask.value.id)
 })
 function openAbsorbModal(t) {
   if (t.sub_tasks?.length) return
@@ -870,7 +885,7 @@ const moveReusableIds  = ref([])
 
 const moveCandidates = computed(() => {
   if (!movingFromParent.value) return []
-  return props.tasks.filter(t => t.id !== movingFromParent.value.id)
+  return localTasks.value.filter(t => t.id !== movingFromParent.value.id)
 })
 function openMoveModal(st, parentTask) {
   movingSubTask.value = st; movingFromParent.value = parentTask
