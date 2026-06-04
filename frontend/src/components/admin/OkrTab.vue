@@ -485,8 +485,12 @@ const { toastMsg, showToast } = useToast(2000)
 
 // props.tasks의 로컬 사본 — DnD에서 직접 수정해 새로고침 없이 즉시 반영
 const localTasks = ref([])
+const sortSubTasks = arr => [...arr].sort((a, b) => {
+  const n = s => parseInt(s.id.split('-').pop()) || 0
+  return n(a) - n(b)
+})
 watch(() => props.tasks, val => {
-  localTasks.value = val.map(t => ({ ...t, sub_tasks: [...(t.sub_tasks || [])] }))
+  localTasks.value = val.map(t => ({ ...t, sub_tasks: sortSubTasks(t.sub_tasks || []) }))
 }, { immediate: true })
 
 // ── 접기/펼치기 ───────────────────────────────────────────────────────
@@ -796,6 +800,7 @@ async function onDropToTask(e, targetTask) {
       const [movedTask] = localTasks.value.splice(taskIdx, 1)
       const parentTask = localTasks.value.find(t => t.id === targetTask.id)
       parentTask.sub_tasks.push({ id: newSubId, name: movedTask.name, done: false, members: movedTask.members || [], target: movedTask.target || '' })
+      parentTask.sub_tasks = sortSubTasks(parentTask.sub_tasks)
       showToast(`${movedTask.name} → ${newSubId} 편입 완료`)
     } else {
       await axios.post(`/api/tasks/${ds.st.id}/move-sub-task`, { from_parent_id: ds.parentTask.id, to_parent_id: targetTask.id, new_sub_id: newSubId })
@@ -806,6 +811,7 @@ async function onDropToTask(e, targetTask) {
       const [moved] = fromTask.sub_tasks.splice(idx, 1)
       moved.id = newSubId
       toTask.sub_tasks.push(moved)
+      toTask.sub_tasks = sortSubTasks(toTask.sub_tasks)
       showToast(`${ds.st.id} → ${newSubId} 이동 완료`)
     }
   } catch {
