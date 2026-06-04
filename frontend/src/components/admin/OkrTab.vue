@@ -952,12 +952,14 @@ async function submitMove() {
 /* ── 모달 ── */
 .modal-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-  display: flex; align-items: center; justify-content: center; z-index: 1000;
+  display: flex; align-items: flex-start; justify-content: center;
+  z-index: 1000; overflow-y: auto; padding: 32px 0;
 }
 .modal-card {
   background: var(--surface); border-radius: var(--radius-lg);
   padding: 28px 32px; width: 440px; max-width: 95vw;
   box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  margin: auto;
 }
 .modal-title { margin: 0 0 20px; font-size: 16px; font-weight: 700; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
