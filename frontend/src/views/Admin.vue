@@ -200,7 +200,7 @@ const auth = useAuthStore()
 
 const tabs = computed(() => {
   const baseTabs = [
-    { key: 'okr',      label: '🗂 OKR 현황' },
+    { key: 'okr',      label: '목표·과제 관리' },
     { key: 'staff',    label: '👥 인력' },
     { key: 'settings', label: '⚙️ 설정' },
   ]
