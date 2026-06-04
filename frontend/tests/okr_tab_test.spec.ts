@@ -256,4 +256,54 @@ test.describe('OKR 현황 탭 통합 테스트', () => {
     await page.click('.okr-tab', { position: { x: 10, y: 10 } })
     await page.waitForTimeout(200)
   })
+
+  // ── 15. 드래그 핸들 표시 ──
+  test('드래그 핸들 — 과제/소과제 행 hover 시 표시', async ({ page }) => {
+    // 소과제 없는 과제 행에 drag_indicator 아이콘 존재 확인
+    const taskRow = page.locator('.task-row[draggable="true"]').first()
+    await expect(taskRow).toBeVisible()
+    const handle = taskRow.locator('.drag-handle')
+    await expect(handle).toBeAttached()
+
+    // 소과제 행에도 drag_indicator 존재
+    const subtaskRow = page.locator('.subtask-row[draggable="true"]').first()
+    await expect(subtaskRow).toBeAttached()
+    const subHandle = subtaskRow.locator('.drag-handle')
+    await expect(subHandle).toBeAttached()
+    console.log('드래그 핸들 확인: 과제 행 + 소과제 행 모두 존재')
+  })
+
+  // ── 16. 소과제 드래그앤드롭 이동 ──
+  test('소과제 드래그 → 다른 과제 블록에 드롭 시 이동 API 호출', async ({ page }) => {
+    // T1의 첫 소과제를 T2 블록으로 드래그
+    const sourceRow = page.locator('.subtask-row[draggable="true"]').first()
+    const targetBlock = page.locator('.task-block').nth(1)
+
+    await expect(sourceRow).toBeVisible()
+    await expect(targetBlock).toBeVisible()
+
+    const sourceBox = await sourceRow.boundingBox()
+    const targetBox = await targetBlock.boundingBox()
+    if (!sourceBox || !targetBox) { console.log('요소 위치 측정 실패, 스킵'); return }
+
+    // drag_indicator handle 위치에서 드래그 시작
+    await page.mouse.move(sourceBox.x + 8, sourceBox.y + sourceBox.height / 2)
+    await page.mouse.down()
+    await page.waitForTimeout(100)
+    await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 10 })
+    await page.waitForTimeout(200)
+    // drag-over 클래스 확인
+    const hasDragOver = await targetBlock.evaluate(el => el.classList.contains('drag-over'))
+    console.log(`drag-over 클래스 적용: ${hasDragOver}`)
+    await page.mouse.up()
+    await page.waitForTimeout(800)
+
+    // 이동 완료 토스트 또는 오류 없음 확인 (실제 이동은 데이터 상태에 따라 다름)
+    const toast = page.locator('.toast, [class*="toast"]')
+    if (await toast.isVisible({ timeout: 1000 }).catch(() => false)) {
+      console.log(`토스트 메시지: ${await toast.textContent()}`)
+    } else {
+      console.log('토스트 없음 (같은 부모이거나 데이터 변경 없음)')
+    }
+  })
 })

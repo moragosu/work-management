@@ -67,8 +67,17 @@
 
           <!-- 과제 목록 -->
           <div class="task-list">
-            <div v-for="task in getTasksForObj(obj.id)" :key="task.id" class="task-block">
-              <div class="task-row">
+            <div v-for="task in getTasksForObj(obj.id)" :key="task.id" class="task-block"
+              :class="{ 'drag-over': dragOverTaskId === task.id }"
+              @dragover="onDragOverTask($event, task)"
+              @dragleave="onDragLeaveTask($event, task.id)"
+              @drop="onDropToTask($event, task)">
+              <div class="task-row"
+                :draggable="!task.sub_tasks?.length"
+                :class="{ 'dragging': dragState?.type === 'task' && dragState.task.id === task.id }"
+                @dragstart="onDragStartTask($event, task)"
+                @dragend="onDragEnd">
+                <span class="material-symbols-outlined drag-handle" v-if="!task.sub_tasks?.length">drag_indicator</span>
                 <span class="task-id-badge">{{ task.id }}</span>
                 <span class="task-name">{{ task.name }}</span>
                 <span v-if="task.target" class="badge badge-target">{{ task.target }}</span>
@@ -98,7 +107,12 @@
 
               <!-- 소과제 -->
               <div v-if="task.sub_tasks?.length" class="subtask-list">
-                <div v-for="st in task.sub_tasks" :key="st.id" class="subtask-row">
+                <div v-for="st in task.sub_tasks" :key="st.id" class="subtask-row"
+                  draggable="true"
+                  :class="{ 'dragging': dragState?.type === 'subtask' && dragState.st.id === st.id }"
+                  @dragstart="onDragStartSubtask($event, st, task)"
+                  @dragend="onDragEnd">
+                  <span class="material-symbols-outlined drag-handle">drag_indicator</span>
                   <input type="checkbox" class="subtask-check" :checked="st.done" @change="toggleSubDone(task, st)" />
                   <span class="subtask-id-badge">{{ st.id }}</span>
                   <span class="subtask-name" :class="{ done: st.done }">{{ st.name }}</span>
@@ -147,8 +161,17 @@
           <span class="badge badge-gray">{{ unlinkedTasks.length }}개</span>
         </div>
         <div v-if="unlinkedOpen" class="task-list" style="padding:0 16px 16px">
-          <div v-for="task in unlinkedTasks" :key="task.id" class="task-block">
-            <div class="task-row">
+          <div v-for="task in unlinkedTasks" :key="task.id" class="task-block"
+            :class="{ 'drag-over': dragOverTaskId === task.id }"
+            @dragover="onDragOverTask($event, task)"
+            @dragleave="onDragLeaveTask($event, task.id)"
+            @drop="onDropToTask($event, task)">
+            <div class="task-row"
+              :draggable="!task.sub_tasks?.length"
+              :class="{ 'dragging': dragState?.type === 'task' && dragState.task.id === task.id }"
+              @dragstart="onDragStartTask($event, task)"
+              @dragend="onDragEnd">
+              <span class="material-symbols-outlined drag-handle" v-if="!task.sub_tasks?.length">drag_indicator</span>
               <span class="task-id-badge">{{ task.id }}</span>
               <span class="task-name">{{ task.name }}</span>
               <span v-if="task.target" class="badge badge-target">{{ task.target }}</span>
@@ -176,7 +199,12 @@
               </div>
             </div>
             <div v-if="task.sub_tasks?.length" class="subtask-list">
-              <div v-for="st in task.sub_tasks" :key="st.id" class="subtask-row">
+              <div v-for="st in task.sub_tasks" :key="st.id" class="subtask-row"
+                draggable="true"
+                :class="{ 'dragging': dragState?.type === 'subtask' && dragState.st.id === st.id }"
+                @dragstart="onDragStartSubtask($event, st, task)"
+                @dragend="onDragEnd">
+                <span class="material-symbols-outlined drag-handle">drag_indicator</span>
                 <input type="checkbox" class="subtask-check" :checked="st.done" @change="toggleSubDone(task, st)" />
                 <span class="subtask-id-badge">{{ st.id }}</span>
                 <span class="subtask-name" :class="{ done: st.done }">{{ st.name }}</span>
@@ -695,6 +723,60 @@ async function removeSubMember(task, st, username) {
   emit('refresh')
 }
 
+// ── 드래그앤드롭 ──────────────────────────────────────────────────────
+const dragState     = ref(null)  // { type: 'task'|'subtask', task?, st?, parentTask? }
+const dragOverTaskId = ref(null)
+
+function onDragStartTask(e, task) {
+  if (task.sub_tasks?.length) { e.preventDefault(); return }
+  dragState.value = { type: 'task', task }
+  e.dataTransfer.effectAllowed = 'move'
+}
+function onDragStartSubtask(e, st, parentTask) {
+  dragState.value = { type: 'subtask', st, parentTask }
+  e.dataTransfer.effectAllowed = 'move'
+}
+function onDragOverTask(e, targetTask) {
+  const ds = dragState.value
+  if (!ds) return
+  if (ds.type === 'task' && ds.task.id === targetTask.id) return
+  if (ds.type === 'subtask' && ds.parentTask.id === targetTask.id) return
+  e.preventDefault()
+  dragOverTaskId.value = targetTask.id
+}
+function onDragLeaveTask(e, taskId) {
+  if (!e.currentTarget.contains(e.relatedTarget)) {
+    if (dragOverTaskId.value === taskId) dragOverTaskId.value = null
+  }
+}
+function onDragEnd() {
+  dragState.value = null
+  dragOverTaskId.value = null
+}
+async function onDropToTask(e, targetTask) {
+  e.preventDefault()
+  dragOverTaskId.value = null
+  const ds = dragState.value
+  dragState.value = null
+  if (!ds) return
+  if (ds.type === 'task' && ds.task.id === targetTask.id) return
+  if (ds.type === 'subtask' && ds.parentTask.id === targetTask.id) return
+  try {
+    const { data } = await axios.get(`/api/tasks/${targetTask.id}/reusable-sub-ids`)
+    const newSubId = data.next
+    if (ds.type === 'task') {
+      await axios.post(`/api/tasks/${ds.task.id}/absorb`, { parent_id: targetTask.id, new_sub_id: newSubId })
+      showToast(`${ds.task.name} → ${newSubId} 편입 완료`)
+    } else {
+      await axios.post(`/api/tasks/${ds.st.id}/move-sub-task`, { from_parent_id: ds.parentTask.id, to_parent_id: targetTask.id, new_sub_id: newSubId })
+      showToast(`${ds.st.id} → ${newSubId} 이동 완료`)
+    }
+    emit('refresh')
+  } catch {
+    showToast(ds.type === 'task' ? '편입 실패' : '이동 실패')
+  }
+}
+
 // ── 편입 ─────────────────────────────────────────────────────────────
 const showAbsorbModal   = ref(false)
 const absorbingTask     = ref(null)
@@ -948,6 +1030,20 @@ async function submitMove() {
 }
 .reusable-chip:hover { background: var(--primary); color: #fff; }
 .reusable-chip-active { background: var(--primary); color: #fff; }
+
+/* ── 드래그앤드롭 ── */
+.drag-handle {
+  font-size: 16px; color: var(--text-muted); cursor: grab;
+  opacity: 0; transition: opacity 0.15s; flex-shrink: 0;
+}
+.task-row:hover .drag-handle,
+.subtask-row:hover .drag-handle { opacity: 1; }
+.task-row.dragging,
+.subtask-row.dragging { opacity: 0.35; }
+.task-block.drag-over {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light, #eff6ff);
+}
 
 /* ── 모달 ── */
 .modal-backdrop {
