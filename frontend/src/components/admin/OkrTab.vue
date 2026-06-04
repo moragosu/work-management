@@ -724,17 +724,34 @@ async function removeSubMember(task, st, username) {
 }
 
 // ── 드래그앤드롭 ──────────────────────────────────────────────────────
-const dragState     = ref(null)  // { type: 'task'|'subtask', task?, st?, parentTask? }
+const dragState      = ref(null)  // { type: 'task'|'subtask', task?, st?, parentTask? }
 const dragOverTaskId = ref(null)
+
+const SCROLL_THRESHOLD = 80  // viewport 상/하단 이 거리 이내에서 자동 스크롤
+const SCROLL_MAX_SPEED = 16
+
+function _autoScroll(e) {
+  const y = e.clientY
+  const vh = window.innerHeight
+  if (y < SCROLL_THRESHOLD) {
+    const speed = Math.round((SCROLL_THRESHOLD - y) / SCROLL_THRESHOLD * SCROLL_MAX_SPEED)
+    window.scrollBy({ top: -speed, behavior: 'instant' })
+  } else if (y > vh - SCROLL_THRESHOLD) {
+    const speed = Math.round((y - (vh - SCROLL_THRESHOLD)) / SCROLL_THRESHOLD * SCROLL_MAX_SPEED)
+    window.scrollBy({ top: speed, behavior: 'instant' })
+  }
+}
 
 function onDragStartTask(e, task) {
   if (task.sub_tasks?.length) { e.preventDefault(); return }
   dragState.value = { type: 'task', task }
   e.dataTransfer.effectAllowed = 'move'
+  document.addEventListener('dragover', _autoScroll)
 }
 function onDragStartSubtask(e, st, parentTask) {
   dragState.value = { type: 'subtask', st, parentTask }
   e.dataTransfer.effectAllowed = 'move'
+  document.addEventListener('dragover', _autoScroll)
 }
 function onDragOverTask(e, targetTask) {
   const ds = dragState.value
@@ -752,15 +769,18 @@ function onDragLeaveTask(e, taskId) {
 function onDragEnd() {
   dragState.value = null
   dragOverTaskId.value = null
+  document.removeEventListener('dragover', _autoScroll)
 }
 async function onDropToTask(e, targetTask) {
   e.preventDefault()
+  document.removeEventListener('dragover', _autoScroll)
   dragOverTaskId.value = null
   const ds = dragState.value
   dragState.value = null
   if (!ds) return
   if (ds.type === 'task' && ds.task.id === targetTask.id) return
   if (ds.type === 'subtask' && ds.parentTask.id === targetTask.id) return
+  const savedScrollY = window.scrollY
   try {
     const { data } = await axios.get(`/api/tasks/${targetTask.id}/reusable-sub-ids`)
     const newSubId = data.next
@@ -772,6 +792,7 @@ async function onDropToTask(e, targetTask) {
       showToast(`${ds.st.id} → ${newSubId} 이동 완료`)
     }
     emit('refresh')
+    setTimeout(() => window.scrollTo({ top: savedScrollY, behavior: 'instant' }), 150)
   } catch {
     showToast(ds.type === 'task' ? '편입 실패' : '이동 실패')
   }

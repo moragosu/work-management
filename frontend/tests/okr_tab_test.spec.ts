@@ -376,4 +376,66 @@ test.describe('OKR 현황 탭 통합 테스트', () => {
     expect(captured.new_sub_id).toBeTruthy()
     console.log(`편입 API 바디: ${JSON.stringify(captured)}`)
   })
+
+  // ── 19. 드롭 후 스크롤 위치 복원 ──
+  test('드롭 후 스크롤 위치 복원', async ({ page }) => {
+    await page.route('**/api/tasks/**/move-sub-task', async route => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
+    })
+    await page.route('**/api/tasks/T2/reusable-sub-ids', async route => {
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ next: 'T2-4', reusable: [] }) })
+    })
+
+    // 페이지를 300px 아래로 스크롤 후 드롭
+    await page.evaluate(() => window.scrollTo(0, 300))
+    await page.waitForTimeout(100)
+    const scrollBefore = await page.evaluate(() => window.scrollY)
+    expect(scrollBefore).toBeGreaterThan(200)
+
+    const sourceRow = page.locator('.subtask-row[draggable="true"]').first()
+    const targetBlock = page.locator('.task-block').nth(1)
+    await page.evaluate(([src, tgt]) => {
+      const dt = new DataTransfer()
+      src.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: dt }))
+      tgt.dispatchEvent(new DragEvent('dragover',  { bubbles: true, cancelable: true, dataTransfer: dt }))
+      tgt.dispatchEvent(new DragEvent('drop',      { bubbles: true, cancelable: true, dataTransfer: dt }))
+      src.dispatchEvent(new DragEvent('dragend',   { bubbles: true, cancelable: true }))
+    }, [await sourceRow.elementHandle(), await targetBlock.elementHandle()])
+
+    // refresh + setTimeout(150ms) 대기
+    await page.waitForTimeout(600)
+    const scrollAfter = await page.evaluate(() => window.scrollY)
+    console.log(`스크롤 복원: before=${scrollBefore}, after=${scrollAfter}`)
+    expect(Math.abs(scrollAfter - scrollBefore)).toBeLessThan(50)
+  })
+
+  // ── 20. 드래그 중 하단 경계 자동 스크롤 ──
+  test('드래그 중 viewport 하단에서 자동 스크롤', async ({ page }) => {
+    await page.evaluate(() => window.scrollTo(0, 0))
+    const scrollBefore = await page.evaluate(() => window.scrollY)
+
+    const sourceRow = page.locator('.subtask-row[draggable="true"]').first()
+    await expect(sourceRow).toBeVisible()
+
+    // dragstart 후 viewport 하단 근처에서 dragover 이벤트 dispatch
+    await page.evaluate(src => {
+      const dt = new DataTransfer()
+      src.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: dt }))
+      // document에 clientY = vh - 40 (하단 경계 내부) 로 dragover 발화
+      document.dispatchEvent(new DragEvent('dragover', {
+        bubbles: true, cancelable: true, dataTransfer: dt,
+        clientY: window.innerHeight - 40
+      }))
+    }, await sourceRow.elementHandle())
+
+    await page.waitForTimeout(200)
+    const scrollAfter = await page.evaluate(() => window.scrollY)
+    console.log(`자동 스크롤: before=${scrollBefore}, after=${scrollAfter}`)
+    expect(scrollAfter).toBeGreaterThan(scrollBefore)
+
+    // 정리: dragend
+    await page.evaluate(src => src.dispatchEvent(new DragEvent('dragend', { bubbles: true })),
+      await sourceRow.elementHandle())
+  })
 })
