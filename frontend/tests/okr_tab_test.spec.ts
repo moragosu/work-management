@@ -281,10 +281,10 @@ test.describe('OKR 현황 탭 통합 테스트', () => {
       captured = JSON.parse(route.request().postData() || '{}')
       await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
     })
-    // reusable-sub-ids mock (T2 기준)
+    // reusable-sub-ids mock: 빈 번호 T2-1이 있을 때 T2-4(next) 대신 T2-1 우선 사용 확인
     await page.route('**/api/tasks/T2/reusable-sub-ids', async route => {
       await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ next: 'T2-4', reusable: [] }) })
+        body: JSON.stringify({ next: 'T2-4', reusable: ['T2-1'] }) })
     })
 
     // T1의 첫 소과제(T1-1) → T2 블록으로 DragEvent dispatch
@@ -309,7 +309,8 @@ test.describe('OKR 현황 탭 통합 테스트', () => {
     expect(captured).toBeTruthy()
     expect(captured.from_parent_id).toBe('T1')
     expect(captured.to_parent_id).toBe('T2')
-    expect(captured.new_sub_id).toBe('T2-4')
+    // reusable(['T2-1'])이 있으므로 next('T2-4') 대신 T2-1 우선 사용
+    expect(captured.new_sub_id).toBe('T2-1')
     console.log(`이동 API 바디: ${JSON.stringify(captured)}`)
   })
 

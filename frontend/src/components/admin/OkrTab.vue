@@ -788,7 +788,7 @@ async function onDropToTask(e, targetTask) {
   if (ds.type === 'subtask' && ds.parentTask.id === targetTask.id) return
   try {
     const { data } = await axios.get(`/api/tasks/${targetTask.id}/reusable-sub-ids`)
-    const newSubId = data.next
+    const newSubId = data.reusable?.length ? data.reusable[0] : data.next
     if (ds.type === 'task') {
       await axios.post(`/api/tasks/${ds.task.id}/absorb`, { parent_id: targetTask.id, new_sub_id: newSubId })
       // 편입: 독립 과제 → parent의 소과제로 로컬 즉시 반영
