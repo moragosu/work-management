@@ -31,6 +31,16 @@ export const useAuthStore = defineStore('auth', () => {
     if (token.value) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
     }
+    axios.interceptors.response.use(
+      res => res,
+      err => {
+        if (err.response?.status === 401 && token.value) {
+          _clearAuth()
+          window.location.href = '/login'
+        }
+        return Promise.reject(err)
+      }
+    )
   }
 
   async function login(username, password) {
