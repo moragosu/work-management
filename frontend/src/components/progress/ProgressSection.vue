@@ -257,6 +257,7 @@ async function submitComment(issueId, parentId) {
         comment_by: auth.user?.name || '',
         parent_id: parentId || null,
       })
+      window.dispatchEvent(new Event('refresh-notifications'))
       if (parentId) {
         emit('update:issues', _updateComments(issueId, comments =>
           comments.map(c => c.id === parentId ? { ...c, replies: [...(c.replies || []), data] } : c)
