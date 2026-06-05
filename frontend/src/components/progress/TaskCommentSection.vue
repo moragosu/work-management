@@ -148,7 +148,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import TiptapPreview from '../TiptapPreview.vue'
 import TiptapEditor from '../TiptapEditor.vue'
@@ -183,7 +183,9 @@ const editRequiresAnswer = ref(false)
 
 onMounted(async () => {
   await Promise.all([loadComments(), loadLegacyQA()])
+  window.addEventListener('data-updated', loadComments)
 })
+onUnmounted(() => { window.removeEventListener('data-updated', loadComments) })
 
 async function loadComments() {
   try {

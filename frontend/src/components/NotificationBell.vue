@@ -170,7 +170,12 @@ function connectSSE() {
   if (!token) return
   if (es) es.close()
   es = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}`)
-  es.onmessage = (e) => { if (e.data === 'new') load() }
+  es.onmessage = (e) => {
+    if (e.data === 'new') {
+      load()
+      window.dispatchEvent(new Event('data-updated'))
+    }
+  }
   es.onerror = () => {
     es.close()
     es = null

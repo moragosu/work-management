@@ -347,7 +347,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, onUnmounted, reactive } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import axios from 'axios'
 import TiptapPreview from '../components/TiptapPreview.vue'
@@ -725,7 +725,11 @@ async function loadDefaultWeek() {
   } catch { /* 기본값('last') 유지 */ }
 }
 
-onMounted(() => { loadDefaultWeek(); refresh(); loadNotice() })
+onMounted(() => {
+  loadDefaultWeek(); refresh(); loadNotice()
+  window.addEventListener('data-updated', refresh)
+})
+onUnmounted(() => { window.removeEventListener('data-updated', refresh) })
 </script>
 
 <style scoped>

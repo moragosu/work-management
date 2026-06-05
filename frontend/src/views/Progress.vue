@@ -454,7 +454,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { useToast } from '../composables/useToast.js'
@@ -829,7 +829,16 @@ async function fetchAll() {
   await handleFocusQuery()
 }
 
-onMounted(fetchAll)
+function onDataUpdated() {
+  loadIssues()
+  loadLeftIssues()
+}
+
+onMounted(() => {
+  fetchAll()
+  window.addEventListener('data-updated', onDataUpdated)
+})
+onUnmounted(() => { window.removeEventListener('data-updated', onDataUpdated) })
 
 // 알림 클릭 등으로 같은 페이지에서 쿼리 파라미터가 바뀌면 week·focus 처리
 watch(() => route.query, async (q, prev) => {
