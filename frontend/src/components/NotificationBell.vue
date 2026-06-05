@@ -163,16 +163,29 @@ function onOutside(e) {
   open.value = false
 }
 
-let pollInterval = null
+let es = null
+
+function connectSSE() {
+  const token = localStorage.getItem('token')
+  if (!token) return
+  if (es) es.close()
+  es = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}`)
+  es.onmessage = (e) => { if (e.data === 'new') load() }
+  es.onerror = () => {
+    es.close()
+    es = null
+    setTimeout(connectSSE, 10000)
+  }
+}
 
 onMounted(() => {
   load()
-  pollInterval = setInterval(load, 5 * 60 * 1000)
+  connectSSE()
   document.addEventListener('click', onOutside, true)
   window.addEventListener('refresh-notifications', load)
 })
 onUnmounted(() => {
-  clearInterval(pollInterval)
+  if (es) { es.close(); es = null }
   document.removeEventListener('click', onOutside, true)
   window.removeEventListener('refresh-notifications', load)
 })

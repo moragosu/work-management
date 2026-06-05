@@ -1,7 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from dependencies import get_current_user
 import data_store
+import auth_utils
 import re
+import asyncio
+from datetime import datetime
 
 router = APIRouter()
 
@@ -144,3 +148,38 @@ def delete_notification(nid: str, user: dict = Depends(get_current_user)):
                 )
         conn.execute("DELETE FROM notifications WHERE id=?", (nid,))
     return {"ok": True}
+
+
+@router.get("/stream")
+async def notification_stream(token: str = Query(...)):
+    """SSE 스트림 — EventSource는 커스텀 헤더를 보낼 수 없어 토큰을 쿼리 파라미터로 수신."""
+    payload = auth_utils.decode_token(token)
+    if not payload or "sub" not in payload:
+        raise HTTPException(status_code=401, detail="인증이 필요합니다")
+    with data_store.get_conn() as conn:
+        row = conn.execute("SELECT username FROM users WHERE username=?", (payload["sub"],)).fetchone()
+    if not row:
+        raise HTTPException(status_code=401, detail="사용자를 찾을 수 없습니다")
+    username = row["username"]
+
+    async def event_generator():
+        last_check = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        yield "data: connected\n\n"
+        while True:
+            await asyncio.sleep(3)
+            with data_store.get_conn() as conn:
+                rows = conn.execute(
+                    "SELECT id FROM notifications WHERE recipient=? AND created_at > ?",
+                    (username, last_check)
+                ).fetchall()
+            if rows:
+                last_check = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                yield "data: new\n\n"
+            else:
+                yield ": keepalive\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
