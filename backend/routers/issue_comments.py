@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+import json
 import data_store
 from utils.id_generator import short_uuid
 from dependencies import get_current_user
@@ -52,23 +53,29 @@ def create_comment(issue_id: str, body: CommentCreate, user: dict = Depends(get_
             (new_c["id"], issue_id, body.parent_id, body.comment, body.comment_by, user["username"], now),
         )
         issue_row = conn.execute(
-            "SELECT created_by, week FROM issues WHERE id=?", (issue_id,)
+            "SELECT task_id, week FROM issues WHERE id=?", (issue_id,)
         ).fetchone()
         existing = conn.execute(
             "SELECT DISTINCT comment_by FROM issue_comments WHERE issue_id=? AND id!=?",
             (issue_id, new_c["id"])
         ).fetchall()
+        members = []
+        if issue_row and issue_row["task_id"]:
+            task_row = conn.execute(
+                "SELECT members FROM tasks WHERE id=?", (issue_row["task_id"],)
+            ).fetchone()
+            members = json.loads(task_row["members"] or "[]") if task_row else []
 
     if issue_row:
         notified = {user["username"]}
         link = f"/progress?week={issue_row['week']}&focusIssueId={issue_id}"
         title = "이슈 댓글에 답글이 달렸습니다" if body.parent_id else "이슈에 댓글이 달렸습니다"
 
-        if issue_row["created_by"] and issue_row["created_by"] not in notified:
-            data_store.insert_notification(
-                issue_row["created_by"], "issue_comment", title, body.comment[:50], link
-            )
-            notified.add(issue_row["created_by"])
+        for m in members:
+            username = m.get("username") or data_store.get_username_for_notification(m.get("name", ""))
+            if username and username not in notified:
+                data_store.insert_notification(username, "issue_comment", title, body.comment[:50], link)
+                notified.add(username)
 
         for r in existing:
             resolved = data_store.get_username_for_notification(r["comment_by"])
