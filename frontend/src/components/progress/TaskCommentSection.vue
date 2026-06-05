@@ -38,7 +38,7 @@
             @click="toggleEditTag(s.name)"
           >{{ s.name }}</button>
         </div>
-        <TiptapEditor ref="editEditorRef" v-model="editCommentText" height="100px" />
+        <TiptapEditor v-model="editCommentText" height="100px" />
         <div class="flex gap-4 mt-6" style="align-items:center;justify-content:flex-end">
           <label v-if="auth.isLeader" class="requires-answer-toggle">
             <input type="checkbox" v-model="editRequiresAnswer" />
@@ -103,7 +103,7 @@
             @click="toggleTag(s.name)"
           >{{ s.name }}</button>
         </div>
-        <TiptapEditor ref="editorRef" v-model="newCommentText" height="120px" placeholder="댓글을 입력하세요..." />
+        <TiptapEditor v-model="newCommentText" height="120px" placeholder="댓글을 입력하세요..." />
         <div class="flex gap-4 mt-6" style="align-items:center;justify-content:flex-end">
           <label v-if="auth.isLeader" class="requires-answer-toggle">
             <input type="checkbox" v-model="requiresAnswer" />
@@ -175,12 +175,11 @@ const replyingToId = ref('')
 const newCommentText = ref('')
 const tagged = ref([])
 const requiresAnswer = ref(false)
-const editorRef = ref(null)
+
 const editingCommentId = ref('')
 const editCommentText = ref('')
 const editTagged = ref([])
 const editRequiresAnswer = ref(false)
-const editEditorRef = ref(null)
 
 onMounted(async () => {
   await Promise.all([loadComments(), loadLegacyQA()])
@@ -225,12 +224,8 @@ function cancelComment() {
 
 function toggleTag(name) {
   const idx = tagged.value.indexOf(name)
-  if (idx === -1) {
-    tagged.value.push(name)
-    editorRef.value?.insertText(` @${name} `)
-  } else {
-    tagged.value.splice(idx, 1)
-  }
+  if (idx === -1) tagged.value.push(name)
+  else tagged.value.splice(idx, 1)
 }
 
 async function submitComment(parentId) {
@@ -274,12 +269,8 @@ function cancelEditComment() {
 
 function toggleEditTag(name) {
   const idx = editTagged.value.indexOf(name)
-  if (idx === -1) {
-    editTagged.value.push(name)
-    editEditorRef.value?.insertText(` @${name} `)
-  } else {
-    editTagged.value.splice(idx, 1)
-  }
+  if (idx === -1) editTagged.value.push(name)
+  else editTagged.value.splice(idx, 1)
 }
 
 async function saveEditComment(commentId) {
