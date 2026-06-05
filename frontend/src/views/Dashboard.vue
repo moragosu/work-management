@@ -403,7 +403,7 @@ async function saveNotice() {
   }
 }
 const questionFilter = ref('unanswered') // 'unanswered' | 'answered' | 'all'
-const qWeekFilter    = ref('last')       // 'this' | 'last'
+const qWeekFilter    = ref('this')       // 'this' | 'last'
 const issWeekFilter  = ref('last')       // 'this' | 'last'
 const activityWeek   = ref('last')       // 'this' | 'last'
 
@@ -665,7 +665,7 @@ function navigateFromModal() {
 
 // ── 바로가기 네비게이션 ──
 function goToQuestion(c) {
-  router.push({ path: '/progress', query: { week: c.week, focusTask: c.task_id } })
+  router.push({ path: '/progress', query: { week: c.week, taskId: c.task_id, commentId: c.id } })
 }
 function goToIssue(p) {
   router.push({ path: '/progress', query: { week: p.week, focusIssueId: p.id } })
