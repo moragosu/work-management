@@ -385,6 +385,12 @@ function setLink() {
   if (!url) { editor.value?.chain().focus().unsetLink().run(); return }
   editor.value?.chain().focus().setLink({ href: url }).run()
 }
+
+defineExpose({
+  insertText(text) {
+    editor.value?.chain().focus().insertContent(text).run()
+  }
+})
 </script>
 
 <style scoped>

@@ -187,13 +187,11 @@
                       :week="leftWeek"
                       @update:issues="iss => onLeftIssuesUpdate(st.id, iss)"
                     />
-                    <QASection
-                      :questions="getLeftQuestionsForTask(st.id)"
-                      :staff-list="staffList"
-                      :qa-leaders="qaLeaders"
+                    <TaskCommentSection
                       :task-id="st.id"
                       :week="leftWeek"
-                      @update:questions="qs => onLeftQuestionsUpdate(st.id, qs)"
+                      :staff-list="staffList"
+                      :qa-leaders="qaLeaders"
                     />
                   </template>
                 </div>
@@ -229,13 +227,11 @@
                   :week="leftWeek"
                   @update:issues="iss => onLeftIssuesUpdate(task.id, iss)"
                 />
-                <QASection
-                  :questions="getLeftQuestionsForTask(task.id)"
-                  :staff-list="staffList"
-                  :qa-leaders="qaLeaders"
+                <TaskCommentSection
                   :task-id="task.id"
                   :week="leftWeek"
-                  @update:questions="qs => onLeftQuestionsUpdate(task.id, qs)"
+                  :staff-list="staffList"
+                  :qa-leaders="qaLeaders"
                 />
               </template>
             </div>
@@ -389,13 +385,11 @@
                       @update:issues="iss => onIssuesUpdate(st.id, iss)"
                     />
 
-                    <QASection
-                      :questions="getQuestionsForTask(st.id)"
-                      :staff-list="staffList"
-                      :qa-leaders="qaLeaders"
+                    <TaskCommentSection
                       :task-id="st.id"
                       :week="selectedWeek"
-                      @update:questions="qs => onQuestionsUpdate(st.id, qs)"
+                      :staff-list="staffList"
+                      :qa-leaders="qaLeaders"
                     />
                   </template>
                 </div>
@@ -441,13 +435,11 @@
                   @update:issues="iss => onIssuesUpdate(task.id, iss)"
                 />
 
-                <QASection
-                  :questions="getQuestionsForTask(task.id)"
-                  :staff-list="staffList"
-                  :qa-leaders="qaLeaders"
+                <TaskCommentSection
                   :task-id="task.id"
                   :week="selectedWeek"
-                  @update:questions="qs => onQuestionsUpdate(task.id, qs)"
+                  :staff-list="staffList"
+                  :qa-leaders="qaLeaders"
                 />
               </template>
             </div>
@@ -470,7 +462,7 @@ import { parseIds } from '../utils/parseIds.js'
 import { getCurrentWeek, getWeekDateRange, addWeeks } from '../utils/week.js'
 import { getTaskMembers, getAllTaskMembers } from '../utils/staff.js'
 import ProgressSection from '../components/progress/ProgressSection.vue'
-import QASection from '../components/progress/QASection.vue'
+import TaskCommentSection from '../components/progress/TaskCommentSection.vue'
 
 const route = useRoute()
 const router = useRouter()

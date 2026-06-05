@@ -14,10 +14,22 @@ class CommentCreate(BaseModel):
     comment: str
     comment_by: str
     parent_id: Optional[str] = None
+    requires_answer: bool = False
+    tagged_users: list[str] = []
 
 
 class CommentUpdate(BaseModel):
     comment: str
+
+
+def _serialize(row: dict) -> dict:
+    row = dict(row)
+    if isinstance(row.get("tagged_users"), str):
+        try:
+            row["tagged_users"] = json.loads(row["tagged_users"])
+        except Exception:
+            row["tagged_users"] = []
+    return row
 
 
 @router.get("/{issue_id}/comments")
@@ -27,7 +39,7 @@ def list_comments(issue_id: str):
             "SELECT * FROM issue_comments WHERE issue_id=? ORDER BY created_at",
             (issue_id,)
         ).fetchall()
-    comments = [dict(r) for r in rows]
+    comments = [_serialize(dict(r)) for r in rows]
     top = [c for c in comments if not c["parent_id"]]
     for c in top:
         c["replies"] = [r for r in comments if r["parent_id"] == c["id"]]
@@ -37,6 +49,7 @@ def list_comments(issue_id: str):
 @router.post("/{issue_id}/comments", status_code=201)
 def create_comment(issue_id: str, body: CommentCreate, user: dict = Depends(get_current_user)):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    tagged_json = json.dumps(body.tagged_users)
     new_c = {
         "id": short_uuid("C"),
         "issue_id": issue_id,
@@ -44,14 +57,24 @@ def create_comment(issue_id: str, body: CommentCreate, user: dict = Depends(get_
         "comment": body.comment,
         "comment_by": body.comment_by,
         "created_by": user["username"],
+        "requires_answer": int(body.requires_answer),
+        "is_answered": 0,
+        "tagged_users": body.tagged_users,
         "created_at": now,
         "updated_at": None,
     }
     with data_store.get_conn() as conn:
         conn.execute(
-            "INSERT INTO issue_comments (id,issue_id,parent_id,comment,comment_by,created_by,created_at) VALUES (?,?,?,?,?,?,?)",
-            (new_c["id"], issue_id, body.parent_id, body.comment, body.comment_by, user["username"], now),
+            "INSERT INTO issue_comments (id,issue_id,parent_id,comment,comment_by,created_by,requires_answer,is_answered,tagged_users,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (new_c["id"], issue_id, body.parent_id, body.comment, body.comment_by, user["username"],
+             new_c["requires_answer"], 0, tagged_json, now),
         )
+        # 대댓글 등록 시 부모 댓글 자동 answered 처리
+        if body.parent_id:
+            conn.execute(
+                "UPDATE issue_comments SET is_answered=1 WHERE id=? AND requires_answer=1",
+                (body.parent_id,)
+            )
         issue_row = conn.execute(
             "SELECT task_id, week FROM issues WHERE id=?", (issue_id,)
         ).fetchone()
@@ -69,7 +92,20 @@ def create_comment(issue_id: str, body: CommentCreate, user: dict = Depends(get_
     if issue_row:
         notified = {user["username"]}
         link = f"/progress?week={issue_row['week']}&focusIssueId={issue_id}"
-        title = "이슈 댓글에 답글이 달렸습니다" if body.parent_id else "이슈에 댓글이 달렸습니다"
+        if body.requires_answer:
+            title = "답변을 요청하는 댓글이 달렸습니다"
+        elif body.parent_id:
+            title = "이슈 댓글에 답글이 달렸습니다"
+        else:
+            title = "이슈에 댓글이 달렸습니다"
+
+        # 답변 요구 댓글: tagged_users에게 우선 알림
+        if body.requires_answer:
+            for name in body.tagged_users:
+                resolved = data_store.get_username_for_notification(name)
+                if resolved and resolved not in notified:
+                    data_store.insert_notification(resolved, "issue_comment", title, body.comment[:50], link)
+                    notified.add(resolved)
 
         for m in members:
             username = m.get("username") or data_store.get_username_for_notification(m.get("name", ""))
@@ -100,7 +136,7 @@ def update_comment(issue_id: str, comment_id: str, body: CommentUpdate, user: di
             "UPDATE issue_comments SET comment=?, updated_at=? WHERE id=?",
             (body.comment, updated_at, comment_id),
         )
-    return {**dict(row), "comment": body.comment, "updated_at": updated_at}
+    return {**_serialize(dict(row)), "comment": body.comment, "updated_at": updated_at}
 
 
 @router.delete("/{issue_id}/comments/{comment_id}")

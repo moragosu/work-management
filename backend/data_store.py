@@ -103,14 +103,31 @@ CREATE TABLE IF NOT EXISTS answer_replies (
     updated_at TEXT
 );
 CREATE TABLE IF NOT EXISTS issue_comments (
-    id         TEXT PRIMARY KEY,
-    issue_id   TEXT NOT NULL DEFAULT '',
-    parent_id  TEXT DEFAULT NULL,
-    comment    TEXT NOT NULL DEFAULT '',
-    comment_by TEXT NOT NULL DEFAULT '',
-    created_by TEXT NOT NULL DEFAULT '',
-    created_at TEXT,
-    updated_at TEXT
+    id              TEXT PRIMARY KEY,
+    issue_id        TEXT NOT NULL DEFAULT '',
+    parent_id       TEXT DEFAULT NULL,
+    comment         TEXT NOT NULL DEFAULT '',
+    comment_by      TEXT NOT NULL DEFAULT '',
+    created_by      TEXT NOT NULL DEFAULT '',
+    requires_answer INTEGER NOT NULL DEFAULT 0,
+    is_answered     INTEGER NOT NULL DEFAULT 0,
+    tagged_users    TEXT NOT NULL DEFAULT '[]',
+    created_at      TEXT,
+    updated_at      TEXT
+);
+CREATE TABLE IF NOT EXISTS task_comments (
+    id              TEXT PRIMARY KEY,
+    task_id         TEXT NOT NULL DEFAULT '',
+    week            TEXT NOT NULL DEFAULT '',
+    parent_id       TEXT DEFAULT NULL,
+    comment         TEXT NOT NULL DEFAULT '',
+    comment_by      TEXT NOT NULL DEFAULT '',
+    created_by      TEXT NOT NULL DEFAULT '',
+    requires_answer INTEGER NOT NULL DEFAULT 0,
+    is_answered     INTEGER NOT NULL DEFAULT 0,
+    tagged_users    TEXT NOT NULL DEFAULT '[]',
+    created_at      TEXT,
+    updated_at      TEXT
 );
 CREATE TABLE IF NOT EXISTS feedbacks (
     id         TEXT PRIMARY KEY,
@@ -209,6 +226,9 @@ def init_db() -> None:
             "ALTER TABLE users ADD COLUMN desired_field TEXT NOT NULL DEFAULT ''",
             "ALTER TABLE users ADD COLUMN okrs TEXT NOT NULL DEFAULT ''",
             "ALTER TABLE users ADD COLUMN task_ids TEXT NOT NULL DEFAULT '[]'",
+            "ALTER TABLE issue_comments ADD COLUMN requires_answer INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE issue_comments ADD COLUMN is_answered INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE issue_comments ADD COLUMN tagged_users TEXT NOT NULL DEFAULT '[]'",
         ]:
             try:
                 conn.execute(sql)
