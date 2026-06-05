@@ -176,6 +176,11 @@ def delete_comment(issue_id: str, comment_id: str, user: dict = Depends(get_curr
                     parent_issue_week = issue_row["week"] if issue_row else None
         else:
             conn.execute("DELETE FROM issue_comments WHERE id=? OR parent_id=?", (comment_id, comment_id))
+            if row["requires_answer"]:
+                conn.execute(
+                    "DELETE FROM notifications WHERE type='comment_tagged' AND link LIKE ?",
+                    (f"%commentId={comment_id}%",)
+                )
 
     if renotify_parent and parent_issue_week:
         tagged = json.loads(renotify_parent.get("tagged_users") or "[]")

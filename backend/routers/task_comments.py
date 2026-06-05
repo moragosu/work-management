@@ -170,6 +170,11 @@ def delete_task_comment(task_id: str, comment_id: str, user: dict = Depends(get_
                     renotify_parent = dict(parent)
         else:
             conn.execute("DELETE FROM task_comments WHERE id=? OR parent_id=?", (comment_id, comment_id))
+            if row["requires_answer"]:
+                conn.execute(
+                    "DELETE FROM notifications WHERE type='comment_tagged' AND link LIKE ?",
+                    (f"%commentId={comment_id}%",)
+                )
 
     # 부모 댓글 미답변 복원 시 재알림 발송 (태그된 모든 사람에게 재발송)
     if renotify_parent:
