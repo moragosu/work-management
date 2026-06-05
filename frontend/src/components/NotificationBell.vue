@@ -164,11 +164,14 @@ function onOutside(e) {
 }
 
 let es = null
+let reconnectTimer = null
+let reconnecting = false
 
 function connectSSE() {
   const token = localStorage.getItem('token')
   if (!token) return
-  if (es) es.close()
+  reconnecting = false
+  if (es) { es.close(); es = null }
   es = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}`)
   es.onmessage = (e) => {
     if (e.data === 'new') {
@@ -177,10 +180,17 @@ function connectSSE() {
     }
   }
   es.onerror = () => {
-    es.close()
-    es = null
-    setTimeout(connectSSE, 10000)
+    if (reconnecting) return   // 중복 reconnect 방지
+    reconnecting = true
+    if (es) { es.close(); es = null }
+    reconnectTimer = setTimeout(connectSSE, 5000)
   }
+}
+
+function stopSSE() {
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null }
+  if (es) { es.close(); es = null }
+  reconnecting = false
 }
 
 onMounted(() => {
@@ -190,7 +200,7 @@ onMounted(() => {
   window.addEventListener('refresh-notifications', load)
 })
 onUnmounted(() => {
-  if (es) { es.close(); es = null }
+  stopSSE()
   document.removeEventListener('click', onOutside, true)
   window.removeEventListener('refresh-notifications', load)
 })

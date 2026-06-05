@@ -162,20 +162,28 @@ async def notification_stream(token: str = Query(...)):
         raise HTTPException(status_code=401, detail="사용자를 찾을 수 없습니다")
     username = row["username"]
 
+    def _check_new(since: str):
+        with data_store.get_conn() as conn:
+            return conn.execute(
+                "SELECT id FROM notifications WHERE recipient=? AND created_at > ?",
+                (username, since)
+            ).fetchall()
+
     async def event_generator():
         last_check = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         yield "data: connected\n\n"
         while True:
-            await asyncio.sleep(3)
-            with data_store.get_conn() as conn:
-                rows = conn.execute(
-                    "SELECT id FROM notifications WHERE recipient=? AND created_at > ?",
-                    (username, last_check)
-                ).fetchall()
-            if rows:
-                last_check = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                yield "data: new\n\n"
-            else:
+            try:
+                await asyncio.sleep(3)
+                rows = await asyncio.to_thread(_check_new, last_check)
+                if rows:
+                    last_check = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    yield "data: new\n\n"
+                else:
+                    yield ": keepalive\n\n"
+            except asyncio.CancelledError:
+                break
+            except Exception:
                 yield ": keepalive\n\n"
 
     return StreamingResponse(
