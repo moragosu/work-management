@@ -105,12 +105,20 @@ def create_task_comment(task_id: str, body: TaskCommentCreate, user: dict = Depe
     # 알림 발송
     notified = {user["username"]}
     link = f"/progress?week={body.week}&taskId={task_id}&commentId={new_c['id']}"
+    base_link = f"/progress?week={body.week}&taskId={task_id}"
     if body.requires_answer:
         title = "답변을 요청하는 과제 댓글이 달렸습니다"
         for name in body.tagged_users:
             resolved = data_store.get_username_for_notification(name)
             if resolved and resolved not in notified:
                 data_store.insert_notification(resolved, "comment_tagged", title, body.comment[:50], link)
+                notified.add(resolved)
+    elif body.tagged_users:
+        title = "과제 댓글에서 태그되었습니다"
+        for name in body.tagged_users:
+            resolved = data_store.get_username_for_notification(name)
+            if resolved and resolved not in notified:
+                data_store.insert_notification(resolved, "task_comment", title, body.comment[:50], base_link)
                 notified.add(resolved)
     elif body.parent_id:
         title = "과제 댓글에 답글이 달렸습니다"
@@ -135,6 +143,33 @@ def update_task_comment(task_id: str, comment_id: str, body: TaskCommentUpdate, 
             "UPDATE task_comments SET comment=?, tagged_users=?, requires_answer=?, updated_at=? WHERE id=?",
             (body.comment, tagged_json, int(body.requires_answer), updated_at, comment_id),
         )
+
+    # 수정 시 알림: 새로 추가된 tagged_users 또는 requires_answer가 켜진 경우
+    if body.tagged_users:
+        old_requires = bool(row["requires_answer"])
+        old_tagged = _serialize(dict(row))["tagged_users"]
+        notified = {user["username"]}
+        week = row["week"]
+        base_link = f"/progress?week={week}&taskId={task_id}"
+
+        if body.requires_answer:
+            title = "답변을 요청하는 과제 댓글이 달렸습니다"
+            tagged_link = f"{base_link}&commentId={comment_id}"
+            to_notify = body.tagged_users if not old_requires else [n for n in body.tagged_users if n not in old_tagged]
+            for name in to_notify:
+                resolved = data_store.get_username_for_notification(name)
+                if resolved and resolved not in notified:
+                    data_store.insert_notification(resolved, "comment_tagged", title, body.comment[:50], tagged_link)
+                    notified.add(resolved)
+        else:
+            title = "과제 댓글에서 태그되었습니다"
+            new_tagged = [n for n in body.tagged_users if n not in old_tagged]
+            for name in new_tagged:
+                resolved = data_store.get_username_for_notification(name)
+                if resolved and resolved not in notified:
+                    data_store.insert_notification(resolved, "task_comment", title, body.comment[:50], base_link)
+                    notified.add(resolved)
+
     return {
         **_serialize(dict(row)),
         "comment": body.comment,
