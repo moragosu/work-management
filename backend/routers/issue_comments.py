@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
@@ -8,6 +8,7 @@ from utils.id_generator import short_uuid
 from dependencies import get_current_user
 
 router = APIRouter()
+router_global = APIRouter()  # /api/issue-comments (대시보드용)
 
 
 class CommentCreate(BaseModel):
@@ -32,6 +33,39 @@ def _serialize(row: dict) -> dict:
         except Exception:
             row["tagged_users"] = []
     return row
+
+
+@router_global.get("")
+def list_all_issue_comments(week: Optional[str] = Query(None)):
+    """대시보드용 전체 이슈 댓글 조회 (issues 테이블에서 week, task_id 조인)."""
+    with data_store.get_conn() as conn:
+        if week:
+            rows = conn.execute(
+                """SELECT ic.id, ic.issue_id, ic.parent_id, ic.comment, ic.comment_by,
+                          ic.created_by, ic.requires_answer, ic.is_answered, ic.tagged_users,
+                          ic.created_at, ic.updated_at, iss.week, iss.task_id
+                   FROM issue_comments ic
+                   LEFT JOIN issues iss ON ic.issue_id = iss.id
+                   WHERE iss.week=? AND ic.parent_id IS NULL
+                   ORDER BY ic.created_at""",
+                (week,)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """SELECT ic.id, ic.issue_id, ic.parent_id, ic.comment, ic.comment_by,
+                          ic.created_by, ic.requires_answer, ic.is_answered, ic.tagged_users,
+                          ic.created_at, ic.updated_at, iss.week, iss.task_id
+                   FROM issue_comments ic
+                   LEFT JOIN issues iss ON ic.issue_id = iss.id
+                   WHERE ic.parent_id IS NULL
+                   ORDER BY ic.created_at"""
+            ).fetchall()
+    result = []
+    for r in rows:
+        d = _serialize(dict(r))
+        d["type"] = "issue"
+        result.append(d)
+    return result
 
 
 @router.get("/{issue_id}/comments")

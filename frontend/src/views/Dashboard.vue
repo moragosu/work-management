@@ -362,6 +362,7 @@ const objectives = ref([])
 const tasks      = ref([])
 const staffList  = ref([])
 const allTaskComments    = ref([])
+const allIssueComments   = ref([])
 const allConfluenceLinks = ref([])
 const weekIssuesList   = ref([])
 const allIssuesList    = ref([])
@@ -417,14 +418,17 @@ const inProgressCount = computed(() => objectives.value.filter(o => o.status ===
 const completedCount  = computed(() => objectives.value.filter(o => o.status === '완료').length)
 const dangerCount     = computed(() => objectives.value.filter(o => o.status === '위험').length)
 
+// ── 이슈 댓글 + 과제 댓글 통합 ──
+const allComments = computed(() => [...allTaskComments.value, ...allIssueComments.value])
+
 // ── 액션 패널 데이터 ──
 const unansweredQuestions = computed(() =>
-  allTaskComments.value.filter(c => c.requires_answer && !c.is_answered)
+  allComments.value.filter(c => c.requires_answer && !c.is_answered)
 )
 
 const filteredQuestions = computed(() => {
   const w = qWeekFilter.value === 'last' ? lastWeek : currentWeek
-  const cs = allTaskComments.value.filter(c => c.requires_answer && normalizeWeek(c.week) === w)
+  const cs = allComments.value.filter(c => c.requires_answer && normalizeWeek(c.week) === w)
   if (questionFilter.value === 'answered') return cs.filter(c => c.is_answered)
   if (questionFilter.value === 'all') return cs
   return cs.filter(c => !c.is_answered)
@@ -440,7 +444,7 @@ const weekIssues = computed(() => weekIssuesList.value)
 // ── 팀원별 활동 통계 ──
 const memberStatsMap = computed(() => {
   const w = activityWeek.value === 'last' ? lastWeek : currentWeek
-  const wComments = allTaskComments.value.filter(c => c.requires_answer && normalizeWeek(c.week) === w)
+  const wComments = allComments.value.filter(c => c.requires_answer && normalizeWeek(c.week) === w)
   const wIssues   = allIssuesList.value.filter(i => normalizeWeek(i.week) === w)
   const map = {}
   staffList.value.forEach(s => {
@@ -585,7 +589,7 @@ const issueMap = computed(() => {
 
 const qnaMap = computed(() => {
   const m = {}
-  allTaskComments.value.filter(c => c.requires_answer).forEach(c => {
+  allComments.value.filter(c => c.requires_answer).forEach(c => {
     if (!c.task_id) return
     if (!m[c.task_id]) m[c.task_id] = {}
     const w = normalizeWeek(c.week)
@@ -601,7 +605,7 @@ const issueThisWeek = computed(() =>
   flatTaskRows.value.filter(r => issueMap.value[r.id]?.has(currentWeek)).length
 )
 const qnaThisWeek = computed(() =>
-  allTaskComments.value.filter(c => c.requires_answer && normalizeWeek(c.week) === currentWeek).length
+  allComments.value.filter(c => c.requires_answer && normalizeWeek(c.week) === currentWeek).length
 )
 
 function truncate(text, len) {
@@ -665,7 +669,11 @@ function navigateFromModal() {
 
 // ── 바로가기 네비게이션 ──
 function goToQuestion(c) {
-  router.push({ path: '/progress', query: { week: c.week, taskId: c.task_id, commentId: c.id } })
+  if (c.type === 'issue') {
+    router.push({ path: '/progress', query: { week: c.week, focusIssueId: c.issue_id, commentId: c.id } })
+  } else {
+    router.push({ path: '/progress', query: { week: c.week, taskId: c.task_id, commentId: c.id } })
+  }
 }
 function goToIssue(p) {
   router.push({ path: '/progress', query: { week: p.week, focusIssueId: p.id } })
@@ -688,13 +696,15 @@ async function refresh() {
     tasks.value      = tRes.data
     staffList.value  = sRes.data
 
-    const [allTCRes, clRes, issWeekRes, issAllRes] = await Promise.all([
+    const [allTCRes, allICRes, clRes, issWeekRes, issAllRes] = await Promise.all([
       axios.get('/api/task-comments'),
+      axios.get('/api/issue-comments'),
       axios.get('/api/confluence'),
       axios.get('/api/issues', { params: { week: currentWeek } }),
       axios.get('/api/issues'),
     ])
     allTaskComments.value    = allTCRes.data
+    allIssueComments.value   = allICRes.data
     allConfluenceLinks.value = clRes.data
     weekIssuesList.value     = issWeekRes.data
     allIssuesList.value      = issAllRes.data
