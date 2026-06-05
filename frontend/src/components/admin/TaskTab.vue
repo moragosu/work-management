@@ -769,7 +769,7 @@ onMounted(async () => {
     await new Promise(r => setTimeout(r, 100))
     const el = document.getElementById(`task-row-${route.query.focusTask}`)
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.scrollIntoView({ behavior: 'instant', block: 'center' })
       el.classList.add('highlight-focus')
       setTimeout(() => el?.classList.remove('highlight-focus'), 2200)
     }

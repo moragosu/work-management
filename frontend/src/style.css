@@ -404,12 +404,8 @@ body {
 .badge-yellow{ background: var(--warning-light);  color: var(--warning); }
 .badge-orange{ background: var(--orange-light);   color: var(--orange); }
 .badge-gray  { background: var(--gray-100); color: var(--gray-600); }
-<<<<<<< HEAD
 .badge-purple{ background: var(--purple-light); color: var(--purple); }
-=======
-.badge-purple{ background: #ede9fe; color: #6d28d9; }
-.badge-target{ background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
->>>>>>> 90d6072 (feat: 주간 진행 현황 과제/소과제에 적용 대상(target) 배지 표시)
+.badge-target{ background: var(--success-light); color: var(--success); border: 1px solid #bbf7d0; }
 
 /* ── Author meta row ── */
 .author-row {

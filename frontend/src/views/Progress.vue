@@ -793,7 +793,7 @@ async function handleFocusQuery() {
   }
   if (!el) return
 
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  el.scrollIntoView({ behavior: 'instant', block: 'center' })
   el.classList.add('highlight-focus')
   setTimeout(() => el?.classList.remove('highlight-focus'), 2200)
 }
