@@ -56,6 +56,12 @@ def list_issues(
             ).fetchall()]
     else:
         all_comments = []
+    for c in all_comments:
+        if isinstance(c.get("tagged_users"), str):
+            try:
+                c["tagged_users"] = json.loads(c["tagged_users"])
+            except Exception:
+                c["tagged_users"] = []
     for iss in items:
         top = [c for c in all_comments if c["issue_id"] == iss["id"] and not c["parent_id"]]
         for c in top:
