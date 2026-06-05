@@ -47,6 +47,10 @@
           <div v-for="c in (iss.comments || [])" :key="c.id" class="comment-item">
             <div class="comment-meta-row">
               <span class="badge badge-gray">{{ c.comment_by }}</span>
+              <template v-if="c.tagged_users && c.tagged_users.length">
+                <span class="material-symbols-outlined comment-tag-arrow">arrow_forward</span>
+                <span v-for="t in c.tagged_users" :key="t" class="badge comment-tag-badge">{{ t }}</span>
+              </template>
               <span v-if="c.requires_answer && !c.is_answered" class="badge-pending">
                 <span class="material-symbols-outlined" style="font-size:11px;vertical-align:-2px">hourglass_empty</span>
                 답변 대기
@@ -463,6 +467,19 @@ async function deleteComment(issueId, commentId) {
   color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
+}
+.comment-tag-arrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  vertical-align: middle;
+}
+.comment-tag-badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 99px;
 }
 .badge-pending {
   display: inline-flex;
