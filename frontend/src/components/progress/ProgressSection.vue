@@ -324,7 +324,7 @@ async function deleteComment(issueId, commentId) {
 }
 .comment-section-label .material-symbols-outlined { font-size: 14px; }
 .comment-item {
-  background: var(--gray-50);
+  background: var(--surface);
   border: 1px solid var(--outline);
   border-radius: var(--radius-md);
   padding: 10px 12px;
