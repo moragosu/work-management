@@ -20,6 +20,8 @@ class CommentCreate(BaseModel):
 
 class CommentUpdate(BaseModel):
     comment: str
+    tagged_users: list[str] = []
+    requires_answer: bool = False
 
 
 def _serialize(row: dict) -> dict:
@@ -133,11 +135,18 @@ def update_comment(issue_id: str, comment_id: str, body: CommentUpdate, user: di
         if not user.get("is_admin") and row["created_by"] != user["username"]:
             raise HTTPException(status_code=403, detail="본인이 작성한 댓글만 수정할 수 있습니다")
         updated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        tagged_json = json.dumps(body.tagged_users)
         conn.execute(
-            "UPDATE issue_comments SET comment=?, updated_at=? WHERE id=?",
-            (body.comment, updated_at, comment_id),
+            "UPDATE issue_comments SET comment=?, tagged_users=?, requires_answer=?, updated_at=? WHERE id=?",
+            (body.comment, tagged_json, int(body.requires_answer), updated_at, comment_id),
         )
-    return {**_serialize(dict(row)), "comment": body.comment, "updated_at": updated_at}
+    return {
+        **_serialize(dict(row)),
+        "comment": body.comment,
+        "tagged_users": body.tagged_users,
+        "requires_answer": int(body.requires_answer),
+        "updated_at": updated_at,
+    }
 
 
 @router.delete("/{issue_id}/comments/{comment_id}")

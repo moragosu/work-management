@@ -118,7 +118,9 @@
                   답변 요구
                 </label>
                 <button class="btn btn-ghost btn-xs" @click="cancelComment">취소</button>
-                <button class="btn btn-primary btn-xs" @click="submitComment(iss.id, null)" :disabled="!hasContent(newCommentText)">등록</button>
+                <button class="btn btn-primary btn-xs" @click="submitComment(iss.id, null)" :disabled="!hasContent(newCommentText)">
+                  {{ editingCommentId ? '저장' : '등록' }}
+                </button>
               </div>
             </div>
             <button v-else-if="commentingIssueId !== iss.id" class="btn-add-action mt-4" @click="startComment(iss.id)">
@@ -282,11 +284,18 @@ function startReplyToComment(issueId, commentId) {
 function cancelComment() {
   commentingIssueId.value = ''
   replyingToCommentId.value = ''
+  editingCommentId.value = ''
   newCommentText.value = ''
   commentTagged.value = []
   commentRequiresAnswer.value = false
 }
-function startEditComment(issueId, c) { commentingIssueId.value = issueId; editingCommentId.value = c.id; newCommentText.value = c.comment }
+function startEditComment(issueId, c) {
+  commentingIssueId.value = issueId
+  editingCommentId.value = c.id
+  newCommentText.value = c.comment
+  commentTagged.value = [...(c.tagged_users || [])]
+  commentRequiresAnswer.value = !!c.requires_answer
+}
 
 function toggleCommentTag(name) {
   const idx = commentTagged.value.indexOf(name)
@@ -306,14 +315,18 @@ async function submitComment(issueId, parentId) {
   if (!hasContent(newCommentText.value)) return
   try {
     if (editingCommentId.value) {
-      const { data } = await axios.put(`/api/issues/${issueId}/comments/${editingCommentId.value}`, { comment: newCommentText.value.trim() })
+      const { data } = await axios.put(`/api/issues/${issueId}/comments/${editingCommentId.value}`, {
+        comment: newCommentText.value.trim(),
+        tagged_users: [...commentTagged.value],
+        requires_answer: commentRequiresAnswer.value,
+      })
       emit('update:issues', _updateComments(issueId, comments =>
         comments.map(c => c.id === editingCommentId.value
           ? { ...c, ...data }
           : { ...c, replies: (c.replies || []).map(r => r.id === editingCommentId.value ? { ...r, ...data } : r) }
         )
       ))
-      editingCommentId.value = ''
+      cancelComment()
     } else {
       const { data } = await axios.post(`/api/issues/${issueId}/comments`, {
         comment: newCommentText.value.trim(),

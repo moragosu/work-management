@@ -28,8 +28,22 @@
       </div>
       <!-- 수정 폼 -->
       <div v-if="editingCommentId === c.id">
+        <div v-if="staffList.length > 0" class="comment-tag-row">
+          <span class="comment-tag-label">@태그</span>
+          <button
+            v-for="s in staffList.filter(s => s.name !== auth.user?.name)"
+            :key="s.id || s.name"
+            class="target-chip"
+            :class="{ active: editTagged.includes(s.name) }"
+            @click="toggleEditTag(s.name)"
+          >{{ s.name }}</button>
+        </div>
         <TiptapEditor v-model="editCommentText" height="100px" />
-        <div class="flex gap-4 mt-6" style="justify-content:flex-end">
+        <div class="flex gap-4 mt-6" style="align-items:center;justify-content:flex-end">
+          <label class="requires-answer-toggle">
+            <input type="checkbox" v-model="editRequiresAnswer" />
+            답변 요구
+          </label>
           <button class="btn btn-ghost btn-xs" @click="cancelEditComment">취소</button>
           <button class="btn btn-primary btn-xs" @click="saveEditComment(c.id)" :disabled="!hasContent(editCommentText)">저장</button>
         </div>
@@ -164,6 +178,8 @@ const requiresAnswer = ref(false)
 const editorRef = ref(null)
 const editingCommentId = ref('')
 const editCommentText = ref('')
+const editTagged = ref([])
+const editRequiresAnswer = ref(false)
 
 onMounted(async () => {
   await Promise.all([loadComments(), loadLegacyQA()])
@@ -244,17 +260,31 @@ async function submitComment(parentId) {
 function startEditComment(c) {
   editingCommentId.value = c.id
   editCommentText.value = c.comment
+  editTagged.value = [...(c.tagged_users || [])]
+  editRequiresAnswer.value = !!c.requires_answer
 }
 
 function cancelEditComment() {
   editingCommentId.value = ''
   editCommentText.value = ''
+  editTagged.value = []
+  editRequiresAnswer.value = false
+}
+
+function toggleEditTag(name) {
+  const idx = editTagged.value.indexOf(name)
+  if (idx === -1) editTagged.value.push(name)
+  else editTagged.value.splice(idx, 1)
 }
 
 async function saveEditComment(commentId) {
   if (!hasContent(editCommentText.value)) return
   try {
-    const { data } = await axios.put(`/api/tasks/${props.taskId}/comments/${commentId}`, { comment: editCommentText.value.trim() })
+    const { data } = await axios.put(`/api/tasks/${props.taskId}/comments/${commentId}`, {
+      comment: editCommentText.value.trim(),
+      tagged_users: [...editTagged.value],
+      requires_answer: editRequiresAnswer.value,
+    })
     comments.value = comments.value.map(c =>
       c.id === commentId
         ? { ...c, ...data }
