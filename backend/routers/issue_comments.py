@@ -163,6 +163,7 @@ def create_comment(issue_id: str, body: CommentCreate, user: dict = Depends(get_
                 notified.add(resolved)
 
     new_c["replies"] = []
+    data_store.bump_data_version()
     return new_c
 
 
@@ -215,6 +216,7 @@ def update_comment(issue_id: str, comment_id: str, body: CommentUpdate, user: di
                     data_store.insert_notification(resolved, "issue_comment", title, body.comment[:50], base_link)
                     notified.add(resolved)
 
+    data_store.bump_data_version()
     return {
         **_serialize(dict(row)),
         "comment": body.comment,
@@ -268,4 +270,5 @@ def delete_comment(issue_id: str, comment_id: str, user: dict = Depends(get_curr
                 data_store.insert_notification(resolved, "comment_tagged", title, renotify_parent["comment"][:50], link)
                 seen.add(resolved)
 
+    data_store.bump_data_version()
     return {"deleted": comment_id, "parent_unanswered": parent_id if renotify_parent else None}

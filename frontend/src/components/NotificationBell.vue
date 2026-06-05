@@ -177,6 +177,8 @@ function connectSSE() {
     if (e.data === 'new') {
       load()
       window.dispatchEvent(new Event('data-updated'))
+    } else if (e.data === 'refresh') {
+      window.dispatchEvent(new Event('data-updated'))
     }
   }
   es.onerror = () => {

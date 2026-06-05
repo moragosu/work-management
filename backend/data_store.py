@@ -162,6 +162,11 @@ CREATE TABLE IF NOT EXISTS notifications (
     is_read    INTEGER NOT NULL DEFAULT 0,
     created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS data_version (
+    id         INTEGER PRIMARY KEY CHECK (id = 1),
+    version    INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT
+);
 CREATE TABLE IF NOT EXISTS users (
     username               TEXT PRIMARY KEY,
     name                   TEXT NOT NULL DEFAULT '',
@@ -286,6 +291,8 @@ def init_db() -> None:
                     "UPDATE users SET task_ids=? WHERE username=? AND task_ids='[]'",
                     (json.dumps(ids, ensure_ascii=False), srow["user_id"])
                 )
+        # data_version 초기 행 (없으면 삽입)
+        conn.execute("INSERT OR IGNORE INTO data_version (id, version, updated_at) VALUES (1, 0, '')")
         # tasks.members[].staff_id → username 변환
         task_rows = conn.execute("SELECT id, members FROM tasks").fetchall()
         for row in task_rows:
@@ -306,6 +313,15 @@ def init_db() -> None:
                     "UPDATE tasks SET members=? WHERE id=?",
                     (json.dumps(members, ensure_ascii=False), row["id"])
                 )
+
+
+def bump_data_version() -> None:
+    """댓글/이슈 변경 시 호출 — 모든 SSE 클라이언트에게 갱신 신호를 보낸다."""
+    with get_conn() as conn:
+        conn.execute(
+            "UPDATE data_version SET version = version + 1, updated_at = ? WHERE id = 1",
+            (datetime.now().strftime("%Y-%m-%d %H:%M:%S"),)
+        )
 
 
 # ── 행 변환 헬퍼 ─────────────────────────────────────────────────────────────

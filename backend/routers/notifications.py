@@ -162,23 +162,31 @@ async def notification_stream(token: str = Query(...)):
         raise HTTPException(status_code=401, detail="사용자를 찾을 수 없습니다")
     username = row["username"]
 
-    def _check_new(since: str):
+    def _check_changes(since: str, last_ver: int):
         with data_store.get_conn() as conn:
-            return conn.execute(
+            new_notifs = conn.execute(
                 "SELECT id FROM notifications WHERE recipient=? AND created_at > ?",
                 (username, since)
             ).fetchall()
+            ver_row = conn.execute("SELECT version FROM data_version WHERE id=1").fetchone()
+            cur_ver = ver_row["version"] if ver_row else last_ver
+        return new_notifs, cur_ver
 
     async def event_generator():
         last_check = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        _, last_ver = await asyncio.to_thread(_check_changes, last_check, 0)
         yield "data: connected\n\n"
         while True:
             try:
                 await asyncio.sleep(3)
-                rows = await asyncio.to_thread(_check_new, last_check)
-                if rows:
+                new_notifs, cur_ver = await asyncio.to_thread(_check_changes, last_check, last_ver)
+                if new_notifs:
                     last_check = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    yield "data: new\n\n"
+                    last_ver = cur_ver
+                    yield "data: new\n\n"        # 알림 + 데이터 갱신
+                elif cur_ver != last_ver:
+                    last_ver = cur_ver
+                    yield "data: refresh\n\n"    # 알림 없이 데이터만 갱신
                 else:
                     yield ": keepalive\n\n"
             except asyncio.CancelledError:

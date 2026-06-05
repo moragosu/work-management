@@ -126,6 +126,7 @@ def create_task_comment(task_id: str, body: TaskCommentCreate, user: dict = Depe
         title = "과제에 댓글이 달렸습니다"
 
     new_c["replies"] = []
+    data_store.bump_data_version()
     return new_c
 
 
@@ -176,6 +177,7 @@ def update_task_comment(task_id: str, comment_id: str, body: TaskCommentUpdate, 
                     data_store.insert_notification(resolved, "task_comment", title, body.comment[:50], base_link)
                     notified.add(resolved)
 
+    data_store.bump_data_version()
     return {
         **_serialize(dict(row)),
         "comment": body.comment,
@@ -229,4 +231,5 @@ def delete_task_comment(task_id: str, comment_id: str, user: dict = Depends(get_
                 data_store.insert_notification(resolved, "comment_tagged", title, renotify_parent["comment"][:50], link)
                 seen.add(resolved)
 
+    data_store.bump_data_version()
     return {"deleted": comment_id, "parent_unanswered": parent_id if renotify_parent else None}

@@ -104,6 +104,7 @@ def create_issue(body: IssueCreate, user: dict = Depends(get_current_user)):
                 link,
             )
             notified.add(username)
+    data_store.bump_data_version()
     return new_item
 
 
@@ -115,6 +116,7 @@ def update_issue(issue_id: str, body: IssueUpdate):
             patch = body.model_dump(exclude_none=True)
             items[i] = {**item, **patch, "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
             _save(items)
+            data_store.bump_data_version()
             return items[i]
     raise HTTPException(status_code=404, detail="Issue not found")
 
@@ -128,4 +130,5 @@ def delete_issue(issue_id: str, user: dict = Depends(get_current_user)):
     if not user.get("is_admin") and target.get("created_by") != user["username"]:
         raise HTTPException(status_code=403, detail="본인이 작성한 이슈만 삭제할 수 있습니다")
     _save([i for i in items if i["id"] != issue_id])
+    data_store.bump_data_version()
     return {"deleted": issue_id}
