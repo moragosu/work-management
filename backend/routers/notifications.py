@@ -7,17 +7,18 @@ router = APIRouter()
 
 
 def _is_comment_unanswered(conn, link: str) -> bool:
-    """comment_tagged 알림 링크에서 commentId 추출 후 미답변 여부 반환."""
+    """comment_tagged 알림 링크에서 commentId 추출 후 미답변 여부 반환.
+    requires_answer가 해제됐거나 댓글이 삭제된 경우 False."""
     m = re.search(r'commentId=([^&]+)', link or "")
     if not m:
         return False
     cid = m.group(1)
-    row_tc = conn.execute("SELECT is_answered FROM task_comments WHERE id=?", (cid,)).fetchone()
-    row_ic = conn.execute("SELECT is_answered FROM issue_comments WHERE id=?", (cid,)).fetchone()
+    row_tc = conn.execute("SELECT requires_answer, is_answered FROM task_comments WHERE id=?", (cid,)).fetchone()
+    row_ic = conn.execute("SELECT requires_answer, is_answered FROM issue_comments WHERE id=?", (cid,)).fetchone()
     if row_tc:
-        return not row_tc["is_answered"]
+        return bool(row_tc["requires_answer"]) and not bool(row_tc["is_answered"])
     if row_ic:
-        return not row_ic["is_answered"]
+        return bool(row_ic["requires_answer"]) and not bool(row_ic["is_answered"])
     return False
 
 

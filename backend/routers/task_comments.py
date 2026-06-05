@@ -143,6 +143,12 @@ def update_task_comment(task_id: str, comment_id: str, body: TaskCommentUpdate, 
             "UPDATE task_comments SET comment=?, tagged_users=?, requires_answer=?, updated_at=? WHERE id=?",
             (body.comment, tagged_json, int(body.requires_answer), updated_at, comment_id),
         )
+        # requires_answer 해제 시 기존 comment_tagged 알림 자동 삭제
+        if row["requires_answer"] and not body.requires_answer:
+            conn.execute(
+                "DELETE FROM notifications WHERE type='comment_tagged' AND link LIKE ?",
+                (f"%commentId={comment_id}%",)
+            )
 
     # 수정 시 알림: 새로 추가된 tagged_users 또는 requires_answer가 켜진 경우
     if body.tagged_users:

@@ -147,6 +147,12 @@ def update_comment(issue_id: str, comment_id: str, body: CommentUpdate, user: di
             (body.comment, tagged_json, int(body.requires_answer), updated_at, comment_id),
         )
         issue_row = conn.execute("SELECT week FROM issues WHERE id=?", (issue_id,)).fetchone()
+        # requires_answer 해제 시 기존 comment_tagged 알림 자동 삭제
+        if row["requires_answer"] and not body.requires_answer:
+            conn.execute(
+                "DELETE FROM notifications WHERE type='comment_tagged' AND link LIKE ?",
+                (f"%commentId={comment_id}%",)
+            )
 
     # 수정 시 알림: 새로 추가된 tagged_users 또는 requires_answer가 켜진 경우
     if body.tagged_users and issue_row:
