@@ -40,18 +40,24 @@
 
         <!-- 댓글 영역 -->
         <div class="comment-section">
+          <div v-if="(iss.comments || []).length > 0" class="comment-section-label">
+            <span class="material-symbols-outlined">chat_bubble_outline</span>
+            댓글 {{ (iss.comments || []).length }}개
+          </div>
           <div v-for="c in (iss.comments || [])" :key="c.id" class="comment-item">
             <div class="comment-meta-row">
               <span class="badge badge-gray">{{ c.comment_by }}</span>
               <span class="meta-date">{{ (c.updated_at ?? c.created_at)?.slice(0, 19) }}</span>
               <span v-if="c.updated_at" class="meta-edited">수정됨</span>
-              <div v-if="!readonly" class="comment-actions" style="margin-left:auto">
+              <div v-if="!readonly" class="comment-actions">
                 <button class="btn btn-ghost btn-xs" @click="startReplyToComment(iss.id, c.id)">↩ 답글</button>
                 <button v-if="c.created_by === auth.user?.username || auth.isAdmin" class="btn btn-ghost btn-xs" @click="startEditComment(iss.id, c)">수정</button>
                 <button v-if="c.created_by === auth.user?.username || auth.isAdmin" class="btn btn-danger btn-xs" @click="deleteComment(iss.id, c.id)">삭제</button>
               </div>
             </div>
-            <TiptapPreview :modelValue="c.comment" />
+            <div class="comment-body">
+              <TiptapPreview :modelValue="c.comment" />
+            </div>
             <!-- 대댓글 -->
             <div v-for="r in (c.replies || [])" :key="r.id" class="reply-item">
               <div class="reply-indent-line"></div>
@@ -60,12 +66,14 @@
                   <span class="badge badge-gray">{{ r.comment_by }}</span>
                   <span class="meta-date">{{ (r.updated_at ?? r.created_at)?.slice(0, 19) }}</span>
                   <span v-if="r.updated_at" class="meta-edited">수정됨</span>
-                  <div v-if="!readonly" class="comment-actions" style="margin-left:auto">
+                  <div v-if="!readonly" class="comment-actions">
                     <button v-if="r.created_by === auth.user?.username || auth.isAdmin" class="btn btn-ghost btn-xs" @click="startEditComment(iss.id, r)">수정</button>
                     <button v-if="r.created_by === auth.user?.username || auth.isAdmin" class="btn btn-danger btn-xs" @click="deleteComment(iss.id, r.id)">삭제</button>
                   </div>
                 </div>
-                <TiptapPreview :modelValue="r.comment" />
+                <div class="comment-body">
+                  <TiptapPreview :modelValue="r.comment" />
+                </div>
               </div>
             </div>
             <!-- 대댓글 입력 폼 -->
@@ -301,30 +309,41 @@ async function deleteComment(issueId, commentId) {
 }
 .mt-4 { margin-top: 4px; }
 .comment-section {
-  margin-top: 10px;
-  padding-top: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
   border-top: 1px dashed var(--outline);
 }
-.comment-item {
+.comment-section-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
   margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--outline);
 }
-.comment-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.comment-section-label .material-symbols-outlined { font-size: 14px; }
+.comment-item {
+  background: var(--gray-50);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 6px;
+}
+.comment-item:last-child { margin-bottom: 0; }
 .comment-meta-row {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   font-size: var(--fs-xs);
 }
-.comment-meta-row:hover .comment-actions { opacity: 1; }
-.comment-actions { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; }
+.comment-actions { display: flex; gap: 2px; flex-shrink: 0; margin-left: auto; }
+.comment-body { font-size: var(--fs-sm); }
 .reply-item {
   display: flex;
   gap: 8px;
-  margin-top: 6px;
-  padding-left: 8px;
+  margin-top: 8px;
 }
 .reply-indent-line {
   width: 2px;
@@ -334,12 +353,18 @@ async function deleteComment(issueId, commentId) {
   align-self: stretch;
   min-height: 20px;
 }
-.reply-body { flex: 1; min-width: 0; }
+.reply-body {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
 .reply-editor-form {
   display: flex;
   gap: 8px;
   margin-top: 8px;
-  padding-left: 8px;
 }
 .comment-editor-form { margin-top: 8px; }
 
