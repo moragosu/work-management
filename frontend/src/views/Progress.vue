@@ -182,7 +182,7 @@
                     </div>
                     <ProgressSection
                       :issues="leftIssueMap[st.id] || []"
-                      :staff-list="staffList"
+                      :staff-list="allChipTargets"
                       :task-id="st.id"
                       :week="leftWeek"
                       @update:issues="iss => onLeftIssuesUpdate(st.id, iss)"
@@ -190,7 +190,7 @@
                     <TaskCommentSection
                       :task-id="st.id"
                       :week="leftWeek"
-                      :staff-list="staffList"
+                      :staff-list="allChipTargets"
                       :qa-leaders="qaLeaders"
                     />
                   </template>
@@ -222,7 +222,7 @@
                 </div>
                 <ProgressSection
                   :issues="leftIssueMap[task.id] || []"
-                  :staff-list="staffList"
+                  :staff-list="allChipTargets"
                   :task-id="task.id"
                   :week="leftWeek"
                   @update:issues="iss => onLeftIssuesUpdate(task.id, iss)"
@@ -230,7 +230,7 @@
                 <TaskCommentSection
                   :task-id="task.id"
                   :week="leftWeek"
-                  :staff-list="staffList"
+                  :staff-list="allChipTargets"
                   :qa-leaders="qaLeaders"
                 />
               </template>
@@ -379,7 +379,7 @@
 
                     <ProgressSection
                       :issues="issueMap[st.id] || []"
-                      :staff-list="staffList"
+                      :staff-list="allChipTargets"
                       :task-id="st.id"
                       :week="selectedWeek"
                       @update:issues="iss => onIssuesUpdate(st.id, iss)"
@@ -388,7 +388,7 @@
                     <TaskCommentSection
                       :task-id="st.id"
                       :week="selectedWeek"
-                      :staff-list="staffList"
+                      :staff-list="allChipTargets"
                       :qa-leaders="qaLeaders"
                     />
                   </template>
@@ -429,7 +429,7 @@
 
                 <ProgressSection
                   :issues="issueMap[task.id] || []"
-                  :staff-list="staffList"
+                  :staff-list="allChipTargets"
                   :task-id="task.id"
                   :week="selectedWeek"
                   @update:issues="iss => onIssuesUpdate(task.id, iss)"
@@ -438,7 +438,7 @@
                 <TaskCommentSection
                   :task-id="task.id"
                   :week="selectedWeek"
-                  :staff-list="staffList"
+                  :staff-list="allChipTargets"
                   :qa-leaders="qaLeaders"
                 />
               </template>
@@ -472,6 +472,13 @@ const objectives = ref([])
 const staffList = ref([])
 const qaLeaders = ref([])
 const loading = ref(false)
+
+// staffList + qaLeaders 병합 (이름 기준 중복 제거, 리더 우선)
+const allChipTargets = computed(() => {
+  const leaderNames = new Set(qaLeaders.value.map(l => l.name))
+  const members = staffList.value.filter(s => !leaderNames.has(s.name))
+  return [...qaLeaders.value, ...members]
+})
 const { toastMsg, showToast, toastError } = useToast()
 
 // ── 패널 상태: 'split' | 'left' | 'right' ──
@@ -742,8 +749,8 @@ async function loadLeftIssues() {
 
 // ── 포커스 이동 ──
 async function handleFocusQuery() {
-  const { focusQuestion, focusIssue, focusIssueId, focusTask } = route.query
-  if (!focusQuestion && !focusIssue && !focusIssueId && !focusTask) return
+  const { focusQuestion, focusIssue, focusIssueId, focusTask, taskId, commentId } = route.query
+  if (!focusQuestion && !focusIssue && !focusIssueId && !focusTask && !taskId && !commentId) return
 
   if (focusQuestion) {
     const q = qnaList.value.find(q => q.id === focusQuestion)
@@ -766,21 +773,30 @@ async function handleFocusQuery() {
       expandedSubTaskIds.value = new Set([...expandedSubTaskIds.value, focusTask])
     }
   }
+  if (taskId) {
+    const isSubTask = tasks.value.some(t => (t.sub_tasks || []).some(st => st.id === taskId))
+    if (isSubTask) {
+      expandedSubTaskIds.value = new Set([...expandedSubTaskIds.value, taskId])
+    }
+  }
 
   await nextTick()
   await new Promise(r => setTimeout(r, 150))
 
-  const targetId = focusQuestion
-    ? `qa-${focusQuestion}`
-    : focusIssueId
-      ? `issue-${focusIssueId}`
-      : `task-${focusIssue || focusTask}`
+  // commentId가 있으면 해당 댓글로 직접 이동, 없으면 이슈/과제/질문으로 이동
+  const primaryId = commentId
+    ? `comment-${commentId}`
+    : focusQuestion
+      ? `qa-${focusQuestion}`
+      : focusIssueId
+        ? `issue-${focusIssueId}`
+        : `task-${focusIssue || focusTask || taskId}`
 
   // DOM이 준비될 때까지 최대 3회 재시도
   let el = null
   for (const delay of [0, 200, 400]) {
     if (delay) await new Promise(r => setTimeout(r, delay))
-    el = document.getElementById(targetId)
+    el = document.getElementById(primaryId)
     if (el) break
   }
   if (!el) return

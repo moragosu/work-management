@@ -44,7 +44,7 @@
             <span class="material-symbols-outlined">chat_bubble_outline</span>
             댓글 {{ (iss.comments || []).length }}개
           </div>
-          <div v-for="c in (iss.comments || [])" :key="c.id" class="comment-item">
+          <div v-for="c in (iss.comments || [])" :key="c.id" :id="`comment-${c.id}`" class="comment-item">
             <div class="comment-meta-row">
               <span class="badge badge-gray">{{ c.comment_by }}</span>
               <template v-if="c.tagged_users && c.tagged_users.length">
@@ -113,12 +113,12 @@
               </div>
               <TiptapEditor ref="commentEditorRef" v-model="newCommentText" height="120px" placeholder="댓글을 입력하세요..." />
               <div class="flex gap-4 mt-6" style="align-items:center;justify-content:flex-end">
-                <label class="requires-answer-toggle">
+                <label v-if="auth.isLeader" class="requires-answer-toggle">
                   <input type="checkbox" v-model="commentRequiresAnswer" />
                   답변 요구
                 </label>
                 <button class="btn btn-ghost btn-xs" @click="cancelComment">취소</button>
-                <button class="btn btn-primary btn-xs" @click="submitComment(iss.id, null)" :disabled="!hasContent(newCommentText)">
+                <button class="btn btn-primary btn-xs" @click="submitComment(iss.id, null)" :disabled="!hasContent(newCommentText) || (staffList.length > 0 && commentTagged.length === 0)">
                   {{ editingCommentId ? '저장' : '등록' }}
                 </button>
               </div>

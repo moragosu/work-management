@@ -6,7 +6,7 @@
     </div>
 
     <!-- 댓글 목록 -->
-    <div v-for="c in comments" :key="c.id" class="comment-item">
+    <div v-for="c in comments" :key="c.id" :id="`comment-${c.id}`" class="comment-item">
       <div class="comment-meta-row">
         <span class="badge badge-gray">{{ c.comment_by }}</span>
         <template v-if="c.tagged_users && c.tagged_users.length">
@@ -38,14 +38,14 @@
             @click="toggleEditTag(s.name)"
           >{{ s.name }}</button>
         </div>
-        <TiptapEditor v-model="editCommentText" height="100px" />
+        <TiptapEditor ref="editEditorRef" v-model="editCommentText" height="100px" />
         <div class="flex gap-4 mt-6" style="align-items:center;justify-content:flex-end">
-          <label class="requires-answer-toggle">
+          <label v-if="auth.isLeader" class="requires-answer-toggle">
             <input type="checkbox" v-model="editRequiresAnswer" />
             답변 요구
           </label>
           <button class="btn btn-ghost btn-xs" @click="cancelEditComment">취소</button>
-          <button class="btn btn-primary btn-xs" @click="saveEditComment(c.id)" :disabled="!hasContent(editCommentText)">저장</button>
+          <button class="btn btn-primary btn-xs" @click="saveEditComment(c.id)" :disabled="!hasContent(editCommentText) || (staffList.length > 0 && editTagged.length === 0)">저장</button>
         </div>
       </div>
       <div v-else class="comment-body">
@@ -105,12 +105,12 @@
         </div>
         <TiptapEditor ref="editorRef" v-model="newCommentText" height="120px" placeholder="댓글을 입력하세요..." />
         <div class="flex gap-4 mt-6" style="align-items:center;justify-content:flex-end">
-          <label class="requires-answer-toggle">
+          <label v-if="auth.isLeader" class="requires-answer-toggle">
             <input type="checkbox" v-model="requiresAnswer" />
             답변 요구
           </label>
           <button class="btn btn-ghost btn-xs" @click="cancelComment">취소</button>
-          <button class="btn btn-primary btn-xs" @click="submitComment(null)" :disabled="!hasContent(newCommentText)">등록</button>
+          <button class="btn btn-primary btn-xs" @click="submitComment(null)" :disabled="!hasContent(newCommentText) || (staffList.length > 0 && tagged.length === 0)">등록</button>
         </div>
       </div>
       <button v-else-if="!commenting" class="btn-add-action mt-4" @click="startComment">
@@ -180,6 +180,7 @@ const editingCommentId = ref('')
 const editCommentText = ref('')
 const editTagged = ref([])
 const editRequiresAnswer = ref(false)
+const editEditorRef = ref(null)
 
 onMounted(async () => {
   await Promise.all([loadComments(), loadLegacyQA()])
@@ -273,8 +274,12 @@ function cancelEditComment() {
 
 function toggleEditTag(name) {
   const idx = editTagged.value.indexOf(name)
-  if (idx === -1) editTagged.value.push(name)
-  else editTagged.value.splice(idx, 1)
+  if (idx === -1) {
+    editTagged.value.push(name)
+    editEditorRef.value?.insertText(` @${name} `)
+  } else {
+    editTagged.value.splice(idx, 1)
+  }
 }
 
 async function saveEditComment(commentId) {
