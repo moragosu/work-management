@@ -91,32 +91,33 @@ def create_comment(issue_id: str, body: CommentCreate, user: dict = Depends(get_
 
     if issue_row:
         notified = {user["username"]}
-        link = f"/progress?week={issue_row['week']}&focusIssueId={issue_id}"
+        base_link = f"/progress?week={issue_row['week']}&focusIssueId={issue_id}"
         if body.requires_answer:
             title = "답변을 요청하는 댓글이 달렸습니다"
+            tagged_link = f"{base_link}&commentId={new_c['id']}"
         elif body.parent_id:
             title = "이슈 댓글에 답글이 달렸습니다"
         else:
             title = "이슈에 댓글이 달렸습니다"
 
-        # 답변 요구 댓글: tagged_users에게 우선 알림
+        # 답변 요구 댓글: tagged_users에게 우선 알림 (comment_tagged 타입으로 보호)
         if body.requires_answer:
             for name in body.tagged_users:
                 resolved = data_store.get_username_for_notification(name)
                 if resolved and resolved not in notified:
-                    data_store.insert_notification(resolved, "issue_comment", title, body.comment[:50], link)
+                    data_store.insert_notification(resolved, "comment_tagged", title, body.comment[:50], tagged_link)
                     notified.add(resolved)
 
         for m in members:
             username = m.get("username") or data_store.get_username_for_notification(m.get("name", ""))
             if username and username not in notified:
-                data_store.insert_notification(username, "issue_comment", title, body.comment[:50], link)
+                data_store.insert_notification(username, "issue_comment", title, body.comment[:50], base_link)
                 notified.add(username)
 
         for r in existing:
             resolved = data_store.get_username_for_notification(r["comment_by"])
             if resolved and resolved not in notified:
-                data_store.insert_notification(resolved, "issue_comment", title, body.comment[:50], link)
+                data_store.insert_notification(resolved, "issue_comment", title, body.comment[:50], base_link)
                 notified.add(resolved)
 
     new_c["replies"] = []
@@ -141,12 +142,41 @@ def update_comment(issue_id: str, comment_id: str, body: CommentUpdate, user: di
 
 @router.delete("/{issue_id}/comments/{comment_id}")
 def delete_comment(issue_id: str, comment_id: str, user: dict = Depends(get_current_user)):
+    renotify_parent = None
+    parent_issue_week = None
     with data_store.get_conn() as conn:
-        row = conn.execute("SELECT created_by, parent_id FROM issue_comments WHERE id=?", (comment_id,)).fetchone()
+        row = conn.execute("SELECT * FROM issue_comments WHERE id=?", (comment_id,)).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Comment not found")
         if not user.get("is_admin") and row["created_by"] != user["username"]:
             raise HTTPException(status_code=403, detail="본인이 작성한 댓글만 삭제할 수 있습니다")
-        # 댓글 삭제 시 대댓글도 함께 삭제
-        conn.execute("DELETE FROM issue_comments WHERE id=? OR parent_id=?", (comment_id, comment_id))
-    return {"deleted": comment_id}
+
+        parent_id = row["parent_id"]
+        if parent_id:
+            sibling_cnt = conn.execute(
+                "SELECT COUNT(*) as cnt FROM issue_comments WHERE parent_id=? AND id!=?",
+                (parent_id, comment_id)
+            ).fetchone()["cnt"]
+            conn.execute("DELETE FROM issue_comments WHERE id=?", (comment_id,))
+            if sibling_cnt == 0:
+                parent = conn.execute("SELECT * FROM issue_comments WHERE id=?", (parent_id,)).fetchone()
+                if parent and parent["requires_answer"]:
+                    conn.execute("UPDATE issue_comments SET is_answered=0 WHERE id=?", (parent_id,))
+                    renotify_parent = dict(parent)
+                    issue_row = conn.execute("SELECT week FROM issues WHERE id=?", (issue_id,)).fetchone()
+                    parent_issue_week = issue_row["week"] if issue_row else None
+        else:
+            conn.execute("DELETE FROM issue_comments WHERE id=? OR parent_id=?", (comment_id, comment_id))
+
+    if renotify_parent and parent_issue_week:
+        tagged = json.loads(renotify_parent.get("tagged_users") or "[]")
+        link = f"/progress?week={parent_issue_week}&focusIssueId={issue_id}&commentId={parent_id}"
+        title = "답변을 요청하는 댓글이 달렸습니다"
+        seen = set()
+        for name in tagged:
+            resolved = data_store.get_username_for_notification(name)
+            if resolved and resolved not in seen:
+                data_store.insert_notification(resolved, "comment_tagged", title, renotify_parent["comment"][:50], link)
+                seen.add(resolved)
+
+    return {"deleted": comment_id, "parent_unanswered": parent_id if renotify_parent else None}

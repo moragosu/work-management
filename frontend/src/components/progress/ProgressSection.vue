@@ -337,9 +337,15 @@ async function submitComment(issueId, parentId) {
 async function deleteComment(issueId, commentId) {
   if (!confirm('삭제하시겠습니까?')) return
   try {
-    await axios.delete(`/api/issues/${issueId}/comments/${commentId}`)
+    const { data } = await axios.delete(`/api/issues/${issueId}/comments/${commentId}`)
     emit('update:issues', _updateComments(issueId, comments =>
-      comments.filter(c => c.id !== commentId).map(c => ({ ...c, replies: (c.replies || []).filter(r => r.id !== commentId) }))
+      comments
+        .filter(c => c.id !== commentId)
+        .map(c => {
+          const filtered = (c.replies || []).filter(r => r.id !== commentId)
+          const unanswered = data.parent_unanswered === c.id
+          return { ...c, replies: filtered, is_answered: unanswered ? 0 : c.is_answered }
+        })
     ))
   } catch (e) { toastError(e, '삭제 실패') }
 }

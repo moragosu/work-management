@@ -102,13 +102,13 @@ def create_task_comment(task_id: str, body: TaskCommentCreate, user: dict = Depe
 
     # 알림 발송
     notified = {user["username"]}
-    link = f"/progress?week={body.week}&taskId={task_id}"
+    link = f"/progress?week={body.week}&taskId={task_id}&commentId={new_c['id']}"
     if body.requires_answer:
         title = "답변을 요청하는 과제 댓글이 달렸습니다"
         for name in body.tagged_users:
             resolved = data_store.get_username_for_notification(name)
             if resolved and resolved not in notified:
-                data_store.insert_notification(resolved, "issue_comment", title, body.comment[:50], link)
+                data_store.insert_notification(resolved, "comment_tagged", title, body.comment[:50], link)
                 notified.add(resolved)
     elif body.parent_id:
         title = "과제 댓글에 답글이 달렸습니다"
@@ -137,11 +137,41 @@ def update_task_comment(task_id: str, comment_id: str, body: TaskCommentUpdate, 
 
 @router.delete("/{task_id}/comments/{comment_id}")
 def delete_task_comment(task_id: str, comment_id: str, user: dict = Depends(get_current_user)):
+    renotify_parent = None
     with data_store.get_conn() as conn:
-        row = conn.execute("SELECT created_by, parent_id FROM task_comments WHERE id=?", (comment_id,)).fetchone()
+        row = conn.execute("SELECT * FROM task_comments WHERE id=?", (comment_id,)).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Comment not found")
         if not user.get("is_admin") and row["created_by"] != user["username"]:
             raise HTTPException(status_code=403, detail="본인이 작성한 댓글만 삭제할 수 있습니다")
-        conn.execute("DELETE FROM task_comments WHERE id=? OR parent_id=?", (comment_id, comment_id))
-    return {"deleted": comment_id}
+
+        parent_id = row["parent_id"]
+        if parent_id:
+            # 답글 삭제 시: 남은 형제 답글 수 확인
+            sibling_cnt = conn.execute(
+                "SELECT COUNT(*) as cnt FROM task_comments WHERE parent_id=? AND id!=?",
+                (parent_id, comment_id)
+            ).fetchone()["cnt"]
+            conn.execute("DELETE FROM task_comments WHERE id=?", (comment_id,))
+            if sibling_cnt == 0:
+                # 남은 답글 없음 → 부모 is_answered 복원
+                parent = conn.execute("SELECT * FROM task_comments WHERE id=?", (parent_id,)).fetchone()
+                if parent and parent["requires_answer"]:
+                    conn.execute("UPDATE task_comments SET is_answered=0 WHERE id=?", (parent_id,))
+                    renotify_parent = dict(parent)
+        else:
+            conn.execute("DELETE FROM task_comments WHERE id=? OR parent_id=?", (comment_id, comment_id))
+
+    # 부모 댓글 미답변 복원 시 재알림 발송 (태그된 모든 사람에게 재발송)
+    if renotify_parent:
+        tagged = json.loads(renotify_parent.get("tagged_users") or "[]")
+        link = f"/progress?week={renotify_parent['week']}&taskId={task_id}&commentId={parent_id}"
+        title = "답변을 요청하는 과제 댓글이 달렸습니다"
+        seen = set()
+        for name in tagged:
+            resolved = data_store.get_username_for_notification(name)
+            if resolved and resolved not in seen:
+                data_store.insert_notification(resolved, "comment_tagged", title, renotify_parent["comment"][:50], link)
+                seen.add(resolved)
+
+    return {"deleted": comment_id, "parent_unanswered": parent_id if renotify_parent else None}

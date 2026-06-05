@@ -363,7 +363,7 @@ def insert_notification(recipient: str, ntype: str, title: str, message: str, li
             (nid, recipient, ntype, title, message, link, datetime.now().isoformat()),
         )
         # 50개 초과 시 오래된 것부터 삭제
-        # 단, 미답변 question_tagged 알림은 삭제 대상에서 제외
+        # 단, 미답변 question_tagged / comment_tagged 알림은 삭제 대상에서 제외
         all_notifs = conn.execute(
             "SELECT id, type, link FROM notifications WHERE recipient=? ORDER BY created_at ASC",
             (recipient,)
@@ -372,9 +372,7 @@ def insert_notification(recipient: str, ntype: str, title: str, message: str, li
         if total > NOTIFICATION_LIMIT:
             deletable = []
             for n in all_notifs:
-                if n["type"] != "question_tagged":
-                    deletable.append(n["id"])
-                else:
+                if n["type"] == "question_tagged":
                     m = re.search(r'focusQuestion=([^&]+)', n["link"] or "")
                     if m:
                         has_answer = conn.execute(
@@ -384,6 +382,23 @@ def insert_notification(recipient: str, ntype: str, title: str, message: str, li
                             deletable.append(n["id"])
                     else:
                         deletable.append(n["id"])
+                elif n["type"] == "comment_tagged":
+                    m = re.search(r'commentId=([^&]+)', n["link"] or "")
+                    if m:
+                        cid = m.group(1)
+                        row_tc = conn.execute(
+                            "SELECT is_answered FROM task_comments WHERE id=?", (cid,)
+                        ).fetchone()
+                        row_ic = conn.execute(
+                            "SELECT is_answered FROM issue_comments WHERE id=?", (cid,)
+                        ).fetchone()
+                        answered = (row_tc and row_tc["is_answered"]) or (row_ic and row_ic["is_answered"])
+                        if answered:
+                            deletable.append(n["id"])
+                    else:
+                        deletable.append(n["id"])
+                else:
+                    deletable.append(n["id"])
             to_delete = deletable[:total - NOTIFICATION_LIMIT]
             if to_delete:
                 ph = ",".join("?" * len(to_delete))

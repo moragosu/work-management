@@ -264,10 +264,15 @@ async function saveEditComment(commentId) {
 async function deleteComment(commentId) {
   if (!confirm('삭제하시겠습니까?')) return
   try {
-    await axios.delete(`/api/tasks/${props.taskId}/comments/${commentId}`)
+    const { data } = await axios.delete(`/api/tasks/${props.taskId}/comments/${commentId}`)
     comments.value = comments.value
       .filter(c => c.id !== commentId)
-      .map(c => ({ ...c, replies: (c.replies || []).filter(r => r.id !== commentId) }))
+      .map(c => {
+        const filtered = (c.replies || []).filter(r => r.id !== commentId)
+        // 답글 삭제로 부모가 미답변 복원된 경우
+        const unanswered = data.parent_unanswered === c.id
+        return { ...c, replies: filtered, is_answered: unanswered ? 0 : c.is_answered }
+      })
     showToast('삭제되었습니다')
   } catch (e) { toastError(e, '삭제 실패') }
 }
