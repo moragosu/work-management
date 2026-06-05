@@ -43,8 +43,9 @@ const loading = ref(true)
 const TYPE_ICONS = {
   question_tagged: 'forum',
   answer_received: 'chat_bubble',
-  issue_assigned: 'warning',
-  notice_updated: 'campaign',
+  issue_assigned:  'warning',
+  issue_comment:   'comment',
+  notice_updated:  'campaign',
 }
 
 function typeIcon(type) {

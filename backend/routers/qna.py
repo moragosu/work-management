@@ -241,6 +241,34 @@ def create_reply(answer_id: str, body: ReplyCreate, user: dict = Depends(get_cur
             "INSERT INTO answer_replies (id,answer_id,reply,reply_by,created_by,created_at) VALUES (?,?,?,?,?,?)",
             (new_r["id"], answer_id, body.reply, body.reply_by, user["username"], new_r["created_at"]),
         )
+
+    questions, answers = _load()
+    target_a = next((a for a in answers if a["id"] == answer_id), None)
+    if target_a:
+        target_q = next((q for q in questions if q["id"] == target_a["question_id"]), None)
+        if target_q:
+            with data_store.get_conn() as conn:
+                existing_replies = conn.execute(
+                    "SELECT DISTINCT reply_by FROM answer_replies WHERE answer_id=? AND id!=?",
+                    (answer_id, new_r["id"])
+                ).fetchall()
+            link = f"/progress?week={target_q.get('week','')}&focusQuestion={target_q['id']}"
+            notified = {user["username"]}
+            candidates = (
+                [target_a["answer_by"], target_q.get("questioner", "")]
+                + [r["reply_by"] for r in existing_replies]
+            )
+            for name in candidates:
+                if not name:
+                    continue
+                resolved = data_store.get_username_for_notification(name)
+                if resolved and resolved not in notified:
+                    data_store.insert_notification(
+                        resolved, "answer_received",
+                        "답변에 대댓글이 달렸습니다", body.reply[:50], link
+                    )
+                    notified.add(resolved)
+
     return new_r
 
 

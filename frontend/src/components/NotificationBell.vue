@@ -60,13 +60,15 @@ const unreadCount = computed(() => items.value.filter(n => !n.is_read).length)
 const TYPE_ICONS = {
   question_tagged: 'forum',
   answer_received: 'chat_bubble',
-  issue_assigned: 'warning',
-  notice_updated: 'campaign',
+  issue_assigned:  'warning',
+  issue_comment:   'comment',
+  notice_updated:  'campaign',
 }
 const TYPE_COLORS = {
   question_tagged: '#2563eb',
   answer_received: '#16a34a',
   issue_assigned:  '#d97706',
+  issue_comment:   '#0891b2',
   notice_updated:  '#7c3aed',
 }
 function typeIcon(type)  { return TYPE_ICONS[type]  || 'notifications' }
