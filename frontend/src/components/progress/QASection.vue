@@ -475,11 +475,19 @@ async function deleteReply(answerId, replyId) {
   flex-direction: column;
   gap: 8px;
 }
-.question-row,
+.question-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
 .answer-row {
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
 }
 .qa-content {
   flex: 1;
@@ -495,8 +503,12 @@ async function deleteReply(answerId, replyId) {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  padding: 6px 8px 6px 28px;
+  padding: 8px 10px 8px 28px;
   position: relative;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-sm);
+  margin-left: 8px;
 }
 .reply-line {
   position: absolute;
