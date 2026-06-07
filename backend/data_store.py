@@ -167,6 +167,18 @@ CREATE TABLE IF NOT EXISTS data_version (
     version    INTEGER NOT NULL DEFAULT 0,
     updated_at TEXT
 );
+CREATE TABLE IF NOT EXISTS deleted_issues (
+    id                TEXT PRIMARY KEY,
+    issue_id          TEXT NOT NULL,
+    task_id           TEXT NOT NULL DEFAULT '',
+    week              TEXT NOT NULL DEFAULT '',
+    issue             TEXT NOT NULL DEFAULT '',
+    assignee          TEXT NOT NULL DEFAULT '',
+    created_by        TEXT NOT NULL DEFAULT '',
+    deleted_by        TEXT NOT NULL DEFAULT '',
+    deleted_at        TEXT NOT NULL,
+    comments_snapshot TEXT NOT NULL DEFAULT '[]'
+);
 CREATE TABLE IF NOT EXISTS users (
     username               TEXT PRIMARY KEY,
     name                   TEXT NOT NULL DEFAULT '',

@@ -129,7 +129,26 @@ def delete_issue(issue_id: str, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Issue not found")
     if not user.get("is_admin") and target.get("created_by") != user["username"]:
         raise HTTPException(status_code=403, detail="본인이 작성한 이슈만 삭제할 수 있습니다")
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with data_store.get_conn() as conn:
+        # 댓글 스냅샷 수집 (대댓글 포함)
+        all_c = [dict(r) for r in conn.execute(
+            "SELECT * FROM issue_comments WHERE issue_id=? ORDER BY created_at", (issue_id,)
+        ).fetchall()]
+        for c in all_c:
+            if isinstance(c.get("tagged_users"), str):
+                try: c["tagged_users"] = json.loads(c["tagged_users"])
+                except Exception: c["tagged_users"] = []
+        top_c = [c for c in all_c if not c["parent_id"]]
+        for c in top_c:
+            c["replies"] = [r for r in all_c if r["parent_id"] == c["id"]]
+        # deleted_issues 저장
+        conn.execute(
+            "INSERT INTO deleted_issues (id,issue_id,task_id,week,issue,assignee,created_by,deleted_by,deleted_at,comments_snapshot) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (short_uuid("D"), issue_id, target.get("task_id",""), target.get("week",""),
+             target.get("issue",""), target.get("assignee",""), target.get("created_by",""),
+             user["username"], now, json.dumps(top_c, ensure_ascii=False))
+        )
         # requires_answer 댓글의 comment_tagged 알림 정리
         req_rows = conn.execute(
             "SELECT id FROM issue_comments WHERE issue_id=? AND requires_answer=1 AND parent_id IS NULL",

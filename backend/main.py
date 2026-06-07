@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload, settings, issues, issue_comments, task_comments, go, feedback, auth, notifications
+from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload, settings, issues, issue_comments, task_comments, go, feedback, auth, notifications, deleted_issues
 import uvicorn
 import os
 import data_store
@@ -42,6 +42,7 @@ app.include_router(task_comments.router_global, prefix="/api/task-comments", tag
 app.include_router(feedback.router, prefix="/api/feedback", tags=["Feedback"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
+app.include_router(deleted_issues.router, prefix="/api/deleted-issues", tags=["DeletedIssues"])
 app.include_router(go.router, prefix="/go", tags=["ShortLink"])
 app.include_router(go.api_router, prefix="/api/go", tags=["ShortLink"])
 
