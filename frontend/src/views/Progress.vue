@@ -600,6 +600,8 @@ async function onWeekChange() {
     loadQnA(), loadLinks(), loadIssues(),
     loadLeftQnA(), loadLeftLinks(), loadLeftIssues(),
   ])
+  await nextTick()
+  scheduleSyncRetries()
 }
 
 // ── 헬퍼 ──
@@ -840,9 +842,10 @@ async function fetchAll() {
   await handleFocusQuery()
 }
 
-function onDataUpdated() {
-  loadIssues()
-  loadLeftIssues()
+async function onDataUpdated() {
+  await Promise.all([loadIssues(), loadLeftIssues()])
+  await nextTick()
+  scheduleSyncRetries()
 }
 
 onMounted(() => {
@@ -864,6 +867,49 @@ watch(() => route.query, async (q, prev) => {
     await handleFocusQuery()
   }
 })
+
+// ── 소과제 높이 동기화 ──
+// split 모드에서 같은 과제의 소과제끼리 세로 위치가 맞도록 min-height 동기화
+function syncSubTaskHeights() {
+  if (panelState.value !== 'split') {
+    document.querySelectorAll('.task-row .sub-task-section').forEach(el => { el.style.minHeight = '' })
+    return
+  }
+
+  const pairs = []
+  document.querySelectorAll('.task-row').forEach(row => {
+    const cells = row.querySelectorAll(':scope > .task-cell')
+    if (cells.length < 2) return
+    const leftSubs = [...cells[0].querySelectorAll('.sub-task-section')]
+    const rightSubs = [...cells[1].querySelectorAll('.sub-task-section')]
+    ;[...leftSubs, ...rightSubs].forEach(el => { el.style.minHeight = '' })
+    const count = Math.min(leftSubs.length, rightSubs.length)
+    for (let i = 0; i < count; i++) pairs.push([leftSubs[i], rightSubs[i]])
+  })
+
+  // 읽기 → 쓰기 분리로 reflow 최소화
+  const heights = pairs.map(([l, r]) => [l.offsetHeight, r.offsetHeight])
+  pairs.forEach(([l, r], i) => {
+    const maxH = Math.max(heights[i][0], heights[i][1])
+    l.style.minHeight = maxH + 'px'
+    r.style.minHeight = maxH + 'px'
+  })
+}
+
+// 자식 컴포넌트(TaskCommentSection 등)가 비동기 데이터 로드 후 높이가 확정될 때까지
+// 500ms / 1500ms 두 차례 재동기화
+const _syncTimers = []
+function scheduleSyncRetries() {
+  _syncTimers.forEach(clearTimeout)
+  _syncTimers.length = 0
+  _syncTimers.push(setTimeout(syncSubTaskHeights, 500))
+  _syncTimers.push(setTimeout(syncSubTaskHeights, 1500))
+}
+
+// 소과제 접기/펼치기, 패널 전환 시 재동기화
+watch(expandedSubTaskIds, async () => { await nextTick(); syncSubTaskHeights() }, { flush: 'post' })
+watch(panelState, async () => { await nextTick(); syncSubTaskHeights() }, { flush: 'post' })
+onUnmounted(() => { _syncTimers.forEach(clearTimeout) })
 </script>
 
 <style scoped>
