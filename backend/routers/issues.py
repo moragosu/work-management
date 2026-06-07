@@ -129,6 +129,18 @@ def delete_issue(issue_id: str, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Issue not found")
     if not user.get("is_admin") and target.get("created_by") != user["username"]:
         raise HTTPException(status_code=403, detail="본인이 작성한 이슈만 삭제할 수 있습니다")
+    with data_store.get_conn() as conn:
+        # requires_answer 댓글의 comment_tagged 알림 정리
+        req_rows = conn.execute(
+            "SELECT id FROM issue_comments WHERE issue_id=? AND requires_answer=1 AND parent_id IS NULL",
+            (issue_id,)
+        ).fetchall()
+        for row in req_rows:
+            conn.execute(
+                "DELETE FROM notifications WHERE type='comment_tagged' AND link LIKE ?",
+                (f"%commentId={row['id']}%",)
+            )
+        conn.execute("DELETE FROM issue_comments WHERE issue_id=?", (issue_id,))
     _save([i for i in items if i["id"] != issue_id])
     data_store.bump_data_version()
     return {"deleted": issue_id}
