@@ -376,10 +376,12 @@ async function deleteComment(issueId, commentId) {
 }
 .issue-item {
   margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px dashed var(--outline);
+  padding: 12px;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  overflow: hidden;
 }
-.issue-item:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
 .issue-box {
   background: #fff7ed;
   border-left: 3px solid #f59e0b;
@@ -388,9 +390,10 @@ async function deleteComment(issueId, commentId) {
 }
 .mt-4 { margin-top: 4px; }
 .comment-section {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--outline);
+  margin: 10px -12px -12px -12px;
+  padding: 10px 12px 12px;
+  background: var(--gray-50);
+  border-top: 1px solid var(--outline);
 }
 .comment-section-label {
   display: flex;
