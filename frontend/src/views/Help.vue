@@ -65,7 +65,7 @@
             <span class="material-symbols-outlined menu-card-icon icon-orange">assignment</span>
             <div>
               <div class="menu-card-title">주간 진행 현황</div>
-              <div class="menu-card-desc">주차별 이슈 등록 및 의견/질문 관리 — 파트원들이 주로 사용하는 화면</div>
+              <div class="menu-card-desc">주차별 이슈 등록·과제 댓글 관리 — 파트원들이 주로 사용하는 화면</div>
             </div>
           </div>
           <div class="menu-card">
@@ -73,6 +73,13 @@
             <div>
               <div class="menu-card-title">피드백</div>
               <div class="menu-card-desc">시스템 개선 의견·건의사항을 카테고리별로 자유롭게 작성하고 공유</div>
+            </div>
+          </div>
+          <div class="menu-card">
+            <span class="material-symbols-outlined menu-card-icon icon-purple">manage_search</span>
+            <div>
+              <div class="menu-card-title">이슈 히스토리</div>
+              <div class="menu-card-desc">삭제된 이슈·댓글 스냅샷 조회 — 그룹장·파트장·관리자 전용</div>
             </div>
           </div>
           <div class="menu-card">
@@ -145,7 +152,7 @@
             <div class="role-row">
               <span><span class="role-badge role-leader">그룹장/파트장</span></span>
               <span>그룹장 또는 파트장</span>
-              <span>이슈·의견/질문 생성 포함 전체 기능</span>
+              <span>이슈·댓글 전체 기능 + 답변 요구 지정</span>
             </div>
             <div class="role-row">
               <span><span class="role-badge role-admin">관리자</span></span>
@@ -155,7 +162,7 @@
           </div>
           <div class="callout callout-info" style="margin-top:12px">
             <span class="material-symbols-outlined callout-icon">info</span>
-            <div><strong>의견/질문 추가</strong>는 그룹장·파트장·관리자만 가능합니다. 일반 파트원은 등록된 질문에 <strong>답변</strong>만 작성할 수 있습니다.</div>
+            <div><strong>과제 댓글</strong>은 모든 파트원이 작성할 수 있습니다. 다만 댓글에 <strong>답변 요구</strong>를 지정하는 기능은 그룹장·파트장·관리자만 사용할 수 있습니다.</div>
           </div>
         </div>
       </div>
@@ -182,12 +189,12 @@
               <span>발생 조건</span>
             </div>
             <div class="notify-row">
-              <span><span class="material-symbols-outlined" style="font-size:14px;color:#7c3aed;vertical-align:middle">forum</span> 질문 태그</span>
-              <span>내가 답변 대상자로 지정된 의견/질문이 등록될 때</span>
+              <span><span class="material-symbols-outlined" style="font-size:14px;color:#7c3aed;vertical-align:middle">mark_chat_unread</span> 댓글 태그</span>
+              <span>이슈 댓글 또는 과제 댓글에서 나를 @태그하고 <strong>답변 요구</strong>로 지정할 때</span>
             </div>
             <div class="notify-row">
-              <span><span class="material-symbols-outlined" style="font-size:14px;color:#16a34a;vertical-align:middle">check_circle</span> 답변 등록</span>
-              <span>내가 등록한 의견/질문에 답변이 달릴 때</span>
+              <span><span class="material-symbols-outlined" style="font-size:14px;color:#0ea5e9;vertical-align:middle">chat_bubble</span> 이슈 댓글</span>
+              <span>내가 담당한 이슈에 일반 댓글이 달릴 때</span>
             </div>
             <div class="notify-row">
               <span><span class="material-symbols-outlined" style="font-size:14px;color:#d97706;vertical-align:middle">warning</span> 이슈 배정</span>
@@ -216,11 +223,11 @@
           </ul>
           <div class="callout callout-warning">
             <span class="material-symbols-outlined callout-icon">info</span>
-            <div><strong>질문 태그 알림</strong>은 해당 질문에 답변이 없는 동안 삭제되지 않습니다. 답변이 달린 후에야 삭제할 수 있습니다. — 미답변 질문을 놓치지 않기 위한 보호 규칙입니다.</div>
+            <div><strong>답변 요구 댓글 태그 알림</strong>은 해당 댓글에 대댓글(답변)이 달리기 전까지 삭제되지 않습니다. 답변이 작성되어 자동으로 "답변됨" 처리된 후에야 삭제할 수 있습니다. — 답변 요구를 놓치지 않기 위한 보호 규칙입니다.</div>
           </div>
           <div class="callout callout-tip">
             <span class="material-symbols-outlined callout-icon">star</span>
-            <div>알림은 <strong>5분마다 자동으로 갱신</strong>됩니다. 답변 등록·이슈 배정 등 이벤트 발생 직후에는 즉시 갱신되어 바로 표시됩니다.</div>
+            <div>알림은 <strong>SSE(실시간 스트림)</strong>으로 즉시 수신됩니다. 댓글 등록·이슈 배정 등 이벤트 발생 즉시 벨에 배지가 표시됩니다.</div>
           </div>
         </div>
       </div>
@@ -241,7 +248,7 @@
             상단 통계 카드 (3개)
           </div>
           <ul class="feature-list">
-            <li><strong>미답변 의견/질문</strong> — 전체 기간 누적 중 아직 답변이 없는 질문 수. 주황색이면 확인 필요, 초록이면 양호</li>
+            <li><strong>미확인 답변 현황</strong> — 전체 기간 누적 중 아직 답변이 달리지 않은 "답변 요구" 댓글 수. 주황색이면 확인 필요, 초록이면 양호</li>
             <li><strong>이번 주 이슈</strong> — 이번 주 등록된 이슈 수</li>
             <li><strong>컨플루언스 등록률</strong> — 이번 주 컨플루언스 링크를 등록한 과제 비율. 진행 바로 확인 가능</li>
           </ul>
@@ -253,7 +260,7 @@
             액션 패널 (2가지)
           </div>
           <ul class="feature-list">
-            <li><strong>의견/질문</strong> — <strong>이번주 / 지난주</strong> 탭으로 주차를 전환하고, <strong>미답변 / 답변완료 / 전체</strong> 필터를 함께 사용할 수 있습니다. 항목에 <em>과제명 + 주차</em>가 표시되며, 클릭하면 해당 주차의 해당 의견/질문 위치로 바로 이동합니다</li>
+            <li><strong>답변 현황</strong> — <strong>이번주 / 지난주</strong> 탭으로 주차를 전환하고, <strong>미답변 / 답변완료 / 전체</strong> 필터를 함께 사용할 수 있습니다. 이슈 댓글·과제 댓글 중 "답변 요구"로 등록된 항목이 표시되며, 클릭하면 해당 댓글 상세를 확인할 수 있습니다</li>
             <li><strong>이슈</strong> — <strong>이번주 / 지난주</strong> 탭으로 전환하며 해당 주 이슈 목록을 확인합니다. 클릭하면 해당 과제의 이슈 위치로 이동</li>
           </ul>
         </div>
@@ -265,7 +272,7 @@
           </div>
           <ul class="feature-list">
             <li>상단의 <strong>이번주 / 지난주</strong> 탭으로 기준 주차를 전환합니다</li>
-            <li>각 파트원의 <strong>담당 과제 수</strong>(누적)와 해당 주의 <strong>이슈 수 / 질문 수 / 답변 수</strong>를 각각 막대 그래프로 비교합니다 — 질문은 보라색, 답변은 초록색 바로 구분</li>
+            <li>각 파트원의 <strong>담당 과제 수</strong>(누적)와 해당 주의 <strong>이슈 수 / 답변 요구 완료 수 / 미완료 수</strong>를 막대 그래프로 비교합니다</li>
             <li>우측 상단에 <strong>파트원 N명</strong> 배지로 인원 수를 확인할 수 있습니다</li>
           </ul>
         </div>
@@ -276,7 +283,7 @@
             주간 등록 현황 매트릭스
           </div>
           <ul class="feature-list">
-            <li>과제(행) × 주차(열) 기준으로 <strong>컨플루언스 · 이슈 · 의견/질문</strong> 등록 여부를 한눈에 확인합니다</li>
+            <li>과제(행) × 주차(열) 기준으로 <strong>컨플루언스 · 이슈 · 답변 현황</strong> 등록 여부를 한눈에 확인합니다</li>
             <li><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;color:var(--primary)">link</span> <strong>링크 아이콘</strong>을 클릭하면 해당 컨플루언스 페이지가 바로 열립니다</li>
             <li>섹션 제목을 클릭하면 매트릭스를 접거나 펼칠 수 있습니다</li>
             <li>현재 주차 열은 파란색 배경으로 강조됩니다</li>
@@ -304,7 +311,7 @@
             <li>화면이 <strong>지난주(왼쪽) | 이번주(오른쪽)</strong> 2개 패널로 분할되어 한 화면에서 비교할 수 있습니다</li>
             <li>각 패널 헤더의 <strong>← / →</strong> 버튼을 클릭하면 해당 패널이 접힙니다 — <strong>같은 버튼을 다시 클릭</strong>하면 2분할 상태로 복원됩니다</li>
             <li>패널 <strong>헤더 바 전체가 클릭 영역</strong>입니다 — 헤더 어디를 클릭해도 접기/펼치기가 작동합니다</li>
-            <li>양쪽 패널 모두 <strong>이슈 등록·수정·삭제</strong>와 <strong>의견/질문 추가·답변</strong> 등 전체 편집이 가능합니다</li>
+            <li>양쪽 패널 모두 <strong>이슈 등록·수정·삭제</strong>와 <strong>과제 댓글 작성·답변</strong> 등 전체 편집이 가능합니다</li>
           </ul>
         </div>
 
@@ -405,30 +412,30 @@
             <li>등록된 댓글의 <strong>"↩ 답글"</strong> 버튼을 클릭하면 해당 댓글에 대한 대댓글을 작성할 수 있습니다 (2단계까지 지원)</li>
             <li>댓글·대댓글 작성자는 <strong>로그인 계정으로 자동 입력</strong>됩니다</li>
             <li>본인이 작성한 댓글은 <strong>수정·삭제</strong>할 수 있습니다</li>
+            <li>댓글 입력 폼 상단의 <strong>이름 칩</strong>을 클릭하면 댓글 본문에 <code class="md-syntax">@이름</code>이 자동으로 삽입됩니다</li>
+            <li>그룹장·파트장·관리자는 <strong>"답변 요구"</strong> 체크박스를 켜서 해당 댓글에 응답을 요청할 수 있습니다 — 태그된 파트원에게 알림이 발송되며, 댓글 카드에 <strong>"답변 대기"</strong> 배지가 표시됩니다</li>
+            <li>답변 요구 댓글에 대댓글이 달리면 자동으로 <strong>"답변됨"</strong> 처리됩니다</li>
           </ul>
         </div>
 
-        <!-- 의견/질문 -->
+        <!-- 과제 댓글 -->
         <div class="sub-section">
           <div class="sub-section-title">
             <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">forum</span>
-            의견/질문 사용법
+            과제 댓글
           </div>
           <ul class="feature-list">
-            <li><strong>그룹장·파트장·관리자</strong>만 과제 카드 하단의 <strong>"+ 의견/질문 추가"</strong> 버튼이 표시됩니다</li>
-            <li>질문 작성자는 <strong>로그인 계정으로 자동 입력</strong>됩니다</li>
-            <li>질문 작성 전 <strong>질문 대상자를 선택</strong>할 수 있습니다 — 복수 선택 가능하며, 대상자로 지정된 파트원에게 <strong>알림</strong>이 발송됩니다</li>
-            <li>등록된 질문에는 선택한 대상자가 <strong>→ 이름</strong> 형태로 표시됩니다</li>
-            <li>답변이 없는 질문에는 <span class="inline-badge badge-green">A</span> 옆에 <strong>"답변 달기"</strong> 버튼이 표시됩니다</li>
-            <li>답변 작성자는 <strong>로그인 계정으로 자동 입력</strong>됩니다 — 답변 입력도 WYSIWYG 에디터를 사용하며 서식·이미지 첨부가 가능합니다</li>
-            <li>하나의 질문에 여러 명이 <strong>"+ 답변 추가"</strong>로 추가 답변을 달 수 있습니다</li>
-            <li>등록된 답변의 <strong>"↩ 답글"</strong> 버튼으로 추가 의견을 달 수 있습니다 — 답글 입력도 에디터를 사용합니다</li>
-            <li>질문 우측의 <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">link</span> 버튼을 클릭하면 해당 질문으로 바로 이동하는 <strong>단축 링크</strong>가 복사됩니다 — 메신저로 공유하면 받는 사람이 바로 해당 위치로 이동합니다</li>
-            <li>의견/질문 삭제 시 <span class="highlight-red">해당 의견/질문의 모든 답변도 함께 삭제</span>됩니다 — 관리자만 삭제 가능합니다</li>
+            <li>이슈와 별개로, 과제 카드 하단의 <strong>"과제 댓글"</strong> 섹션에서 과제 전반에 대한 의견·질문을 남길 수 있습니다</li>
+            <li><strong>모든 파트원</strong>이 댓글을 작성할 수 있습니다</li>
+            <li>댓글 입력 폼 위의 <strong>이름 칩</strong>을 클릭하면 본문에 <code class="md-syntax">@이름</code>이 삽입됩니다</li>
+            <li>그룹장·파트장·관리자는 <strong>"답변 요구"</strong> 체크박스로 특정 파트원에게 응답을 요청할 수 있습니다 — 태그된 파트원에게 알림이 발송되며, 대댓글이 달리면 자동으로 <strong>"답변됨"</strong> 처리됩니다</li>
+            <li>댓글 카드에는 작성자·태그된 대상자·답변 상태(<strong>답변 대기 / 답변됨</strong>) 배지가 표시됩니다</li>
+            <li>과제 댓글은 <strong>주차 단위</strong>로 저장됩니다 — 지난주·이번주 패널에서 각 주차의 댓글을 독립적으로 확인할 수 있습니다</li>
+            <li>본인이 작성한 댓글은 <strong>수정·삭제</strong>가 가능합니다</li>
           </ul>
           <div class="callout callout-tip">
             <span class="material-symbols-outlined callout-icon">star</span>
-            <div>대시보드의 <strong>미답변 의견/질문 패널</strong>에서 항목을 클릭하면 해당 주차로 이동하며 의견/질문 위치로 자동 스크롤됩니다. 소과제 의견/질문이면 해당 소과제 카드가 자동으로 펼쳐집니다. 대상자가 지정된 의견/질문은 패널에서 대상자 이름도 함께 표시됩니다.</div>
+            <div>대시보드의 <strong>답변 현황 패널</strong>에서 "답변 요구"로 등록된 댓글을 주차별로 확인하고, 클릭하면 상세 내용을 볼 수 있습니다. 파트원별 답변 완료/미완료 현황도 활동 통계에서 확인할 수 있습니다.</div>
           </div>
         </div>
 
@@ -442,9 +449,9 @@
             <li>소과제가 있는 과제 카드는 상단에 <strong>"소과제 N개"</strong> 배지와 <strong>"전체 펼치기 / 전체 접기"</strong> 버튼이 표시됩니다</li>
             <li>각 소과제는 과제 카드 내부에 <strong>파란 왼쪽 테두리</strong>로 구분된 별도 섹션으로 표시되며, <strong>기본적으로 펼쳐진 상태</strong>로 시작합니다</li>
             <li>소과제 헤더(상단 줄)를 <strong>클릭</strong>하면 내용이 펼쳐지거나 접힙니다. 헤더 우측의 완료 버튼·담당자 배지는 클릭해도 접히지 않습니다</li>
-            <li>접힌 상태에서 이슈나 의견/질문 내용이 있으면 헤더에 <strong>요약 배지</strong>가 표시됩니다 — <em>이슈 N건</em>, <em>의견/질문 N건</em></li>
+            <li>접힌 상태에서 이슈나 댓글 내용이 있으면 헤더에 <strong>요약 배지</strong>가 표시됩니다 — <em>이슈 N건</em>, <em>댓글 N건</em></li>
             <li><strong>컨플루언스 링크</strong>는 소과제별로 독립 등록됩니다 — 소과제가 있으면 모과제 단위 링크 대신 각 소과제 섹션 내부에 링크 입력란이 표시됩니다</li>
-            <li>이슈 등록과 의견/질문도 <strong>소과제별로 독립적으로</strong> 관리됩니다</li>
+            <li>이슈 등록과 댓글도 <strong>소과제별로 독립적으로</strong> 관리됩니다</li>
             <li>소과제가 완료 처리되면 해당 섹션은 <strong>녹색 테두리</strong>로 바뀌고 흐릿하게 표시됩니다</li>
           </ul>
           <div class="callout callout-tip">
@@ -503,7 +510,7 @@
           <span class="material-symbols-outlined section-icon-lg">history</span>
           <h3 class="section-title">과제 이력</h3>
         </div>
-        <p class="section-desc">특정 과제의 전체 주차별 이슈·의견/질문·컨플루언스 링크를 한 페이지에서 시간 순으로 확인하는 화면입니다.</p>
+        <p class="section-desc">특정 과제의 전체 주차별 이슈·댓글·컨플루언스 링크를 한 페이지에서 시간 순으로 확인하는 화면입니다.</p>
 
         <div class="sub-section">
           <div class="sub-section-title">
@@ -524,8 +531,8 @@
           </div>
           <ul class="feature-list">
             <li>최신 주차가 맨 위에 표시되며, 각 주차 카드는 <strong>클릭하면 접기/펼치기</strong>가 가능합니다 — 최근 2개 주차는 기본으로 펼쳐진 상태로 시작합니다</li>
-            <li>주차 카드 헤더에는 해당 주차의 <strong>컨플루언스 · 이슈 · 의견/질문</strong> 수가 배지로 요약됩니다</li>
-            <li>각 주차 안에서 컨플루언스 링크 → 이슈 → 의견/질문 순서로 섹션이 구분됩니다</li>
+            <li>주차 카드 헤더에는 해당 주차의 <strong>컨플루언스 · 이슈</strong> 수가 배지로 요약됩니다</li>
+            <li>각 주차 안에서 컨플루언스 링크 → 이슈 순서로 섹션이 구분됩니다</li>
           </ul>
         </div>
 
@@ -535,10 +542,37 @@
             이슈 · 질문 바로가기
           </div>
           <ul class="feature-list">
-            <li>이력 화면에서 <strong>이슈 또는 의견/질문 카드를 클릭</strong>하면, 해당 주차의 주간 진행 현황으로 이동하며 해당 항목으로 자동 스크롤됩니다</li>
+            <li>이력 화면에서 <strong>이슈 카드를 클릭</strong>하면, 해당 주차의 주간 진행 현황으로 이동하며 해당 이슈 위치로 자동 스크롤됩니다</li>
             <li>카드에 마우스를 올리면 배경이 강조되고 <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">open_in_new</span> 아이콘이 표시됩니다</li>
-            <li>답변이 달린 질문도 해당 질문 위치로 바로 이동하므로 원문 확인이 편리합니다</li>
           </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑤-3 삭제된 이슈 히스토리 -->
+    <section id="issue-history" class="help-section card">
+      <div class="card-body">
+        <div class="section-heading">
+          <span class="material-symbols-outlined section-icon-lg">manage_search</span>
+          <h3 class="section-title">이슈 히스토리</h3>
+        </div>
+        <p class="section-desc">삭제된 이슈와 댓글의 스냅샷을 조회하는 화면입니다. 왼쪽 사이드바의 <strong>이슈 히스토리</strong> 메뉴에서 접근할 수 있으며, <strong>그룹장·파트장·관리자</strong>만 볼 수 있습니다.</p>
+
+        <div class="sub-section">
+          <div class="sub-section-title">
+            <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary)">history</span>
+            주요 기능
+          </div>
+          <ul class="feature-list">
+            <li>이슈가 삭제될 때 해당 이슈와 댓글 전체가 <strong>자동으로 스냅샷</strong>으로 저장됩니다</li>
+            <li>상단의 <strong>주차</strong>·<strong>과제</strong> 필터로 원하는 기간·과제의 삭제 이력만 조회할 수 있습니다</li>
+            <li>각 히스토리 카드를 클릭하면 삭제 당시의 이슈 내용과 댓글을 펼쳐서 확인할 수 있습니다</li>
+            <li>관리자는 저장된 스냅샷을 <strong>영구 삭제</strong>할 수 있습니다</li>
+          </ul>
+          <div class="callout callout-info">
+            <span class="material-symbols-outlined callout-icon">info</span>
+            <div>이슈 히스토리는 <strong>복구 기능이 아닙니다</strong> — 삭제된 이슈를 다시 시스템에 되살리는 것은 지원하지 않으며, 내용을 확인·참고하는 용도로만 사용합니다.</div>
+          </div>
         </div>
       </div>
     </section>
@@ -585,7 +619,7 @@
           <span class="material-symbols-outlined section-icon-lg">edit_note</span>
           <h3 class="section-title">에디터 사용법</h3>
         </div>
-        <p class="section-desc">이슈·의견/질문·피드백 작성에 WYSIWYG 에디터를 사용합니다. 툴바 버튼으로 서식을 적용하거나, 마크다운 단축키(<code class="md-syntax">**굵게**</code>, <code class="md-syntax"># 제목</code> 등)를 직접 입력해도 자동으로 변환됩니다.</p>
+        <p class="section-desc">이슈·과제 댓글·피드백 작성에 WYSIWYG 에디터를 사용합니다. 툴바 버튼으로 서식을 적용하거나, 마크다운 단축키(<code class="md-syntax">**굵게**</code>, <code class="md-syntax"># 제목</code> 등)를 직접 입력해도 자동으로 변환됩니다.</p>
 
         <!-- 툴바 기능 -->
         <div class="sub-section">
@@ -831,8 +865,9 @@ const toc = [
   { id: 'notify',    icon: 'notifications',   title: '알림' },
   { id: 'dashboard', icon: 'dashboard',       title: '대시보드' },
   { id: 'progress',  icon: 'assignment',      title: '주간 진행 현황' },
-  { id: 'history',   icon: 'history',         title: '과제 이력' },
-  { id: 'feedback',  icon: 'rate_review',     title: '피드백' },
+  { id: 'history',       icon: 'history',         title: '과제 이력' },
+  { id: 'issue-history', icon: 'manage_search',   title: '이슈 히스토리' },
+  { id: 'feedback',      icon: 'rate_review',     title: '피드백' },
   { id: 'markdown',  icon: 'edit_note',       title: '에디터 사용법' },
   { id: 'admin',     icon: 'settings',        title: '관리 도구' },
   { id: 'faq',       icon: 'help',            title: 'FAQ' },
@@ -876,18 +911,18 @@ const faqs = reactive([
     open: false,
   },
   {
-    q: '"+ 의견/질문 추가" 버튼이 보이지 않는 이유는?',
-    a: '의견/질문 추가는 그룹장·파트장·관리자 역할에게만 표시됩니다. 일반 파트원은 이미 등록된 질문에 답변을 작성할 수 있습니다. 역할 변경이 필요하면 관리자에게 문의하세요.',
+    q: '"답변 요구" 체크박스가 보이지 않는 이유는?',
+    a: '답변 요구 지정은 그룹장·파트장·관리자만 사용할 수 있습니다. 일반 파트원도 댓글 작성은 가능하지만 답변 요구 체크박스는 표시되지 않습니다. 역할 변경이 필요하면 관리자에게 문의하세요.',
     open: false,
   },
   {
-    q: '질문 태그 알림이 삭제되지 않는 이유는?',
-    a: '미답변 상태인 질문의 태그 알림은 보호됩니다 — 답변이 달려야 삭제할 수 있습니다. 담당자가 질문을 놓치지 않도록 하기 위한 규칙입니다. 답변이 작성되면 해당 알림을 삭제할 수 있게 됩니다.',
+    q: '답변 요구 댓글 태그 알림이 삭제되지 않는 이유는?',
+    a: '답변 요구 댓글의 태그 알림은 해당 댓글에 대댓글(답변)이 달려 자동으로 "답변됨" 처리되기 전까지 보호됩니다. 담당자가 답변 요구를 놓치지 않도록 하기 위한 규칙입니다. 답변이 작성되어 "답변됨" 처리되면 알림을 삭제할 수 있습니다.',
     open: false,
   },
   {
-    q: '이슈나 질문 링크를 메신저로 공유하려면?',
-    a: '이슈 또는 질문 우측의 링크(🔗) 버튼을 클릭하면 단축 링크가 클립보드에 복사됩니다. 메신저에 붙여넣어 공유하면 받는 사람이 클릭 시 해당 주차·해당 위치로 바로 이동합니다. 링크 형식은 "http://서버주소/go/{ID}" 형태입니다.',
+    q: '이슈 링크를 메신저로 공유하려면?',
+    a: '이슈 우측의 링크(🔗) 버튼을 클릭하면 단축 링크가 클립보드에 복사됩니다. 메신저에 붙여넣어 공유하면 받는 사람이 클릭 시 해당 주차·해당 위치로 바로 이동합니다. 링크 형식은 "http://서버주소/go/{ID}" 형태입니다.',
     open: false,
   },
   {
@@ -907,12 +942,12 @@ const faqs = reactive([
   },
   {
     q: '과제 이력은 어디서 볼 수 있나요?',
-    a: '주간 진행 현황의 과제 카드 상단 우측에 있는 "이력" 버튼(시계 아이콘)을 클릭하면 해당 과제의 전체 주차별 이력 페이지로 이동합니다. 이력 페이지에서 이슈나 의견/질문 카드를 클릭하면 해당 주차의 주간 진행 현황으로 바로 이동합니다.',
+    a: '주간 진행 현황의 과제 카드 상단 우측에 있는 "이력" 버튼(시계 아이콘)을 클릭하면 해당 과제의 전체 주차별 이력 페이지로 이동합니다. 이력 페이지에서 이슈 카드를 클릭하면 해당 주차의 주간 진행 현황으로 바로 이동합니다.',
     open: false,
   },
   {
-    q: '이슈나 질문을 삭제하면 복구되나요?',
-    a: '삭제된 항목은 복구되지 않습니다. 의견/질문 삭제는 관리자만 가능하며, 삭제 시 해당 의견/질문의 모든 답변도 함께 삭제됩니다. 이슈 삭제는 별도 권한 확인 없이 가능합니다.',
+    q: '이슈를 삭제하면 복구되나요?',
+    a: '삭제된 이슈는 직접 복구되지 않습니다. 다만 이슈 삭제 시 내용과 댓글이 스냅샷으로 저장되어, 그룹장·파트장·관리자는 사이드바의 "이슈 히스토리" 메뉴에서 삭제된 이슈 내용을 확인할 수 있습니다. 과제 댓글 삭제는 복구 및 히스토리 기록이 없으므로 주의하세요.',
     open: false,
   },
   {
@@ -937,7 +972,7 @@ const faqs = reactive([
   },
   {
     q: '소과제란 무엇이고 어떻게 추가하나요?',
-    a: '소과제는 하나의 과제를 세부 작업 단위로 나눈 것입니다. 관리 도구 → 과제 탭에서 수정 모달을 열면 하단에 "소과제 추가" 버튼이 표시됩니다. 소과제 ID는 T1-1, T1-2 형식으로 자동 부여되며, 각 소과제를 파트원의 담당 과제로 지정할 수 있습니다. 주간 진행 현황에서는 소과제별 이슈와 의견/질문을 독립적으로 관리할 수 있습니다.',
+    a: '소과제는 하나의 과제를 세부 작업 단위로 나눈 것입니다. 관리 도구 → 과제 탭에서 수정 모달을 열면 하단에 "소과제 추가" 버튼이 표시됩니다. 소과제 ID는 T1-1, T1-2 형식으로 자동 부여되며, 각 소과제를 파트원의 담당 과제로 지정할 수 있습니다. 주간 진행 현황에서는 소과제별 이슈와 댓글을 독립적으로 관리할 수 있습니다.',
     open: false,
   },
   {
