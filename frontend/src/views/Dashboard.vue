@@ -14,11 +14,11 @@
     <div class="page-body">
       <!-- ① 이번 주 실용 지표 -->
       <div class="grid-3" style="margin-bottom:24px">
-        <div class="card stat-accent" :class="unansweredQuestions.length ? 'stat-accent-orange' : 'stat-accent-green'" data-tooltip="전체 기간 중 아직 답변이 달리지 않은 질문 수" data-tooltip-pos="bottom">
+        <div class="card stat-accent" :class="unansweredQuestions.length ? 'stat-accent-orange' : 'stat-accent-green'" data-tooltip="전체 기간 중 아직 답변이 달리지 않은 확인 요청 수" data-tooltip-pos="bottom">
           <div class="card-body stat-card">
             <span class="material-symbols-outlined stat-icon" :class="unansweredQuestions.length ? 'stat-icon-orange' : 'stat-icon-green'">quiz</span>
             <div class="stat-value" :style="unansweredQuestions.length ? 'color:var(--orange,#f97316)' : 'color:var(--success)'">{{ unansweredQuestions.length }}</div>
-            <div class="stat-label">미답변 답변요구 댓글 (전체)</div>
+            <div class="stat-label">미확인 답변 현황 (전체)</div>
           </div>
         </div>
         <div class="card stat-accent" :class="weekIssues.length ? 'stat-accent-yellow' : 'stat-accent-green'" data-tooltip="이번 주 등록된 이슈 수" data-tooltip-pos="bottom">
@@ -73,14 +73,14 @@
       <!-- ③ 액션 패널 2종 -->
       <div class="grid-2" style="margin-bottom:24px;align-items:start">
 
-        <!-- 답변 요구 댓글 -->
+        <!-- 답변 현황 -->
         <div class="card action-panel">
           <div class="card-header panel-header-toggle" @click="panelExpanded.questions = !panelExpanded.questions" data-tooltip="클릭하여 펼치기 / 접기">
             <div class="panel-title">
               <span class="panel-icon" style="background:#fff7ed;color:var(--orange)">
                 <span class="material-symbols-outlined">chat_bubble_outline</span>
               </span>
-              답변 요구 댓글
+              답변 현황
             </div>
             <div class="q-filter-group" @click.stop>
               <button class="q-filter-btn" :class="{ active: qWeekFilter === 'last' }" @click="qWeekFilter = 'last'">지난주</button>
@@ -99,7 +99,7 @@
           <div class="card-body panel-body">
             <div v-if="actionLoading" class="loading-center" style="padding:24px"><div class="spinner"></div></div>
             <div v-else-if="filteredQuestions.length === 0" class="panel-empty">
-              {{ questionFilter === 'answered' ? '답변 완료된 댓글이 없습니다' : questionFilter === 'all' ? '등록된 답변요구 댓글이 없습니다' : '미답변 댓글이 없습니다 👍' }}
+              {{ questionFilter === 'answered' ? '답변 완료된 항목이 없습니다' : questionFilter === 'all' ? '등록된 답변 현황이 없습니다' : '미답변 항목이 없습니다 👍' }}
             </div>
             <ul v-else class="panel-list" :class="{ 'panel-list-expanded': panelExpanded.questions }">
               <li v-for="c in filteredQuestions" :key="c.id" class="panel-item panel-item-link" @click="openModal('question', c)">
@@ -183,7 +183,7 @@
                     <th class="th-sortable" @click="toggleSort('name')">파트원 <span class="sort-ico">{{ sortIco('name') }}</span></th>
                     <th class="th-sortable" data-tooltip="배정된 과제 수 (누적)" @click="toggleSort('tasks')">담당 과제 <span class="sort-ico">{{ sortIco('tasks') }}</span></th>
                     <th class="th-sortable" data-tooltip="해당 주 등록한 이슈 수" @click="toggleSort('issues')">이슈 <span class="sort-ico">{{ sortIco('issues') }}</span></th>
-                    <th class="th-sortable" data-tooltip="받은 질문의 답변 / 미답변 수" @click="toggleSort('answered')">답변 현황 <span class="sort-ico">{{ sortIco('answered') }}</span></th>
+                    <th class="th-sortable" data-tooltip="받은 답변 요청의 완료 / 미완료 수" @click="toggleSort('answered')">답변 현황 <span class="sort-ico">{{ sortIco('answered') }}</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -234,7 +234,7 @@
             <div class="matrix-legend-inline">
               <span class="material-symbols-outlined matrix-legend-icon matrix-icon-link">link</span><span>컨플루언스</span>
               <span class="material-symbols-outlined matrix-legend-icon matrix-icon-issue">warning</span><span>진행 현황 및 이슈</span>
-              <span class="matrix-count matrix-count-legend">N</span><span>답변요구 댓글</span>
+              <span class="matrix-count matrix-count-legend">N</span><span>답변 현황</span>
             </div>
             <span class="material-symbols-outlined section-chevron" :class="{ open: matrixOpen }">expand_more</span>
           </div>
@@ -259,7 +259,7 @@
                           <span class="material-symbols-outlined matrix-icon matrix-icon-link">link</span>
                         </a>
                         <span v-if="issueMap[row.id]?.has(w)" class="material-symbols-outlined matrix-icon matrix-icon-issue" title="이슈 등록">warning</span>
-                        <span v-if="qnaMap[row.id]?.[w]" class="matrix-count matrix-count-sm" :title="`의견/질문 ${qnaMap[row.id][w]}건`">{{ qnaMap[row.id][w] }}</span>
+                        <span v-if="qnaMap[row.id]?.[w]" class="matrix-count matrix-count-sm" :title="`답변 현황 ${qnaMap[row.id][w]}건`">{{ qnaMap[row.id][w] }}</span>
                         <span v-if="!confluenceMap[row.id]?.has(w) && !issueMap[row.id]?.has(w) && !qnaMap[row.id]?.[w]" class="matrix-dot-no">–</span>
                       </div>
                     </td>
@@ -312,7 +312,7 @@
     <div v-if="modal.visible" class="dash-modal-overlay" @click.self="modal.visible = false">
       <div class="dash-modal">
         <div class="dash-modal-header">
-          <span>{{ modal.type === 'issue' ? '진행 현황 및 이슈 상세' : '답변요구 댓글 상세' }}</span>
+          <span>{{ modal.type === 'issue' ? '진행 현황 및 이슈 상세' : '답변 현황 상세' }}</span>
           <button class="dash-modal-close" @click="modal.visible = false">
             <span class="material-symbols-outlined">close</span>
           </button>
