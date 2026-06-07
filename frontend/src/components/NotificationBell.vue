@@ -163,16 +163,46 @@ function onOutside(e) {
   open.value = false
 }
 
-let pollInterval = null
+let es = null
+let reconnectTimer = null
+let reconnecting = false
+
+function connectSSE() {
+  const token = localStorage.getItem('token')
+  if (!token) return
+  reconnecting = false
+  if (es) { es.close(); es = null }
+  es = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}`)
+  es.onmessage = (e) => {
+    if (e.data === 'new') {
+      load()
+      window.dispatchEvent(new Event('data-updated'))
+    } else if (e.data === 'refresh') {
+      window.dispatchEvent(new Event('data-updated'))
+    }
+  }
+  es.onerror = () => {
+    if (reconnecting) return   // 중복 reconnect 방지
+    reconnecting = true
+    if (es) { es.close(); es = null }
+    reconnectTimer = setTimeout(connectSSE, 5000)
+  }
+}
+
+function stopSSE() {
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null }
+  if (es) { es.close(); es = null }
+  reconnecting = false
+}
 
 onMounted(() => {
   load()
-  pollInterval = setInterval(load, 5 * 60 * 1000)
+  connectSSE()
   document.addEventListener('click', onOutside, true)
   window.addEventListener('refresh-notifications', load)
 })
 onUnmounted(() => {
-  clearInterval(pollInterval)
+  stopSSE()
   document.removeEventListener('click', onOutside, true)
   window.removeEventListener('refresh-notifications', load)
 })

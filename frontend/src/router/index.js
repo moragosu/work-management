@@ -10,6 +10,7 @@ import Signup from '../views/Signup.vue'
 import Notifications from '../views/Notifications.vue'
 import ChangePassword from '../views/ChangePassword.vue'
 import TaskHistory from '../views/TaskHistory.vue'
+import IssueHistory from '../views/IssueHistory.vue'
 
 const routes = [
   { path: '/', redirect: '/dashboard' },
@@ -24,6 +25,7 @@ const routes = [
   { path: '/notifications', component: Notifications, meta: { title: '알림' } },
   { path: '/help', component: Help, meta: { title: '도움말' } },
   { path: '/tasks/:id/history', component: TaskHistory, meta: { title: '과제 이력' } },
+  { path: '/issue-history', component: IssueHistory, meta: { title: '삭제된 이슈 히스토리' } },
   { path: '/go/:id', component: GoRedirect, meta: { title: '이동 중...' } },
 ]
 

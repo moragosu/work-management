@@ -59,20 +59,41 @@
 
       <div v-else class="split-container">
 
-        <!-- ══ 지난주 패널 ══ -->
-        <div v-show="panelState !== 'right'" class="split-panel split-left">
-          <div class="panel-header panel-header-clickable"
-            @click="panelState = panelState === 'split' ? 'right' : 'split'"
-            :title="panelState === 'split' ? '지난주 패널 접기' : '둘 다 보기'"
-          >
-            <span class="panel-title">
-              <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">history</span>
-              지난주 · {{ leftWeekDisplay }}
-            </span>
-            <span class="material-symbols-outlined panel-collapse-icon">chevron_left</span>
+        <!-- ══ 패널 헤더 (sticky) ══ -->
+        <div class="split-headers">
+          <div v-show="panelState !== 'right'" class="split-header-cell">
+            <div class="panel-header panel-header-clickable"
+              @click="panelState = panelState === 'split' ? 'right' : 'split'"
+              :title="panelState === 'split' ? '지난주 패널 접기' : '둘 다 보기'"
+            >
+              <span class="panel-title">
+                <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">history</span>
+                지난주 · {{ leftWeekDisplay }}
+              </span>
+              <span class="material-symbols-outlined panel-collapse-icon">chevron_left</span>
+            </div>
           </div>
+          <div v-show="panelState !== 'left'" class="split-header-cell">
+            <div class="panel-header panel-header-clickable"
+              @click="panelState = panelState === 'split' ? 'left' : 'split'"
+              :title="panelState === 'split' ? '이번주 패널 접기' : '둘 다 보기'"
+            >
+              <span class="material-symbols-outlined panel-collapse-icon">chevron_right</span>
+              <span class="panel-title">
+                <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">today</span>
+                이번주 · {{ rightWeekDisplay }}
+                <span v-if="selectedWeek === getCurrentWeek()" class="week-current-badge">이번 주</span>
+              </span>
+            </div>
+          </div>
+        </div>
 
-          <div v-for="task in filteredTasks" :key="'L-' + task.id" class="card mb-16" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
+        <!-- ══ 과제별 행 (지난주 + 이번주 동시) ══ -->
+        <div v-for="task in filteredTasks" :key="task.id" class="task-row" :id="'task-' + task.id">
+
+          <!-- 지난주 셀 -->
+          <div v-show="panelState !== 'right'" class="task-cell">
+            <div class="card" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
             <div class="card-header" style="flex-wrap:wrap;gap:8px">
               <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
                 <h3 style="margin:0">{{ task.name }}</h3>
@@ -182,18 +203,16 @@
                     </div>
                     <ProgressSection
                       :issues="leftIssueMap[st.id] || []"
-                      :staff-list="staffList"
+                      :staff-list="allChipTargets"
                       :task-id="st.id"
                       :week="leftWeek"
                       @update:issues="iss => onLeftIssuesUpdate(st.id, iss)"
                     />
-                    <QASection
-                      :questions="getLeftQuestionsForTask(st.id)"
-                      :staff-list="staffList"
-                      :qa-leaders="qaLeaders"
+                    <TaskCommentSection
                       :task-id="st.id"
                       :week="leftWeek"
-                      @update:questions="qs => onLeftQuestionsUpdate(st.id, qs)"
+                      :staff-list="allChipTargets"
+                      :qa-leaders="qaLeaders"
                     />
                   </template>
                 </div>
@@ -224,39 +243,25 @@
                 </div>
                 <ProgressSection
                   :issues="leftIssueMap[task.id] || []"
-                  :staff-list="staffList"
+                  :staff-list="allChipTargets"
                   :task-id="task.id"
                   :week="leftWeek"
                   @update:issues="iss => onLeftIssuesUpdate(task.id, iss)"
                 />
-                <QASection
-                  :questions="getLeftQuestionsForTask(task.id)"
-                  :staff-list="staffList"
-                  :qa-leaders="qaLeaders"
+                <TaskCommentSection
                   :task-id="task.id"
                   :week="leftWeek"
-                  @update:questions="qs => onLeftQuestionsUpdate(task.id, qs)"
+                  :staff-list="allChipTargets"
+                  :qa-leaders="qaLeaders"
                 />
               </template>
             </div>
-          </div>
-        </div>
-
-        <!-- ══ 이번주 패널 ══ -->
-        <div v-show="panelState !== 'left'" class="split-panel split-right">
-          <div class="panel-header panel-header-clickable"
-            @click="panelState = panelState === 'split' ? 'left' : 'split'"
-            :title="panelState === 'split' ? '이번주 패널 접기' : '둘 다 보기'"
-          >
-            <span class="material-symbols-outlined panel-collapse-icon">chevron_right</span>
-            <span class="panel-title">
-              <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">today</span>
-              이번주 · {{ rightWeekDisplay }}
-              <span v-if="selectedWeek === getCurrentWeek()" class="week-current-badge">이번 주</span>
-            </span>
+            </div>
           </div>
 
-          <div v-for="task in filteredTasks" :key="task.id" :id="'task-' + task.id" class="card mb-16" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
+          <!-- 이번주 셀 -->
+          <div v-show="panelState !== 'left'" class="task-cell">
+            <div class="card" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
             <div class="card-header" style="flex-wrap:wrap;gap:8px">
               <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
                 <h3 style="margin:0">{{ task.name }}</h3>
@@ -383,19 +388,17 @@
 
                     <ProgressSection
                       :issues="issueMap[st.id] || []"
-                      :staff-list="staffList"
+                      :staff-list="allChipTargets"
                       :task-id="st.id"
                       :week="selectedWeek"
                       @update:issues="iss => onIssuesUpdate(st.id, iss)"
                     />
 
-                    <QASection
-                      :questions="getQuestionsForTask(st.id)"
-                      :staff-list="staffList"
-                      :qa-leaders="qaLeaders"
+                    <TaskCommentSection
                       :task-id="st.id"
                       :week="selectedWeek"
-                      @update:questions="qs => onQuestionsUpdate(st.id, qs)"
+                      :staff-list="allChipTargets"
+                      :qa-leaders="qaLeaders"
                     />
                   </template>
                 </div>
@@ -435,23 +438,23 @@
 
                 <ProgressSection
                   :issues="issueMap[task.id] || []"
-                  :staff-list="staffList"
+                  :staff-list="allChipTargets"
                   :task-id="task.id"
                   :week="selectedWeek"
                   @update:issues="iss => onIssuesUpdate(task.id, iss)"
                 />
 
-                <QASection
-                  :questions="getQuestionsForTask(task.id)"
-                  :staff-list="staffList"
-                  :qa-leaders="qaLeaders"
+                <TaskCommentSection
                   :task-id="task.id"
                   :week="selectedWeek"
-                  @update:questions="qs => onQuestionsUpdate(task.id, qs)"
+                  :staff-list="allChipTargets"
+                  :qa-leaders="qaLeaders"
                 />
               </template>
             </div>
+            </div>
           </div>
+
         </div>
 
       </div>
@@ -462,7 +465,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { useToast } from '../composables/useToast.js'
@@ -470,7 +473,7 @@ import { parseIds } from '../utils/parseIds.js'
 import { getCurrentWeek, getWeekDateRange, addWeeks } from '../utils/week.js'
 import { getTaskMembers, getAllTaskMembers } from '../utils/staff.js'
 import ProgressSection from '../components/progress/ProgressSection.vue'
-import QASection from '../components/progress/QASection.vue'
+import TaskCommentSection from '../components/progress/TaskCommentSection.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -480,6 +483,13 @@ const objectives = ref([])
 const staffList = ref([])
 const qaLeaders = ref([])
 const loading = ref(false)
+
+// staffList + qaLeaders 병합 (이름 기준 중복 제거, 리더 우선)
+const allChipTargets = computed(() => {
+  const leaderNames = new Set(qaLeaders.value.map(l => l.name))
+  const members = staffList.value.filter(s => !leaderNames.has(s.name))
+  return [...qaLeaders.value, ...members]
+})
 const { toastMsg, showToast, toastError } = useToast()
 
 // ── 패널 상태: 'split' | 'left' | 'right' ──
@@ -590,6 +600,8 @@ async function onWeekChange() {
     loadQnA(), loadLinks(), loadIssues(),
     loadLeftQnA(), loadLeftLinks(), loadLeftIssues(),
   ])
+  await nextTick()
+  scheduleSyncRetries()
 }
 
 // ── 헬퍼 ──
@@ -750,8 +762,8 @@ async function loadLeftIssues() {
 
 // ── 포커스 이동 ──
 async function handleFocusQuery() {
-  const { focusQuestion, focusIssue, focusIssueId, focusTask } = route.query
-  if (!focusQuestion && !focusIssue && !focusIssueId && !focusTask) return
+  const { focusQuestion, focusIssue, focusIssueId, focusTask, taskId, commentId } = route.query
+  if (!focusQuestion && !focusIssue && !focusIssueId && !focusTask && !taskId && !commentId) return
 
   if (focusQuestion) {
     const q = qnaList.value.find(q => q.id === focusQuestion)
@@ -774,21 +786,30 @@ async function handleFocusQuery() {
       expandedSubTaskIds.value = new Set([...expandedSubTaskIds.value, focusTask])
     }
   }
+  if (taskId) {
+    const isSubTask = tasks.value.some(t => (t.sub_tasks || []).some(st => st.id === taskId))
+    if (isSubTask) {
+      expandedSubTaskIds.value = new Set([...expandedSubTaskIds.value, taskId])
+    }
+  }
 
   await nextTick()
   await new Promise(r => setTimeout(r, 150))
 
-  const targetId = focusQuestion
-    ? `qa-${focusQuestion}`
-    : focusIssueId
-      ? `issue-${focusIssueId}`
-      : `task-${focusIssue || focusTask}`
+  // commentId가 있으면 해당 댓글로 직접 이동, 없으면 이슈/과제/질문으로 이동
+  const primaryId = commentId
+    ? `comment-${commentId}`
+    : focusQuestion
+      ? `qa-${focusQuestion}`
+      : focusIssueId
+        ? `issue-${focusIssueId}`
+        : `task-${focusIssue || focusTask || taskId}`
 
   // DOM이 준비될 때까지 최대 3회 재시도
   let el = null
   for (const delay of [0, 200, 400]) {
     if (delay) await new Promise(r => setTimeout(r, delay))
-    el = document.getElementById(targetId)
+    el = document.getElementById(primaryId)
     if (el) break
   }
   if (!el) return
@@ -821,7 +842,17 @@ async function fetchAll() {
   await handleFocusQuery()
 }
 
-onMounted(fetchAll)
+async function onDataUpdated() {
+  await Promise.all([loadIssues(), loadLeftIssues()])
+  await nextTick()
+  scheduleSyncRetries()
+}
+
+onMounted(() => {
+  fetchAll()
+  window.addEventListener('data-updated', onDataUpdated)
+})
+onUnmounted(() => { window.removeEventListener('data-updated', onDataUpdated) })
 
 // 알림 클릭 등으로 같은 페이지에서 쿼리 파라미터가 바뀌면 week·focus 처리
 watch(() => route.query, async (q, prev) => {
@@ -836,6 +867,49 @@ watch(() => route.query, async (q, prev) => {
     await handleFocusQuery()
   }
 })
+
+// ── 소과제 높이 동기화 ──
+// split 모드에서 같은 과제의 소과제끼리 세로 위치가 맞도록 min-height 동기화
+function syncSubTaskHeights() {
+  if (panelState.value !== 'split') {
+    document.querySelectorAll('.task-row .sub-task-section').forEach(el => { el.style.minHeight = '' })
+    return
+  }
+
+  const pairs = []
+  document.querySelectorAll('.task-row').forEach(row => {
+    const cells = row.querySelectorAll(':scope > .task-cell')
+    if (cells.length < 2) return
+    const leftSubs = [...cells[0].querySelectorAll('.sub-task-section')]
+    const rightSubs = [...cells[1].querySelectorAll('.sub-task-section')]
+    ;[...leftSubs, ...rightSubs].forEach(el => { el.style.minHeight = '' })
+    const count = Math.min(leftSubs.length, rightSubs.length)
+    for (let i = 0; i < count; i++) pairs.push([leftSubs[i], rightSubs[i]])
+  })
+
+  // 읽기 → 쓰기 분리로 reflow 최소화
+  const heights = pairs.map(([l, r]) => [l.offsetHeight, r.offsetHeight])
+  pairs.forEach(([l, r], i) => {
+    const maxH = Math.max(heights[i][0], heights[i][1])
+    l.style.minHeight = maxH + 'px'
+    r.style.minHeight = maxH + 'px'
+  })
+}
+
+// 자식 컴포넌트(TaskCommentSection 등)가 비동기 데이터 로드 후 높이가 확정될 때까지
+// 500ms / 1500ms 두 차례 재동기화
+const _syncTimers = []
+function scheduleSyncRetries() {
+  _syncTimers.forEach(clearTimeout)
+  _syncTimers.length = 0
+  _syncTimers.push(setTimeout(syncSubTaskHeights, 500))
+  _syncTimers.push(setTimeout(syncSubTaskHeights, 1500))
+}
+
+// 소과제 접기/펼치기, 패널 전환 시 재동기화
+watch(expandedSubTaskIds, async () => { await nextTick(); syncSubTaskHeights() }, { flush: 'post' })
+watch(panelState, async () => { await nextTick(); syncSubTaskHeights() }, { flush: 'post' })
+onUnmounted(() => { _syncTimers.forEach(clearTimeout) })
 </script>
 
 <style scoped>
@@ -953,12 +1027,41 @@ watch(() => route.query, async (q, prev) => {
 /* ── 분할 화면 ── */
 .split-container {
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 0;
 }
-.split-panel {
-  flex: 1 1 0;
+
+/* 패널 헤더 행 */
+.split-headers {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-main);
+  padding: 4px 0;
+}
+.split-header-cell {
+  flex: 1;
   min-width: 0;
+}
+
+/* 과제별 행 */
+.task-row {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 16px;
+}
+.task-cell {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.task-cell > .card {
+  flex: 1;
 }
 
 .panel-header {
@@ -969,13 +1072,9 @@ watch(() => route.query, async (q, prev) => {
   background: var(--gray-50);
   border: 1px solid var(--outline);
   border-radius: var(--radius-md);
-  margin-bottom: 12px;
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
   color: var(--text-secondary);
-  position: sticky;
-  top: 0;
-  z-index: 10;
 }
 .panel-title {
   display: flex;

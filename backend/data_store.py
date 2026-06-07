@@ -103,14 +103,31 @@ CREATE TABLE IF NOT EXISTS answer_replies (
     updated_at TEXT
 );
 CREATE TABLE IF NOT EXISTS issue_comments (
-    id         TEXT PRIMARY KEY,
-    issue_id   TEXT NOT NULL DEFAULT '',
-    parent_id  TEXT DEFAULT NULL,
-    comment    TEXT NOT NULL DEFAULT '',
-    comment_by TEXT NOT NULL DEFAULT '',
-    created_by TEXT NOT NULL DEFAULT '',
-    created_at TEXT,
-    updated_at TEXT
+    id              TEXT PRIMARY KEY,
+    issue_id        TEXT NOT NULL DEFAULT '',
+    parent_id       TEXT DEFAULT NULL,
+    comment         TEXT NOT NULL DEFAULT '',
+    comment_by      TEXT NOT NULL DEFAULT '',
+    created_by      TEXT NOT NULL DEFAULT '',
+    requires_answer INTEGER NOT NULL DEFAULT 0,
+    is_answered     INTEGER NOT NULL DEFAULT 0,
+    tagged_users    TEXT NOT NULL DEFAULT '[]',
+    created_at      TEXT,
+    updated_at      TEXT
+);
+CREATE TABLE IF NOT EXISTS task_comments (
+    id              TEXT PRIMARY KEY,
+    task_id         TEXT NOT NULL DEFAULT '',
+    week            TEXT NOT NULL DEFAULT '',
+    parent_id       TEXT DEFAULT NULL,
+    comment         TEXT NOT NULL DEFAULT '',
+    comment_by      TEXT NOT NULL DEFAULT '',
+    created_by      TEXT NOT NULL DEFAULT '',
+    requires_answer INTEGER NOT NULL DEFAULT 0,
+    is_answered     INTEGER NOT NULL DEFAULT 0,
+    tagged_users    TEXT NOT NULL DEFAULT '[]',
+    created_at      TEXT,
+    updated_at      TEXT
 );
 CREATE TABLE IF NOT EXISTS feedbacks (
     id         TEXT PRIMARY KEY,
@@ -144,6 +161,23 @@ CREATE TABLE IF NOT EXISTS notifications (
     link       TEXT NOT NULL DEFAULT '',
     is_read    INTEGER NOT NULL DEFAULT 0,
     created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS data_version (
+    id         INTEGER PRIMARY KEY CHECK (id = 1),
+    version    INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT
+);
+CREATE TABLE IF NOT EXISTS deleted_issues (
+    id                TEXT PRIMARY KEY,
+    issue_id          TEXT NOT NULL,
+    task_id           TEXT NOT NULL DEFAULT '',
+    week              TEXT NOT NULL DEFAULT '',
+    issue             TEXT NOT NULL DEFAULT '',
+    assignee          TEXT NOT NULL DEFAULT '',
+    created_by        TEXT NOT NULL DEFAULT '',
+    deleted_by        TEXT NOT NULL DEFAULT '',
+    deleted_at        TEXT NOT NULL,
+    comments_snapshot TEXT NOT NULL DEFAULT '[]'
 );
 CREATE TABLE IF NOT EXISTS users (
     username               TEXT PRIMARY KEY,
@@ -209,6 +243,9 @@ def init_db() -> None:
             "ALTER TABLE users ADD COLUMN desired_field TEXT NOT NULL DEFAULT ''",
             "ALTER TABLE users ADD COLUMN okrs TEXT NOT NULL DEFAULT ''",
             "ALTER TABLE users ADD COLUMN task_ids TEXT NOT NULL DEFAULT '[]'",
+            "ALTER TABLE issue_comments ADD COLUMN requires_answer INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE issue_comments ADD COLUMN is_answered INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE issue_comments ADD COLUMN tagged_users TEXT NOT NULL DEFAULT '[]'",
         ]:
             try:
                 conn.execute(sql)
@@ -266,6 +303,8 @@ def init_db() -> None:
                     "UPDATE users SET task_ids=? WHERE username=? AND task_ids='[]'",
                     (json.dumps(ids, ensure_ascii=False), srow["user_id"])
                 )
+        # data_version 초기 행 (없으면 삽입)
+        conn.execute("INSERT OR IGNORE INTO data_version (id, version, updated_at) VALUES (1, 0, '')")
         # tasks.members[].staff_id → username 변환
         task_rows = conn.execute("SELECT id, members FROM tasks").fetchall()
         for row in task_rows:
@@ -286,6 +325,15 @@ def init_db() -> None:
                     "UPDATE tasks SET members=? WHERE id=?",
                     (json.dumps(members, ensure_ascii=False), row["id"])
                 )
+
+
+def bump_data_version() -> None:
+    """댓글/이슈 변경 시 호출 — 모든 SSE 클라이언트에게 갱신 신호를 보낸다."""
+    with get_conn() as conn:
+        conn.execute(
+            "UPDATE data_version SET version = version + 1, updated_at = ? WHERE id = 1",
+            (datetime.now().strftime("%Y-%m-%d %H:%M:%S"),)
+        )
 
 
 # ── 행 변환 헬퍼 ─────────────────────────────────────────────────────────────
@@ -343,7 +391,7 @@ def insert_notification(recipient: str, ntype: str, title: str, message: str, li
             (nid, recipient, ntype, title, message, link, datetime.now().isoformat()),
         )
         # 50개 초과 시 오래된 것부터 삭제
-        # 단, 미답변 question_tagged 알림은 삭제 대상에서 제외
+        # 단, 미답변 question_tagged / comment_tagged 알림은 삭제 대상에서 제외
         all_notifs = conn.execute(
             "SELECT id, type, link FROM notifications WHERE recipient=? ORDER BY created_at ASC",
             (recipient,)
@@ -352,9 +400,7 @@ def insert_notification(recipient: str, ntype: str, title: str, message: str, li
         if total > NOTIFICATION_LIMIT:
             deletable = []
             for n in all_notifs:
-                if n["type"] != "question_tagged":
-                    deletable.append(n["id"])
-                else:
+                if n["type"] == "question_tagged":
                     m = re.search(r'focusQuestion=([^&]+)', n["link"] or "")
                     if m:
                         has_answer = conn.execute(
@@ -364,6 +410,23 @@ def insert_notification(recipient: str, ntype: str, title: str, message: str, li
                             deletable.append(n["id"])
                     else:
                         deletable.append(n["id"])
+                elif n["type"] == "comment_tagged":
+                    m = re.search(r'commentId=([^&]+)', n["link"] or "")
+                    if m:
+                        cid = m.group(1)
+                        row_tc = conn.execute(
+                            "SELECT is_answered FROM task_comments WHERE id=?", (cid,)
+                        ).fetchone()
+                        row_ic = conn.execute(
+                            "SELECT is_answered FROM issue_comments WHERE id=?", (cid,)
+                        ).fetchone()
+                        answered = (row_tc and row_tc["is_answered"]) or (row_ic and row_ic["is_answered"])
+                        if answered:
+                            deletable.append(n["id"])
+                    else:
+                        deletable.append(n["id"])
+                else:
+                    deletable.append(n["id"])
             to_delete = deletable[:total - NOTIFICATION_LIMIT]
             if to_delete:
                 ph = ",".join("?" * len(to_delete))

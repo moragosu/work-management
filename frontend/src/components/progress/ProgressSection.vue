@@ -44,9 +44,18 @@
             <span class="material-symbols-outlined">chat_bubble_outline</span>
             댓글 {{ (iss.comments || []).length }}개
           </div>
-          <div v-for="c in (iss.comments || [])" :key="c.id" class="comment-item">
+          <div v-for="c in (iss.comments || [])" :key="c.id" :id="`comment-${c.id}`" class="comment-item">
             <div class="comment-meta-row">
               <span class="badge badge-gray">{{ c.comment_by }}</span>
+              <template v-if="c.tagged_users && c.tagged_users.length">
+                <span class="material-symbols-outlined comment-tag-arrow">arrow_forward</span>
+                <span v-for="t in c.tagged_users" :key="t" class="badge comment-tag-badge">{{ t }}</span>
+              </template>
+              <span v-if="c.requires_answer && !c.is_answered" class="badge-pending">
+                <span class="material-symbols-outlined" style="font-size:11px;vertical-align:-2px">hourglass_empty</span>
+                답변 대기
+              </span>
+              <span v-if="c.requires_answer && c.is_answered" class="badge badge-green" style="font-size:11px">답변됨</span>
               <span class="meta-date">{{ (c.updated_at ?? c.created_at)?.slice(0, 19) }}</span>
               <span v-if="c.updated_at" class="meta-edited">수정됨</span>
               <div v-if="!readonly" class="comment-actions">
@@ -91,10 +100,27 @@
           <!-- 댓글 입력 -->
           <div v-if="!readonly">
             <div v-if="commentingIssueId === iss.id && !replyingToCommentId" class="comment-editor-form">
-              <TiptapEditor v-model="newCommentText" height="120px" placeholder="댓글을 입력하세요..." />
-              <div class="flex gap-4 mt-6" style="justify-content:flex-end">
+              <!-- @태그 chip -->
+              <div v-if="staffList.length > 0" class="comment-tag-row">
+                <span class="comment-tag-label">@태그</span>
+                <button
+                  v-for="s in staffList.filter(s => s.name !== auth.user?.name)"
+                  :key="s.id || s.name"
+                  class="target-chip"
+                  :class="{ active: commentTagged.includes(s.name) }"
+                  @click="toggleCommentTag(s.name, iss.id)"
+                >{{ s.name }}</button>
+              </div>
+              <TiptapEditor ref="commentEditorRef" v-model="newCommentText" height="120px" placeholder="댓글을 입력하세요..." />
+              <div class="flex gap-4 mt-6" style="align-items:center;justify-content:flex-end">
+                <label v-if="auth.isLeader" class="requires-answer-toggle">
+                  <input type="checkbox" v-model="commentRequiresAnswer" />
+                  답변 요구
+                </label>
                 <button class="btn btn-ghost btn-xs" @click="cancelComment">취소</button>
-                <button class="btn btn-primary btn-xs" @click="submitComment(iss.id, null)" :disabled="!hasContent(newCommentText)">등록</button>
+                <button class="btn btn-primary btn-xs" @click="submitComment(iss.id, null)" :disabled="!hasContent(newCommentText) || (staffList.length > 0 && commentTagged.length === 0)">
+                  {{ editingCommentId ? '저장' : '등록' }}
+                </button>
               </div>
             </div>
             <button v-else-if="commentingIssueId !== iss.id" class="btn-add-action mt-4" @click="startComment(iss.id)">
@@ -237,11 +263,49 @@ const commentingIssueId = ref('')
 const replyingToCommentId = ref('')
 const newCommentText = ref('')
 const editingCommentId = ref('')
+const commentTagged = ref([])
+const commentRequiresAnswer = ref(false)
+const commentEditorRef = ref(null)
 
-function startComment(issueId) { commentingIssueId.value = issueId; newCommentText.value = ''; replyingToCommentId.value = '' }
-function startReplyToComment(issueId, commentId) { commentingIssueId.value = issueId; replyingToCommentId.value = commentId; newCommentText.value = '' }
-function cancelComment() { commentingIssueId.value = ''; replyingToCommentId.value = ''; newCommentText.value = '' }
-function startEditComment(issueId, c) { commentingIssueId.value = issueId; editingCommentId.value = c.id; newCommentText.value = c.comment }
+function startComment(issueId) {
+  commentingIssueId.value = issueId
+  newCommentText.value = ''
+  replyingToCommentId.value = ''
+  commentTagged.value = []
+  commentRequiresAnswer.value = false
+}
+function startReplyToComment(issueId, commentId) {
+  commentingIssueId.value = issueId
+  replyingToCommentId.value = commentId
+  newCommentText.value = ''
+  commentTagged.value = []
+  commentRequiresAnswer.value = false
+}
+function cancelComment() {
+  commentingIssueId.value = ''
+  replyingToCommentId.value = ''
+  editingCommentId.value = ''
+  newCommentText.value = ''
+  commentTagged.value = []
+  commentRequiresAnswer.value = false
+}
+function startEditComment(issueId, c) {
+  commentingIssueId.value = issueId
+  editingCommentId.value = c.id
+  newCommentText.value = c.comment
+  commentTagged.value = [...(c.tagged_users || [])]
+  commentRequiresAnswer.value = !!c.requires_answer
+}
+
+function toggleCommentTag(name) {
+  const idx = commentTagged.value.indexOf(name)
+  if (idx === -1) {
+    commentTagged.value.push(name)
+    commentEditorRef.value?.insertText(` @${name} `)
+  } else {
+    commentTagged.value.splice(idx, 1)
+  }
+}
 
 function _updateComments(issueId, fn) {
   return props.issues.map(i => i.id === issueId ? { ...i, comments: fn(i.comments || []) } : i)
@@ -251,24 +315,33 @@ async function submitComment(issueId, parentId) {
   if (!hasContent(newCommentText.value)) return
   try {
     if (editingCommentId.value) {
-      const { data } = await axios.put(`/api/issues/${issueId}/comments/${editingCommentId.value}`, { comment: newCommentText.value.trim() })
+      const { data } = await axios.put(`/api/issues/${issueId}/comments/${editingCommentId.value}`, {
+        comment: newCommentText.value.trim(),
+        tagged_users: [...commentTagged.value],
+        requires_answer: commentRequiresAnswer.value,
+      })
       emit('update:issues', _updateComments(issueId, comments =>
         comments.map(c => c.id === editingCommentId.value
           ? { ...c, ...data }
           : { ...c, replies: (c.replies || []).map(r => r.id === editingCommentId.value ? { ...r, ...data } : r) }
         )
       ))
-      editingCommentId.value = ''
+      cancelComment()
     } else {
       const { data } = await axios.post(`/api/issues/${issueId}/comments`, {
         comment: newCommentText.value.trim(),
         comment_by: auth.user?.name || '',
         parent_id: parentId || null,
+        requires_answer: commentRequiresAnswer.value,
+        tagged_users: [...commentTagged.value],
       })
       window.dispatchEvent(new Event('refresh-notifications'))
       if (parentId) {
         emit('update:issues', _updateComments(issueId, comments =>
-          comments.map(c => c.id === parentId ? { ...c, replies: [...(c.replies || []), data] } : c)
+          comments.map(c => c.id === parentId
+            ? { ...c, replies: [...(c.replies || []), data], is_answered: c.requires_answer ? 1 : c.is_answered }
+            : c
+          )
         ))
       } else {
         emit('update:issues', _updateComments(issueId, comments => [...comments, { ...data, replies: [] }]))
@@ -281,9 +354,15 @@ async function submitComment(issueId, parentId) {
 async function deleteComment(issueId, commentId) {
   if (!confirm('삭제하시겠습니까?')) return
   try {
-    await axios.delete(`/api/issues/${issueId}/comments/${commentId}`)
+    const { data } = await axios.delete(`/api/issues/${issueId}/comments/${commentId}`)
     emit('update:issues', _updateComments(issueId, comments =>
-      comments.filter(c => c.id !== commentId).map(c => ({ ...c, replies: (c.replies || []).filter(r => r.id !== commentId) }))
+      comments
+        .filter(c => c.id !== commentId)
+        .map(c => {
+          const filtered = (c.replies || []).filter(r => r.id !== commentId)
+          const unanswered = data.parent_unanswered === c.id
+          return { ...c, replies: filtered, is_answered: unanswered ? 0 : c.is_answered }
+        })
     ))
   } catch (e) { toastError(e, '삭제 실패') }
 }
@@ -297,10 +376,12 @@ async function deleteComment(issueId, commentId) {
 }
 .issue-item {
   margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px dashed var(--outline);
+  padding: 12px;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  overflow: hidden;
 }
-.issue-item:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
 .issue-box {
   background: #fff7ed;
   border-left: 3px solid #f59e0b;
@@ -309,9 +390,10 @@ async function deleteComment(issueId, commentId) {
 }
 .mt-4 { margin-top: 4px; }
 .comment-section {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--outline);
+  margin: 10px -12px -12px -12px;
+  padding: 10px 12px 12px;
+  background: var(--gray-50);
+  border-top: 1px solid var(--outline);
 }
 .comment-section-label {
   display: flex;
@@ -367,6 +449,66 @@ async function deleteComment(issueId, commentId) {
   margin-top: 8px;
 }
 .comment-editor-form { margin-top: 8px; }
+
+.comment-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.comment-tag-label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-weight: var(--fw-semibold);
+  flex-shrink: 0;
+}
+.target-chip {
+  font-size: var(--fs-xs);
+  padding: 2px 8px;
+  border-radius: 99px;
+  border: 1px solid var(--outline);
+  background: var(--bg-main);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+.target-chip:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+.target-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.requires-answer-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+.comment-tag-arrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  vertical-align: middle;
+}
+.comment-tag-badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 99px;
+}
+.badge-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: var(--warning-light);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+  font-weight: var(--fw-semibold);
+}
 
 .issue-add-row {
   margin-top: 12px;

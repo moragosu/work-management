@@ -14,11 +14,11 @@
     <div class="page-body">
       <!-- ① 이번 주 실용 지표 -->
       <div class="grid-3" style="margin-bottom:24px">
-        <div class="card stat-accent" :class="unansweredQuestions.length ? 'stat-accent-orange' : 'stat-accent-green'" data-tooltip="전체 기간 중 아직 답변이 달리지 않은 질문 수" data-tooltip-pos="bottom">
+        <div class="card stat-accent" :class="unansweredQuestions.length ? 'stat-accent-orange' : 'stat-accent-green'" data-tooltip="전체 기간 중 아직 답변이 달리지 않은 확인 요청 수" data-tooltip-pos="bottom">
           <div class="card-body stat-card">
             <span class="material-symbols-outlined stat-icon" :class="unansweredQuestions.length ? 'stat-icon-orange' : 'stat-icon-green'">quiz</span>
             <div class="stat-value" :style="unansweredQuestions.length ? 'color:var(--orange,#f97316)' : 'color:var(--success)'">{{ unansweredQuestions.length }}</div>
-            <div class="stat-label">미답변 의견/질문 (전체)</div>
+            <div class="stat-label">미확인 답변 현황 (전체)</div>
           </div>
         </div>
         <div class="card stat-accent" :class="weekIssues.length ? 'stat-accent-yellow' : 'stat-accent-green'" data-tooltip="이번 주 등록된 이슈 수" data-tooltip-pos="bottom">
@@ -73,14 +73,14 @@
       <!-- ③ 액션 패널 2종 -->
       <div class="grid-2" style="margin-bottom:24px;align-items:start">
 
-        <!-- 의견/질문 -->
+        <!-- 답변 현황 -->
         <div class="card action-panel">
           <div class="card-header panel-header-toggle" @click="panelExpanded.questions = !panelExpanded.questions" data-tooltip="클릭하여 펼치기 / 접기">
             <div class="panel-title">
               <span class="panel-icon" style="background:#fff7ed;color:var(--orange)">
-                <span class="material-symbols-outlined">forum</span>
+                <span class="material-symbols-outlined">chat_bubble_outline</span>
               </span>
-              의견/질문
+              답변 현황
             </div>
             <div class="q-filter-group" @click.stop>
               <button class="q-filter-btn" :class="{ active: qWeekFilter === 'last' }" @click="qWeekFilter = 'last'">지난주</button>
@@ -99,22 +99,24 @@
           <div class="card-body panel-body">
             <div v-if="actionLoading" class="loading-center" style="padding:24px"><div class="spinner"></div></div>
             <div v-else-if="filteredQuestions.length === 0" class="panel-empty">
-              {{ questionFilter === 'answered' ? '답변 완료된 의견/질문이 없습니다' : questionFilter === 'all' ? '등록된 의견/질문이 없습니다' : '미답변 의견/질문이 없습니다 👍' }}
+              {{ questionFilter === 'answered' ? '답변 완료된 항목이 없습니다' : questionFilter === 'all' ? '등록된 답변 현황이 없습니다' : '미답변 항목이 없습니다 👍' }}
             </div>
             <ul v-else class="panel-list" :class="{ 'panel-list-expanded': panelExpanded.questions }">
-              <li v-for="q in filteredQuestions" :key="q.id" class="panel-item panel-item-link" @click="openModal('question', q)">
-                <div v-if="q.questioner || (q.targets && q.targets.length)" class="q-targets-row">
-                  <span v-if="q.questioner" class="badge badge-purple" style="font-size:11px">{{ q.questioner }}</span>
-                  <template v-if="q.targets && q.targets.length">
+              <li v-for="c in filteredQuestions" :key="c.id" class="panel-item panel-item-link" @click="openModal('question', c)">
+                <div class="q-targets-row">
+                  <span class="badge badge-gray" style="font-size:11px">{{ c.comment_by }}</span>
+                  <template v-if="c.tagged_users && c.tagged_users.length">
                     <span class="material-symbols-outlined q-targets-icon">arrow_forward</span>
-                    <span v-for="t in q.targets" :key="t" class="q-target-badge">{{ t }}</span>
+                    <span v-for="t in c.tagged_users" :key="t" class="q-target-badge">{{ t }}</span>
                   </template>
+                  <span v-if="c.is_answered" class="badge badge-green" style="font-size:11px;margin-left:auto">답변됨</span>
+                  <span v-else class="badge-pending-sm" style="margin-left:auto">답변 대기</span>
                 </div>
-                <div class="panel-item-main">{{ stripMarkdown(q.question) }}</div>
+                <div class="panel-item-main">{{ stripMarkdown(c.comment) }}</div>
                 <div class="panel-item-sub">
-                  <span class="badge badge-blue">{{ getTaskName(q.task_id) }}</span>
-                  <span class="badge badge-gray">{{ formatWeekLabel(q.week) }}</span>
-                  <span class="panel-goto">상세보기 →</span>
+                  <span class="badge badge-blue">{{ getTaskName(c.task_id) }}</span>
+                  <span class="badge badge-gray">{{ formatWeekLabel(c.week) }}</span>
+                  <span class="panel-goto">바로가기 →</span>
                 </div>
               </li>
             </ul>
@@ -181,7 +183,7 @@
                     <th class="th-sortable" @click="toggleSort('name')">파트원 <span class="sort-ico">{{ sortIco('name') }}</span></th>
                     <th class="th-sortable" data-tooltip="배정된 과제 수 (누적)" @click="toggleSort('tasks')">담당 과제 <span class="sort-ico">{{ sortIco('tasks') }}</span></th>
                     <th class="th-sortable" data-tooltip="해당 주 등록한 이슈 수" @click="toggleSort('issues')">이슈 <span class="sort-ico">{{ sortIco('issues') }}</span></th>
-                    <th class="th-sortable" data-tooltip="받은 질문의 답변 / 미답변 수" @click="toggleSort('answered')">답변 현황 <span class="sort-ico">{{ sortIco('answered') }}</span></th>
+                    <th class="th-sortable" data-tooltip="받은 답변 요청의 완료 / 미완료 수" @click="toggleSort('answered')">답변 현황 <span class="sort-ico">{{ sortIco('answered') }}</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -232,7 +234,7 @@
             <div class="matrix-legend-inline">
               <span class="material-symbols-outlined matrix-legend-icon matrix-icon-link">link</span><span>컨플루언스</span>
               <span class="material-symbols-outlined matrix-legend-icon matrix-icon-issue">warning</span><span>진행 현황 및 이슈</span>
-              <span class="matrix-count matrix-count-legend">N</span><span>의견/질문</span>
+              <span class="matrix-count matrix-count-legend">N</span><span>답변 현황</span>
             </div>
             <span class="material-symbols-outlined section-chevron" :class="{ open: matrixOpen }">expand_more</span>
           </div>
@@ -257,7 +259,7 @@
                           <span class="material-symbols-outlined matrix-icon matrix-icon-link">link</span>
                         </a>
                         <span v-if="issueMap[row.id]?.has(w)" class="material-symbols-outlined matrix-icon matrix-icon-issue" title="이슈 등록">warning</span>
-                        <span v-if="qnaMap[row.id]?.[w]" class="matrix-count matrix-count-sm" :title="`의견/질문 ${qnaMap[row.id][w]}건`">{{ qnaMap[row.id][w] }}</span>
+                        <span v-if="qnaMap[row.id]?.[w]" class="matrix-count matrix-count-sm" :title="`답변 현황 ${qnaMap[row.id][w]}건`">{{ qnaMap[row.id][w] }}</span>
                         <span v-if="!confluenceMap[row.id]?.has(w) && !issueMap[row.id]?.has(w) && !qnaMap[row.id]?.[w]" class="matrix-dot-no">–</span>
                       </div>
                     </td>
@@ -310,7 +312,7 @@
     <div v-if="modal.visible" class="dash-modal-overlay" @click.self="modal.visible = false">
       <div class="dash-modal">
         <div class="dash-modal-header">
-          <span>{{ modal.type === 'issue' ? '진행 현황 및 이슈 상세' : '질문 상세' }}</span>
+          <span>{{ modal.type === 'issue' ? '진행 현황 및 이슈 상세' : '답변 현황 상세' }}</span>
           <button class="dash-modal-close" @click="modal.visible = false">
             <span class="material-symbols-outlined">close</span>
           </button>
@@ -318,10 +320,10 @@
         <div class="dash-modal-meta">
           <span class="badge badge-blue">{{ getTaskName(modal.item.task_id) }}</span>
           <span v-if="modal.item.assignee" class="badge badge-gray">{{ modal.item.assignee }}</span>
-          <span v-if="modal.item.questioner" class="badge badge-purple">{{ modal.item.questioner }}</span>
-          <template v-if="modal.item.targets && modal.item.targets.length">
+          <span v-if="modal.item.comment_by" class="badge badge-gray">{{ modal.item.comment_by }}</span>
+          <template v-if="modal.item.tagged_users && modal.item.tagged_users.length">
             <span class="material-symbols-outlined" style="font-size:13px;color:var(--text-muted)">arrow_forward</span>
-            <span v-for="t in modal.item.targets" :key="t" class="badge badge-blue">{{ t }}</span>
+            <span v-for="t in modal.item.tagged_users" :key="t" class="badge badge-blue">{{ t }}</span>
           </template>
           <span class="badge badge-gray">{{ formatWeekLabel(modal.item.week) }}</span>
         </div>
@@ -330,12 +332,9 @@
             <TiptapPreview :modelValue="modal.item.issue" class="dash-modal-md" />
           </template>
           <template v-else>
-            <div class="dash-modal-q">{{ modal.item.question }}</div>
-            <template v-if="modal.item.answers && modal.item.answers.length > 0">
-              <div class="dash-modal-a-label">답변</div>
-              <TiptapPreview v-for="a in modal.item.answers" :key="a.id" :modelValue="a.answer" class="dash-modal-md" />
-            </template>
-            <div v-else class="dash-modal-no-answer">아직 답변이 없습니다.</div>
+            <TiptapPreview :modelValue="modal.item.comment" class="dash-modal-md" />
+            <div v-if="modal.item.is_answered" class="dash-modal-a-label" style="color:var(--success)">✓ 답변됨</div>
+            <div v-else class="dash-modal-no-answer">아직 답변이 달리지 않았습니다.</div>
           </template>
         </div>
         <div class="dash-modal-footer">
@@ -348,7 +347,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, onUnmounted, reactive } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import axios from 'axios'
 import TiptapPreview from '../components/TiptapPreview.vue'
@@ -362,8 +361,8 @@ const router = useRouter()
 const objectives = ref([])
 const tasks      = ref([])
 const staffList  = ref([])
-const questions  = ref([])
-const allQuestions     = ref([])
+const allTaskComments    = ref([])
+const allIssueComments   = ref([])
 const allConfluenceLinks = ref([])
 const weekIssuesList   = ref([])
 const allIssuesList    = ref([])
@@ -405,7 +404,7 @@ async function saveNotice() {
   }
 }
 const questionFilter = ref('unanswered') // 'unanswered' | 'answered' | 'all'
-const qWeekFilter    = ref('last')       // 'this' | 'last'
+const qWeekFilter    = ref('this')       // 'this' | 'last'
 const issWeekFilter  = ref('last')       // 'this' | 'last'
 const activityWeek   = ref('last')       // 'this' | 'last'
 
@@ -419,17 +418,20 @@ const inProgressCount = computed(() => objectives.value.filter(o => o.status ===
 const completedCount  = computed(() => objectives.value.filter(o => o.status === '완료').length)
 const dangerCount     = computed(() => objectives.value.filter(o => o.status === '위험').length)
 
+// ── 이슈 댓글 + 과제 댓글 통합 ──
+const allComments = computed(() => [...allTaskComments.value, ...allIssueComments.value])
+
 // ── 액션 패널 데이터 ──
 const unansweredQuestions = computed(() =>
-  allQuestions.value.filter(q => !q.answers || q.answers.length === 0)
+  allComments.value.filter(c => c.requires_answer && !c.is_answered)
 )
 
 const filteredQuestions = computed(() => {
   const w = qWeekFilter.value === 'last' ? lastWeek : currentWeek
-  const qs = allQuestions.value.filter(q => normalizeWeek(q.week) === w)
-  if (questionFilter.value === 'answered') return qs.filter(q => q.answers && q.answers.length > 0)
-  if (questionFilter.value === 'all') return qs
-  return qs.filter(q => !q.answers || q.answers.length === 0)
+  const cs = allComments.value.filter(c => c.requires_answer && normalizeWeek(c.week) === w)
+  if (questionFilter.value === 'answered') return cs.filter(c => c.is_answered)
+  if (questionFilter.value === 'all') return cs
+  return cs.filter(c => !c.is_answered)
 })
 
 const filteredIssues = computed(() => {
@@ -442,12 +444,12 @@ const weekIssues = computed(() => weekIssuesList.value)
 // ── 팀원별 활동 통계 ──
 const memberStatsMap = computed(() => {
   const w = activityWeek.value === 'last' ? lastWeek : currentWeek
-  const wQuestions = allQuestions.value.filter(q => normalizeWeek(q.week) === w)
-  const wIssues    = allIssuesList.value.filter(i => normalizeWeek(i.week) === w)
+  const wComments = allComments.value.filter(c => c.requires_answer && normalizeWeek(c.week) === w)
+  const wIssues   = allIssuesList.value.filter(i => normalizeWeek(i.week) === w)
   const map = {}
   staffList.value.forEach(s => {
-    const received   = wQuestions.filter(q => Array.isArray(q.targets) && q.targets.includes(s.name))
-    const answered   = received.filter(q => q.answers && q.answers.length > 0).length
+    const received   = wComments.filter(c => Array.isArray(c.tagged_users) && c.tagged_users.includes(s.name))
+    const answered   = received.filter(c => c.is_answered).length
     const unanswered = received.length - answered
     map[s.name] = {
       tasks:      (s.task_ids || []).length,
@@ -532,7 +534,7 @@ const latestIssueMap = computed(() => {
 const allWeeks = computed(() => {
   const s = new Set([currentWeek])
   allIssuesList.value.forEach(i => { if (i.week) s.add(normalizeWeek(i.week)) })
-  allQuestions.value.forEach(q => { if (q.week) s.add(normalizeWeek(q.week)) })
+  allTaskComments.value.forEach(c => { if (c.week) s.add(normalizeWeek(c.week)) })
   allConfluenceLinks.value.forEach(l => { if (l.week) s.add(normalizeWeek(l.week)) })
   return [...s].sort((a, b) => {
     const [ay, aw] = a.split('-W').map(Number)
@@ -587,11 +589,11 @@ const issueMap = computed(() => {
 
 const qnaMap = computed(() => {
   const m = {}
-  allQuestions.value.forEach(q => {
-    if (!q.task_id) return
-    if (!m[q.task_id]) m[q.task_id] = {}
-    const w = normalizeWeek(q.week)
-    m[q.task_id][w] = (m[q.task_id][w] || 0) + 1
+  allComments.value.filter(c => c.requires_answer).forEach(c => {
+    if (!c.task_id) return
+    if (!m[c.task_id]) m[c.task_id] = {}
+    const w = normalizeWeek(c.week)
+    m[c.task_id][w] = (m[c.task_id][w] || 0) + 1
   })
   return m
 })
@@ -603,7 +605,7 @@ const issueThisWeek = computed(() =>
   flatTaskRows.value.filter(r => issueMap.value[r.id]?.has(currentWeek)).length
 )
 const qnaThisWeek = computed(() =>
-  allQuestions.value.filter(q => q.week === currentWeek).length
+  allComments.value.filter(c => c.requires_answer && normalizeWeek(c.week) === currentWeek).length
 )
 
 function truncate(text, len) {
@@ -666,8 +668,12 @@ function navigateFromModal() {
 }
 
 // ── 바로가기 네비게이션 ──
-function goToQuestion(q) {
-  router.push({ path: '/progress', query: { week: q.week, focusQuestion: q.id } })
+function goToQuestion(c) {
+  if (c.type === 'issue') {
+    router.push({ path: '/progress', query: { week: c.week, focusIssueId: c.issue_id, commentId: c.id } })
+  } else {
+    router.push({ path: '/progress', query: { week: c.week, taskId: c.task_id, commentId: c.id } })
+  }
 }
 function goToIssue(p) {
   router.push({ path: '/progress', query: { week: p.week, focusIssueId: p.id } })
@@ -690,15 +696,15 @@ async function refresh() {
     tasks.value      = tRes.data
     staffList.value  = sRes.data
 
-    const [qRes, allQRes, clRes, issWeekRes, issAllRes] = await Promise.all([
-      axios.get('/api/qna/questions', { params: { week: currentWeek } }),
-      axios.get('/api/qna/questions'),
+    const [allTCRes, allICRes, clRes, issWeekRes, issAllRes] = await Promise.all([
+      axios.get('/api/task-comments'),
+      axios.get('/api/issue-comments'),
       axios.get('/api/confluence'),
       axios.get('/api/issues', { params: { week: currentWeek } }),
       axios.get('/api/issues'),
     ])
-    questions.value          = qRes.data
-    allQuestions.value       = allQRes.data
+    allTaskComments.value    = allTCRes.data
+    allIssueComments.value   = allICRes.data
     allConfluenceLinks.value = clRes.data
     weekIssuesList.value     = issWeekRes.data
     allIssuesList.value      = issAllRes.data
@@ -719,7 +725,11 @@ async function loadDefaultWeek() {
   } catch { /* 기본값('last') 유지 */ }
 }
 
-onMounted(() => { loadDefaultWeek(); refresh(); loadNotice() })
+onMounted(() => {
+  loadDefaultWeek(); refresh(); loadNotice()
+  window.addEventListener('data-updated', refresh)
+})
+onUnmounted(() => { window.removeEventListener('data-updated', refresh) })
 </script>
 
 <style scoped>
@@ -878,6 +888,17 @@ onMounted(() => { loadDefaultWeek(); refresh(); loadNotice() })
   color: #7c3aed;
   border: 1px solid #ddd6fe;
   font-size: 11px;
+  font-weight: 600;
+}
+.badge-pending-sm {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: var(--warning-light);
+  color: var(--warning);
+  border: 1px solid var(--warning);
   font-weight: 600;
 }
 

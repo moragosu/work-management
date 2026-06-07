@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload, settings, issues, issue_comments, go, feedback, auth, notifications
+from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload, settings, issues, issue_comments, task_comments, go, feedback, auth, notifications, deleted_issues
 import uvicorn
 import os
 import data_store
@@ -36,9 +36,13 @@ app.include_router(upload.router, prefix="/api/upload", tags=["Upload"])
 app.include_router(settings.router, prefix="/api/settings", tags=["Settings"])
 app.include_router(issues.router, prefix="/api/issues", tags=["Issues"])
 app.include_router(issue_comments.router, prefix="/api/issues", tags=["IssueComments"])
+app.include_router(issue_comments.router_global, prefix="/api/issue-comments", tags=["IssueCommentsAll"])
+app.include_router(task_comments.router, prefix="/api/tasks", tags=["TaskComments"])
+app.include_router(task_comments.router_global, prefix="/api/task-comments", tags=["TaskCommentsAll"])
 app.include_router(feedback.router, prefix="/api/feedback", tags=["Feedback"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
+app.include_router(deleted_issues.router, prefix="/api/deleted-issues", tags=["DeletedIssues"])
 app.include_router(go.router, prefix="/go", tags=["ShortLink"])
 app.include_router(go.api_router, prefix="/api/go", tags=["ShortLink"])
 

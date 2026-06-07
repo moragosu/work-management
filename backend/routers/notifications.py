@@ -1,9 +1,29 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from dependencies import get_current_user
 import data_store
+import auth_utils
 import re
+import asyncio
+from datetime import datetime
 
 router = APIRouter()
+
+
+def _is_comment_unanswered(conn, link: str) -> bool:
+    """comment_tagged 알림 링크에서 commentId 추출 후 미답변 여부 반환.
+    requires_answer가 해제됐거나 댓글이 삭제된 경우 False."""
+    m = re.search(r'commentId=([^&]+)', link or "")
+    if not m:
+        return False
+    cid = m.group(1)
+    row_tc = conn.execute("SELECT requires_answer, is_answered FROM task_comments WHERE id=?", (cid,)).fetchone()
+    row_ic = conn.execute("SELECT requires_answer, is_answered FROM issue_comments WHERE id=?", (cid,)).fetchone()
+    if row_tc:
+        return bool(row_tc["requires_answer"]) and not bool(row_tc["is_answered"])
+    if row_ic:
+        return bool(row_ic["requires_answer"]) and not bool(row_ic["is_answered"])
+    return False
 
 
 @router.get("")
@@ -14,19 +34,26 @@ def list_notifications(user: dict = Depends(get_current_user)):
             (user["username"],)
         ).fetchall()
         notifications = [dict(r) for r in rows]
-        # question_tagged 알림: 질문의 현재 답변 유무 확인 (답변 삭제 후에도 실시간 반영)
+        # question_tagged / comment_tagged: 미답변 여부를 실시간 반영
         qid_map = {}
+        cid_pending = set()
         for n in notifications:
             if n["type"] == "question_tagged":
                 m = re.search(r'focusQuestion=([^&]+)', n["link"] or "")
                 if m:
                     qid_map[n["id"]] = m.group(1)
-        answered = set()
+            elif n["type"] == "comment_tagged":
+                if _is_comment_unanswered(conn, n["link"]):
+                    cid_pending.add(n["id"])
+        answered_q = set()
         for nid, qid in qid_map.items():
             if conn.execute("SELECT 1 FROM answers WHERE question_id=?", (qid,)).fetchone():
-                answered.add(nid)
+                answered_q.add(nid)
         for n in notifications:
-            n["is_pending"] = (n["id"] in qid_map and n["id"] not in answered)
+            n["is_pending"] = (
+                (n["id"] in qid_map and n["id"] not in answered_q)
+                or n["id"] in cid_pending
+            )
     return notifications
 
 
@@ -42,7 +69,7 @@ def unread_count(user: dict = Depends(get_current_user)):
 
 @router.delete("")
 def delete_all_notifications(user: dict = Depends(get_current_user)):
-    """전체 삭제 — 미답변 question_tagged는 제외."""
+    """전체 삭제 — 미답변 question_tagged / comment_tagged는 제외."""
     with data_store.get_conn() as conn:
         rows = conn.execute(
             "SELECT id, type, link FROM notifications WHERE recipient=?",
@@ -50,9 +77,7 @@ def delete_all_notifications(user: dict = Depends(get_current_user)):
         ).fetchall()
         deletable = []
         for n in rows:
-            if n["type"] != "question_tagged":
-                deletable.append(n["id"])
-            else:
+            if n["type"] == "question_tagged":
                 m = re.search(r'focusQuestion=([^&]+)', n["link"] or "")
                 if m:
                     has_answer = conn.execute(
@@ -62,6 +87,11 @@ def delete_all_notifications(user: dict = Depends(get_current_user)):
                         deletable.append(n["id"])
                 else:
                     deletable.append(n["id"])
+            elif n["type"] == "comment_tagged":
+                if not _is_comment_unanswered(conn, n["link"]):
+                    deletable.append(n["id"])
+            else:
+                deletable.append(n["id"])
         if deletable:
             ph = ",".join("?" * len(deletable))
             conn.execute(f"DELETE FROM notifications WHERE id IN ({ph})", deletable)
@@ -97,7 +127,7 @@ def delete_notification(nid: str, user: dict = Depends(get_current_user)):
         ).fetchone()
         if not notif:
             raise HTTPException(status_code=404, detail="알림을 찾을 수 없습니다")
-        # question_tagged 알림: 해당 질문에 답변이 없으면 삭제 불가
+        # question_tagged / comment_tagged: 미답변 상태면 삭제 불가
         if notif["type"] == "question_tagged":
             m = re.search(r'focusQuestion=([^&]+)', notif["link"] or "")
             if m:
@@ -110,5 +140,62 @@ def delete_notification(nid: str, user: dict = Depends(get_current_user)):
                         status_code=400,
                         detail="해당 질문에 답변하기 전까지 삭제할 수 없습니다"
                     )
+        elif notif["type"] == "comment_tagged":
+            if _is_comment_unanswered(conn, notif["link"]):
+                raise HTTPException(
+                    status_code=400,
+                    detail="해당 댓글에 답변하기 전까지 삭제할 수 없습니다"
+                )
         conn.execute("DELETE FROM notifications WHERE id=?", (nid,))
     return {"ok": True}
+
+
+@router.get("/stream")
+async def notification_stream(token: str = Query(...)):
+    """SSE 스트림 — EventSource는 커스텀 헤더를 보낼 수 없어 토큰을 쿼리 파라미터로 수신."""
+    payload = auth_utils.decode_token(token)
+    if not payload or "sub" not in payload:
+        raise HTTPException(status_code=401, detail="인증이 필요합니다")
+    with data_store.get_conn() as conn:
+        row = conn.execute("SELECT username FROM users WHERE username=?", (payload["sub"],)).fetchone()
+    if not row:
+        raise HTTPException(status_code=401, detail="사용자를 찾을 수 없습니다")
+    username = row["username"]
+
+    def _check_changes(since: str, last_ver: int):
+        with data_store.get_conn() as conn:
+            new_notifs = conn.execute(
+                "SELECT id FROM notifications WHERE recipient=? AND created_at > ?",
+                (username, since)
+            ).fetchall()
+            ver_row = conn.execute("SELECT version FROM data_version WHERE id=1").fetchone()
+            cur_ver = ver_row["version"] if ver_row else last_ver
+        return new_notifs, cur_ver
+
+    async def event_generator():
+        last_check = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        _, last_ver = await asyncio.to_thread(_check_changes, last_check, 0)
+        yield "data: connected\n\n"
+        while True:
+            try:
+                await asyncio.sleep(3)
+                new_notifs, cur_ver = await asyncio.to_thread(_check_changes, last_check, last_ver)
+                if new_notifs:
+                    last_check = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    last_ver = cur_ver
+                    yield "data: new\n\n"        # 알림 + 데이터 갱신
+                elif cur_ver != last_ver:
+                    last_ver = cur_ver
+                    yield "data: refresh\n\n"    # 알림 없이 데이터만 갱신
+                else:
+                    yield ": keepalive\n\n"
+            except asyncio.CancelledError:
+                break
+            except Exception:
+                yield ": keepalive\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
