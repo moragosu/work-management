@@ -59,20 +59,41 @@
 
       <div v-else class="split-container">
 
-        <!-- ══ 지난주 패널 ══ -->
-        <div v-show="panelState !== 'right'" class="split-panel split-left">
-          <div class="panel-header panel-header-clickable"
-            @click="panelState = panelState === 'split' ? 'right' : 'split'"
-            :title="panelState === 'split' ? '지난주 패널 접기' : '둘 다 보기'"
-          >
-            <span class="panel-title">
-              <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">history</span>
-              지난주 · {{ leftWeekDisplay }}
-            </span>
-            <span class="material-symbols-outlined panel-collapse-icon">chevron_left</span>
+        <!-- ══ 패널 헤더 (sticky) ══ -->
+        <div class="split-headers">
+          <div v-show="panelState !== 'right'" class="split-header-cell">
+            <div class="panel-header panel-header-clickable"
+              @click="panelState = panelState === 'split' ? 'right' : 'split'"
+              :title="panelState === 'split' ? '지난주 패널 접기' : '둘 다 보기'"
+            >
+              <span class="panel-title">
+                <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">history</span>
+                지난주 · {{ leftWeekDisplay }}
+              </span>
+              <span class="material-symbols-outlined panel-collapse-icon">chevron_left</span>
+            </div>
           </div>
+          <div v-show="panelState !== 'left'" class="split-header-cell">
+            <div class="panel-header panel-header-clickable"
+              @click="panelState = panelState === 'split' ? 'left' : 'split'"
+              :title="panelState === 'split' ? '이번주 패널 접기' : '둘 다 보기'"
+            >
+              <span class="material-symbols-outlined panel-collapse-icon">chevron_right</span>
+              <span class="panel-title">
+                <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">today</span>
+                이번주 · {{ rightWeekDisplay }}
+                <span v-if="selectedWeek === getCurrentWeek()" class="week-current-badge">이번 주</span>
+              </span>
+            </div>
+          </div>
+        </div>
 
-          <div v-for="task in filteredTasks" :key="'L-' + task.id" class="card mb-16" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
+        <!-- ══ 과제별 행 (지난주 + 이번주 동시) ══ -->
+        <div v-for="task in filteredTasks" :key="task.id" class="task-row" :id="'task-' + task.id">
+
+          <!-- 지난주 셀 -->
+          <div v-show="panelState !== 'right'" class="task-cell">
+            <div class="card" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
             <div class="card-header" style="flex-wrap:wrap;gap:8px">
               <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
                 <h3 style="margin:0">{{ task.name }}</h3>
@@ -235,24 +256,12 @@
                 />
               </template>
             </div>
-          </div>
-        </div>
-
-        <!-- ══ 이번주 패널 ══ -->
-        <div v-show="panelState !== 'left'" class="split-panel split-right">
-          <div class="panel-header panel-header-clickable"
-            @click="panelState = panelState === 'split' ? 'left' : 'split'"
-            :title="panelState === 'split' ? '이번주 패널 접기' : '둘 다 보기'"
-          >
-            <span class="material-symbols-outlined panel-collapse-icon">chevron_right</span>
-            <span class="panel-title">
-              <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">today</span>
-              이번주 · {{ rightWeekDisplay }}
-              <span v-if="selectedWeek === getCurrentWeek()" class="week-current-badge">이번 주</span>
-            </span>
+            </div>
           </div>
 
-          <div v-for="task in filteredTasks" :key="task.id" :id="'task-' + task.id" class="card mb-16" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
+          <!-- 이번주 셀 -->
+          <div v-show="panelState !== 'left'" class="task-cell">
+            <div class="card" :style="{ borderLeft: '4px solid ' + getObjectiveColor(task.objective_id) }">
             <div class="card-header" style="flex-wrap:wrap;gap:8px">
               <div class="flex gap-8" style="align-items:center;flex:1;min-width:0">
                 <h3 style="margin:0">{{ task.name }}</h3>
@@ -443,7 +452,9 @@
                 />
               </template>
             </div>
+            </div>
           </div>
+
         </div>
 
       </div>
@@ -970,12 +981,41 @@ watch(() => route.query, async (q, prev) => {
 /* ── 분할 화면 ── */
 .split-container {
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 0;
 }
-.split-panel {
-  flex: 1 1 0;
+
+/* 패널 헤더 행 */
+.split-headers {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-main);
+  padding: 4px 0;
+}
+.split-header-cell {
+  flex: 1;
   min-width: 0;
+}
+
+/* 과제별 행 */
+.task-row {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 16px;
+}
+.task-cell {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.task-cell > .card {
+  flex: 1;
 }
 
 .panel-header {
@@ -986,13 +1026,9 @@ watch(() => route.query, async (q, prev) => {
   background: var(--gray-50);
   border: 1px solid var(--outline);
   border-radius: var(--radius-md);
-  margin-bottom: 12px;
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
   color: var(--text-secondary);
-  position: sticky;
-  top: 0;
-  z-index: 10;
 }
 .panel-title {
   display: flex;
