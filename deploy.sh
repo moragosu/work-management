@@ -1,12 +1,13 @@
 #!/bin/bash
 # OKR Management System - Deployment Script
-# Usage: sudo bash deploy.sh [PORT]
-# Example: sudo bash deploy.sh 8080
+# Usage: sudo bash deploy.sh [PORT] [JWT_EXPIRE_MINUTES]
+# Example: sudo bash deploy.sh 8080 120
 set -e
 
 APP_DIR="/var/www/okr-app"
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 PORT="${1:-8080}"
+JWT_EXPIRE_MINUTES="${2:-120}"
 
 echo "=== OKR 관리 시스템 배포 시작 ==="
 
@@ -91,6 +92,7 @@ User=www-data
 Group=www-data
 WorkingDirectory=$APP_DIR/backend
 Environment="DATA_DIR=$APP_DIR/data"
+Environment="JWT_EXPIRE_MINUTES=$JWT_EXPIRE_MINUTES"
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
 Environment="UV_CACHE_DIR=/var/cache/okr-app/uv"
 Environment="UV_PYTHON_INSTALL_DIR=/usr/local/share/uv-python"
