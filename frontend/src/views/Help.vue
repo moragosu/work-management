@@ -205,6 +205,27 @@
               <span>관리자가 공지 내용을 변경할 때</span>
             </div>
           </div>
+
+          <!-- 알림 항목 미리보기 -->
+          <div class="mini-ui-preview" style="margin-top:12px">
+            <div class="mini-preview-label">알림 항목 미리보기</div>
+            <div class="mini-notify-item">
+              <span class="mini-unread-dot"></span>
+              <span class="material-symbols-outlined" style="font-size:15px;color:#7c3aed;flex-shrink:0">mark_chat_unread</span>
+              <div class="mini-notify-text"><strong>홍길동</strong>님이 <em>T1 과제 댓글</em>에서 회원님을 태그하고 답변을 요청했습니다</div>
+              <span class="mini-unread-badge">1</span>
+            </div>
+            <div class="mini-notify-item mini-read">
+              <span class="mini-unread-dot mini-dot-read"></span>
+              <span class="material-symbols-outlined" style="font-size:15px;color:#0ea5e9;flex-shrink:0">chat_bubble</span>
+              <div class="mini-notify-text"><em>T2-1 이슈</em>에 <strong>김철수</strong>님이 댓글을 달았습니다</div>
+            </div>
+            <div class="mini-notify-item mini-read">
+              <span class="mini-unread-dot mini-dot-read"></span>
+              <span class="material-symbols-outlined" style="font-size:15px;color:#d97706;flex-shrink:0">warning</span>
+              <div class="mini-notify-text">회원님을 담당자로 지정한 이슈가 등록되었습니다 — <em>T3 과제</em></div>
+            </div>
+          </div>
         </div>
 
         <!-- 알림 확인 -->
@@ -416,6 +437,32 @@
             <li>그룹장·파트장·관리자는 <strong>"답변 요구"</strong> 체크박스를 켜서 해당 댓글에 응답을 요청할 수 있습니다 — 태그된 파트원에게 알림이 발송되며, 댓글 카드에 <strong>"답변 대기"</strong> 배지가 표시됩니다</li>
             <li>답변 요구 댓글에 대댓글이 달리면 자동으로 <strong>"답변됨"</strong> 처리됩니다</li>
           </ul>
+
+          <!-- 댓글 카드 미리보기 -->
+          <div class="mini-ui-preview" style="margin-top:14px">
+            <div class="mini-preview-label">댓글 카드 미리보기</div>
+            <div class="mini-comment-card">
+              <div class="mini-cc-header">
+                <span class="mini-avatar">홍</span>
+                <span class="mini-author-name">홍길동</span>
+                <span class="mini-badge-pending">답변 대기</span>
+                <span class="mini-time">2분 전</span>
+              </div>
+              <div class="mini-cc-body"><span class="mini-at-tag">@김철수</span> T1 이슈 관련 내용 확인 부탁드립니다.</div>
+              <div class="mini-cc-actions">
+                <span class="mini-action-btn">↩ 답글</span>
+              </div>
+            </div>
+            <div class="mini-comment-card mini-indent">
+              <div class="mini-cc-header">
+                <span class="mini-avatar mini-avatar-green">김</span>
+                <span class="mini-author-name">김철수</span>
+                <span class="mini-badge-answered">답변됨</span>
+                <span class="mini-time">1분 전</span>
+              </div>
+              <div class="mini-cc-body">확인했습니다. 처리하겠습니다.</div>
+            </div>
+          </div>
         </div>
 
         <!-- 과제 댓글 -->
@@ -433,6 +480,28 @@
             <li>과제 댓글은 <strong>주차 단위</strong>로 저장됩니다 — 지난주·이번주 패널에서 각 주차의 댓글을 독립적으로 확인할 수 있습니다</li>
             <li>본인이 작성한 댓글은 <strong>수정·삭제</strong>가 가능합니다</li>
           </ul>
+
+          <!-- 과제 댓글 폼 미리보기 -->
+          <div class="mini-ui-preview" style="margin-top:14px">
+            <div class="mini-preview-label">댓글 입력 폼 미리보기</div>
+            <div class="mini-form-preview">
+              <div class="mini-tag-row">
+                <span class="mini-tag-label">@태그</span>
+                <span class="mini-person-chip mini-chip-active">홍길동</span>
+                <span class="mini-person-chip">김철수</span>
+                <span class="mini-person-chip">이영희</span>
+              </div>
+              <div class="mini-editor-placeholder">댓글 내용을 입력하세요…&nbsp;<span class="mini-at-tag">@홍길동</span></div>
+              <div class="mini-form-row">
+                <span class="mini-req-check">
+                  <span class="material-symbols-outlined" style="font-size:15px;color:var(--primary);font-variation-settings:'FILL' 1">check_box</span>
+                  답변 요구
+                </span>
+                <span style="flex:1"></span>
+                <span class="mini-submit-btn">등록</span>
+              </div>
+            </div>
+          </div>
           <div class="callout callout-tip">
             <span class="material-symbols-outlined callout-icon">star</span>
             <div>대시보드의 <strong>답변 현황 패널</strong>에서 "답변 요구"로 등록된 댓글을 주차별로 확인하고, 클릭하면 상세 내용을 볼 수 있습니다. 파트원별 답변 완료/미완료 현황도 활동 통계에서 확인할 수 있습니다.</div>
@@ -457,6 +526,26 @@
           <div class="callout callout-tip">
             <span class="material-symbols-outlined callout-icon">star</span>
             <div>모과제 헤더의 <strong>"전체 펼치기"</strong>를 누르면 해당 과제의 소과제를 한 번에 모두 펼칩니다. <strong>"전체 접기"</strong>로 다시 정리할 수 있습니다.</div>
+          </div>
+
+          <!-- 소과제 접힌 상태 미리보기 -->
+          <div class="mini-ui-preview" style="margin-top:14px">
+            <div class="mini-preview-label">소과제 접힌 상태 미리보기</div>
+            <div class="mini-subtask-row">
+              <span class="material-symbols-outlined" style="font-size:15px;color:var(--text-muted)">chevron_right</span>
+              <span class="mini-subtask-name">T1-1 · 현황 분석</span>
+              <span class="mini-cnt-badge mini-cnt-issue">이슈 3건</span>
+              <span class="mini-cnt-badge mini-cnt-comment">댓글 2건</span>
+              <span style="flex:1"></span>
+              <span class="mini-person-tag">홍길동</span>
+            </div>
+            <div class="mini-subtask-row mini-subtask-done">
+              <span class="material-symbols-outlined" style="font-size:15px;color:var(--success)">check_circle</span>
+              <span class="mini-subtask-name mini-name-done">T1-2 · 개선안 도출</span>
+              <span class="mini-cnt-badge mini-cnt-done">완료</span>
+              <span style="flex:1"></span>
+              <span class="mini-person-tag">김철수</span>
+            </div>
           </div>
         </div>
 
@@ -1184,4 +1273,172 @@ const faqs = reactive([
 }
 .notify-row:last-child { border-bottom: none; }
 .notify-header { background: var(--gray-50); font-weight: var(--fw-semibold); color: var(--text-muted); font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* === 미니 UI 미리보기 공통 === */
+.mini-ui-preview {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mini-preview-label {
+  font-size: 10px;
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 2px;
+}
+
+/* 미니 알림 항목 */
+.mini-notify-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: white;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--outline);
+}
+.mini-notify-item.mini-read { opacity: 0.55; }
+.mini-unread-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+.mini-unread-dot.mini-dot-read { background: transparent; }
+.mini-notify-text {
+  flex: 1;
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+.mini-unread-badge {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: white;
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* 미니 댓글 카드 */
+.mini-comment-card {
+  background: white;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mini-comment-card.mini-indent {
+  margin-left: 22px;
+  border-left: 2px solid var(--primary-light);
+}
+.mini-cc-header { display: flex; align-items: center; gap: 6px; }
+.mini-avatar {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.mini-avatar.mini-avatar-green { background: var(--success-light); color: var(--success); }
+.mini-author-name { font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--text-primary); }
+.mini-badge-pending {
+  font-size: 10px; font-weight: var(--fw-semibold);
+  padding: 1px 7px; border-radius: 10px;
+  background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa;
+}
+.mini-badge-answered {
+  font-size: 10px; font-weight: var(--fw-semibold);
+  padding: 1px 7px; border-radius: 10px;
+  background: var(--success-light); color: var(--success); border: 1px solid #bbf7d0;
+}
+.mini-time { font-size: 10px; color: var(--text-muted); margin-left: auto; }
+.mini-cc-body { font-size: var(--fs-xs); color: var(--text-secondary); line-height: 1.55; }
+.mini-at-tag {
+  display: inline;
+  font-size: var(--fs-xs); font-weight: var(--fw-semibold);
+  color: var(--primary); background: var(--primary-light);
+  padding: 1px 5px; border-radius: 3px;
+}
+.mini-cc-actions { display: flex; gap: 6px; }
+.mini-action-btn {
+  font-size: var(--fs-2xs); color: var(--text-muted);
+  padding: 2px 8px; border-radius: var(--radius-sm);
+  border: 1px solid var(--outline); background: var(--gray-50);
+  cursor: default;
+}
+
+/* 미니 댓글 입력 폼 */
+.mini-form-preview {
+  background: white;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.mini-tag-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.mini-tag-label { font-size: 10px; color: var(--text-muted); margin-right: 2px; }
+.mini-person-chip {
+  font-size: 10px; padding: 2px 8px;
+  border-radius: 12px; border: 1px solid var(--outline);
+  background: var(--gray-50); color: var(--text-secondary); cursor: default;
+}
+.mini-person-chip.mini-chip-active {
+  background: var(--primary-light); border-color: var(--primary);
+  color: var(--primary); font-weight: var(--fw-semibold);
+}
+.mini-editor-placeholder {
+  font-size: var(--fs-xs); color: var(--text-secondary);
+  border: 1px solid var(--outline); border-radius: var(--radius-sm);
+  padding: 7px 10px; background: white; min-height: 32px;
+}
+.mini-form-row { display: flex; align-items: center; gap: 8px; }
+.mini-req-check {
+  display: flex; align-items: center; gap: 3px;
+  font-size: var(--fs-xs); color: var(--text-secondary); cursor: default;
+}
+.mini-submit-btn {
+  font-size: var(--fs-xs); padding: 4px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--primary); color: white;
+  font-weight: var(--fw-medium); cursor: default;
+}
+
+/* 미니 소과제 항목 */
+.mini-subtask-row {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 10px;
+  background: white; border-radius: var(--radius-sm);
+  border: 1px solid var(--outline);
+  border-left: 3px solid var(--primary-light);
+}
+.mini-subtask-row.mini-subtask-done { border-left-color: var(--success); opacity: 0.8; }
+.mini-subtask-name { font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--text-primary); }
+.mini-subtask-name.mini-name-done { color: var(--text-muted); text-decoration: line-through; }
+.mini-cnt-badge {
+  font-size: 10px; font-weight: var(--fw-semibold);
+  padding: 1px 6px; border-radius: 9px;
+}
+.mini-cnt-badge.mini-cnt-issue  { background: #fff7ed; color: #92400e; }
+.mini-cnt-badge.mini-cnt-comment { background: #eff6ff; color: #1d4ed8; }
+.mini-cnt-badge.mini-cnt-done   { background: var(--success-light); color: var(--success); }
+.mini-person-tag {
+  font-size: 10px; color: var(--text-muted);
+  background: var(--gray-100); padding: 2px 7px; border-radius: 10px;
+}
 </style>
