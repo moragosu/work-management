@@ -204,7 +204,7 @@ onMounted(async () => {
   try {
     const { data } = await axios.get('/api/export/available-weeks')
     availableWeeks.value = data
-    selectedWeeks.value = data.slice(0, 4)
+    selectedWeeks.value = data.length ? [data[0]] : []
   } catch (e) {
     console.error(e)
   } finally {
