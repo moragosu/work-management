@@ -49,6 +49,8 @@ def _tiptap_to_plain(node: dict, bullet_depth: int = 0) -> str:
         return line
     elif node_type == "heading":
         return "".join(_tiptap_to_plain(c, bullet_depth) for c in children)
+    elif node_type == "image":
+        return ""
     else:
         parts = [_tiptap_to_plain(c, bullet_depth) for c in children]
         return "".join(p for p in parts if p)
@@ -100,6 +102,8 @@ def _tiptap_to_markdown(node: dict, bullet_depth: int = 0) -> str:
         level = node.get("attrs", {}).get("level", 1)
         text = "".join(_tiptap_to_markdown(c, bullet_depth) for c in children)
         return "#" * level + " " + text
+    elif node_type == "image":
+        return ""
     else:
         parts = [_tiptap_to_markdown(c, bullet_depth) for c in children]
         return "".join(p for p in parts if p)
@@ -115,12 +119,18 @@ def _parse_issue_content(raw: str, fmt: str = "text") -> str:
         if isinstance(node, dict) and node.get("type") == "doc":
             result = _tiptap_to_markdown(node) if fmt == "markdown" else _tiptap_to_plain(node)
             lines = [l for l in result.split("\n") if l.strip()]
-            return "\n".join(lines)
+            text = "\n".join(lines)
+            if fmt != "markdown":
+                text = text.replace("\\", "")
+            return text
     except (json.JSONDecodeError, TypeError):
         pass
     plain = re.sub(r"<[^>]+>", "", raw).strip()
     lines = [l for l in plain.split("\n") if l.strip()]
-    return "\n".join(lines)
+    text = "\n".join(lines)
+    if fmt != "markdown":
+        text = text.replace("\\", "")
+    return text
 
 
 def _build_task_name_map(tasks_list: list) -> dict:
