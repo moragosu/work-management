@@ -14,25 +14,36 @@
 
     <!-- 필터 -->
     <div class="filter-bar">
-      <select v-model="filterWeek" class="form-control filter-select">
-        <option value="">전체 주차</option>
-        <option v-for="w in weeks" :key="w" :value="w">{{ weekLabel(w) }}</option>
-      </select>
-      <select v-model="filterTask" class="form-control filter-select">
-        <option value="">전체 과제</option>
-        <option v-for="t in taskOptions" :key="t.id" :value="t.id">{{ t.name }}</option>
-      </select>
-      <div class="filter-chip-group">
-        <button class="filter-chip" :class="{ active: filterStatus === 'unanswered' }" @click="filterStatus = 'unanswered'">미답변</button>
-        <button class="filter-chip" :class="{ active: filterStatus === 'answered' }" @click="filterStatus = 'answered'">답변완료</button>
-        <button class="filter-chip" :class="{ active: filterStatus === 'all' }" @click="filterStatus = 'all'">전체</button>
+      <div class="filter-row">
+        <select v-model="filterWeek" class="form-control filter-select">
+          <option value="">전체 주차</option>
+          <option v-for="w in weeks" :key="w" :value="w">{{ weekLabel(w) }}</option>
+        </select>
+        <select v-model="filterTask" class="form-control filter-select">
+          <option value="">전체 과제</option>
+          <option v-for="t in taskOptions" :key="t.id" :value="t.id">{{ t.name }}</option>
+        </select>
+        <span class="filter-count">{{ filtered.length }}건</span>
       </div>
-      <div class="filter-chip-group">
-        <button class="filter-chip" :class="{ active: filterType === 'all' }" @click="filterType = 'all'">전체</button>
-        <button class="filter-chip" :class="{ active: filterType === 'task' }" @click="filterType = 'task'">과제댓글</button>
-        <button class="filter-chip" :class="{ active: filterType === 'issue' }" @click="filterType = 'issue'">이슈댓글</button>
+      <div class="filter-row">
+        <div class="filter-group">
+          <span class="filter-label">상태</span>
+          <div class="filter-chip-group">
+            <button class="filter-chip" :class="{ active: filterStatus === 'unanswered' }" @click="filterStatus = 'unanswered'">미답변</button>
+            <button class="filter-chip" :class="{ active: filterStatus === 'answered' }" @click="filterStatus = 'answered'">답변완료</button>
+            <button class="filter-chip" :class="{ active: filterStatus === 'all' }" @click="filterStatus = 'all'">전체</button>
+          </div>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+          <span class="filter-label">유형</span>
+          <div class="filter-chip-group">
+            <button class="filter-chip" :class="{ active: filterType === 'all' }" @click="filterType = 'all'">전체</button>
+            <button class="filter-chip" :class="{ active: filterType === 'task' }" @click="filterType = 'task'">과제댓글</button>
+            <button class="filter-chip" :class="{ active: filterType === 'issue' }" @click="filterType = 'issue'">이슈댓글</button>
+          </div>
+        </div>
       </div>
-      <span class="filter-count">{{ filtered.length }}건</span>
     </div>
 
     <!-- 목록 -->
@@ -45,25 +56,38 @@
     </div>
 
     <div v-else class="answer-list">
-      <div v-for="c in filtered" :key="c.id" class="answer-card">
-        <!-- 카드 헤더 -->
-        <div class="answer-card-header">
+      <div v-for="c in filtered" :key="c.id" class="answer-card" :class="c.is_answered ? 'card-answered' : 'card-pending'">
+
+        <!-- 과제명 행 -->
+        <div class="card-task-row">
+          <span class="card-task-name">{{ getTaskName(c.task_id) }}</span>
+          <div class="card-task-meta">
+            <span class="badge badge-gray" style="font-size:11px">{{ weekLabel(c.week) }}</span>
+            <span class="meta-date">{{ formatDate(c.created_at) }}</span>
+          </div>
+        </div>
+
+        <!-- 댓글 메타 행 -->
+        <div class="card-comment-meta">
           <div class="meta-left">
             <span class="type-badge" :class="c.type === 'issue' ? 'type-issue' : 'type-task'">
               {{ c.type === 'issue' ? '이슈댓글' : '과제댓글' }}
             </span>
             <span class="badge badge-gray" style="font-size:11px">{{ c.comment_by }}</span>
             <template v-if="c.tagged_users?.length">
-              <span class="material-symbols-outlined" style="font-size:13px;color:var(--text-muted)">arrow_forward</span>
+              <span class="material-symbols-outlined" style="font-size:12px;color:var(--text-muted);flex-shrink:0">arrow_forward</span>
               <span v-for="t in c.tagged_users" :key="t" class="target-tag">{{ t }}</span>
             </template>
-            <span v-if="c.is_answered" class="badge badge-green" style="font-size:11px">답변됨</span>
-            <span v-else class="badge-pending-sm">답변 대기</span>
           </div>
-          <div class="meta-right">
-            <span class="badge badge-blue" style="font-size:11px">{{ getTaskName(c.task_id) }}</span>
-            <span class="badge badge-gray" style="font-size:11px">{{ weekLabel(c.week) }}</span>
-            <span class="meta-date">{{ formatDate(c.created_at) }}</span>
+          <div class="meta-status">
+            <span v-if="c.is_answered" class="badge badge-green" style="font-size:11px">
+              <span class="material-symbols-outlined" style="font-size:11px;vertical-align:-1px">check_circle</span>
+              답변됨
+            </span>
+            <span v-else class="badge-pending-sm">
+              <span class="material-symbols-outlined" style="font-size:11px;vertical-align:-1px">hourglass_empty</span>
+              답변 대기
+            </span>
           </div>
         </div>
 
@@ -72,24 +96,9 @@
           <TiptapPreview :modelValue="c.comment" />
         </div>
 
-        <!-- 첫 번째 답글 미리보기 -->
-        <div v-if="c.replies?.length" class="reply-preview">
-          <div class="reply-line"></div>
-          <div class="reply-content">
-            <div class="reply-meta">
-              <span class="badge badge-gray" style="font-size:10px">{{ c.replies[0].comment_by }}</span>
-              <span class="meta-date">{{ formatDate(c.replies[0].created_at) }}</span>
-              <span v-if="c.replies.length > 1" class="reply-more">+{{ c.replies.length - 1 }}개 더</span>
-            </div>
-            <div class="reply-body-text">
-              <TiptapPreview :modelValue="c.replies[0].comment" />
-            </div>
-          </div>
-        </div>
-
         <!-- 액션 버튼 -->
         <div class="answer-actions">
-          <button class="btn btn-ghost btn-xs action-btn" @click="goToComment(c)">
+          <button class="btn btn-primary btn-xs action-btn" @click="goToComment(c)">
             <span class="material-symbols-outlined">open_in_new</span>진행현황에서 보기
           </button>
           <button class="btn btn-ghost btn-xs action-btn" @click="goToHistory(c)">
@@ -117,13 +126,10 @@ const filterTask   = ref('')
 const filterStatus = ref('unanswered')
 const filterType   = ref('all')
 
-// 주차 목록 (내림차순)
 const weeks = computed(() => {
-  const ws = [...new Set(allComments.value.map(c => c.week).filter(Boolean))].sort().reverse()
-  return ws
+  return [...new Set(allComments.value.map(c => c.week).filter(Boolean))].sort().reverse()
 })
 
-// 과제 선택 목록 (등장한 task_id 기준)
 const taskOptions = computed(() => {
   const seen = new Set()
   const result = []
@@ -131,22 +137,20 @@ const taskOptions = computed(() => {
     const tid = resolveParentTaskId(c.task_id)
     if (seen.has(tid)) continue
     seen.add(tid)
-    const t = tasks.value.find(t => t.id === tid)
-    result.push({ id: c.task_id, name: getTaskName(c.task_id) })
+    result.push({ id: tid, name: getTaskName(tid) })
   }
-  return result
+  return result.sort((a, b) => a.name.localeCompare(b.name, 'ko'))
 })
 
-// 필터링된 목록 (최신순)
 const filtered = computed(() => {
   let cs = [...allComments.value]
   if (filterWeek.value) cs = cs.filter(c => c.week === filterWeek.value)
-  if (filterTask.value) cs = cs.filter(c => c.task_id === filterTask.value || resolveParentTaskId(c.task_id) === filterTask.value)
+  if (filterTask.value) cs = cs.filter(c => resolveParentTaskId(c.task_id) === filterTask.value)
   if (filterStatus.value === 'answered')   cs = cs.filter(c => c.is_answered)
   if (filterStatus.value === 'unanswered') cs = cs.filter(c => !c.is_answered)
   if (filterType.value === 'task')  cs = cs.filter(c => c.type !== 'issue')
   if (filterType.value === 'issue') cs = cs.filter(c => c.type === 'issue')
-  return cs.sort((a, b) => (b.created_at || '') < (a.created_at || '') ? -1 : 1)
+  return cs.sort((a, b) => (b.created_at || '') > (a.created_at || '') ? 1 : -1)
 })
 
 function weekLabel(w) {
@@ -199,8 +203,8 @@ onMounted(async () => {
       axios.get('/api/issue-comments'),
     ])
     tasks.value = tasksRes.data || []
-    const taskComments  = (tcRes.data || []).filter(c => c.requires_answer)
-    const issueComments = (icRes.data || []).filter(c => c.requires_answer)
+    const taskComments  = (tcRes.data || []).filter(c => c.requires_answer).map(c => ({ ...c, type: 'task' }))
+    const issueComments = (icRes.data || []).filter(c => c.requires_answer).map(c => ({ ...c, type: 'issue' }))
     allComments.value = [...taskComments, ...issueComments]
   } catch (e) {
     console.error(e)
@@ -239,16 +243,38 @@ onMounted(async () => {
 /* 필터 */
 .filter-bar {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
   margin-bottom: 20px;
   padding: 12px 14px;
   background: var(--gray-50);
   border: 1px solid var(--outline);
   border-radius: var(--radius-md);
 }
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 .filter-select { width: auto; min-width: 130px; font-size: var(--fs-sm); }
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.filter-label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-weight: var(--fw-semibold);
+  flex-shrink: 0;
+}
+.filter-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--outline);
+  flex-shrink: 0;
+}
 .filter-chip-group { display: flex; gap: 4px; }
 .filter-chip {
   font-size: var(--fs-xs); padding: 4px 10px;
@@ -284,16 +310,43 @@ onMounted(async () => {
   border-radius: var(--radius-md);
   background: var(--surface);
   overflow: hidden;
+  border-left-width: 3px;
 }
+.card-pending  { border-left-color: var(--warning); }
+.card-answered { border-left-color: var(--success); opacity: 0.85; }
 
-/* 카드 헤더 */
-.answer-card-header {
+/* 과제명 행 */
+.card-task-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: 10px;
+  padding: 8px 14px;
   background: var(--gray-50);
+  border-bottom: 1px solid var(--outline);
+  flex-wrap: wrap;
+}
+.card-task-name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+}
+.card-task-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* 댓글 메타 행 */
+.card-comment-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 14px;
   border-bottom: 1px solid var(--outline);
   flex-wrap: wrap;
 }
@@ -305,12 +358,7 @@ onMounted(async () => {
   flex: 1;
   min-width: 0;
 }
-.meta-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
+.meta-status { flex-shrink: 0; }
 .meta-date {
   font-size: var(--fs-2xs);
   color: var(--text-muted);
@@ -333,37 +381,25 @@ onMounted(async () => {
   border: 1px solid var(--primary);
 }
 
+/* 상태 배지 */
+.badge-pending-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: var(--warning-light);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+  font-weight: var(--fw-semibold);
+}
+
 /* 댓글 본문 */
 .answer-body {
   padding: 12px 14px;
   font-size: var(--fs-sm);
   border-bottom: 1px solid var(--outline);
-}
-
-/* 답글 미리보기 */
-.reply-preview {
-  display: flex;
-  gap: 10px;
-  padding: 10px 14px;
-  background: #f8fafc;
-  border-bottom: 1px solid var(--outline);
-}
-.reply-line {
-  width: 2px;
-  flex-shrink: 0;
-  background: var(--primary-light);
-  border-radius: 1px;
-  align-self: stretch;
-  min-height: 20px;
-}
-.reply-content { flex: 1; min-width: 0; }
-.reply-meta {
-  display: flex; align-items: center; gap: 6px;
-  margin-bottom: 4px;
-}
-.reply-body-text { font-size: var(--fs-sm); }
-.reply-more {
-  font-size: var(--fs-2xs); color: var(--text-muted);
 }
 
 /* 액션 버튼 */
