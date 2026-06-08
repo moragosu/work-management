@@ -693,8 +693,7 @@ function goToProgressTask(row) {
 
 // ── 데이터 로드 ──
 async function refresh({ silent = false } = {}) {
-  if (!silent) loading.value = true
-  actionLoading.value = true
+  if (!silent) { loading.value = true; actionLoading.value = true }
   try {
     const [oRes, tRes, sRes] = await Promise.all([
       axios.get('/api/okrs'),
@@ -718,8 +717,7 @@ async function refresh({ silent = false } = {}) {
     weekIssuesList.value     = issWeekRes.data
     allIssuesList.value      = issAllRes.data
   } finally {
-    loading.value = false
-    actionLoading.value = false
+    if (!silent) { loading.value = false; actionLoading.value = false }
   }
 }
 
