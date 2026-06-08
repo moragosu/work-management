@@ -103,13 +103,14 @@
               <!-- @태그 chip -->
               <div v-if="staffList.length > 0" class="comment-tag-row">
                 <span class="comment-tag-label">@태그</span>
-                <button
-                  v-for="s in staffList.filter(s => s.name !== auth.user?.name)"
-                  :key="s.id || s.name"
-                  class="target-chip"
-                  :class="{ active: commentTagged.includes(s.name) }"
-                  @click="toggleCommentTag(s.name, iss.id)"
-                >{{ s.name }}</button>
+                <template v-for="g in [orderedChipGroups(iss)]" :key="iss.id">
+                  <button v-if="g.assignee" class="target-chip chip-assignee" :class="{ active: commentTagged.includes(g.assignee.name) }" @click="toggleCommentTag(g.assignee.name)">{{ g.assignee.name }}</button>
+                  <span v-if="g.assignee && (g.leaders.length || g.taskMbrs.length || g.otherMbrs.length)" class="chip-sep">|</span>
+                  <button v-for="s in g.leaders" :key="s.id || s.name" class="target-chip" :class="{ active: commentTagged.includes(s.name) }" @click="toggleCommentTag(s.name)">{{ s.name }}</button>
+                  <span v-if="g.leaders.length && (g.taskMbrs.length || g.otherMbrs.length)" class="chip-sep">|</span>
+                  <button v-for="s in g.taskMbrs" :key="s.id || s.name" class="target-chip chip-task" :class="{ active: commentTagged.includes(s.name) }" @click="toggleCommentTag(s.name)">{{ s.name }}</button>
+                  <button v-for="s in g.otherMbrs" :key="s.id || s.name" class="target-chip" :class="{ active: commentTagged.includes(s.name) }" @click="toggleCommentTag(s.name)">{{ s.name }}</button>
+                </template>
               </div>
               <TiptapEditor ref="commentEditorRef" v-model="newCommentText" height="120px" placeholder="댓글을 입력하세요..." />
               <div class="flex gap-4 mt-6" style="align-items:center;justify-content:flex-end">
@@ -297,6 +298,17 @@ function startEditComment(issueId, c) {
   commentRequiresAnswer.value = !!c.requires_answer
 }
 
+function orderedChipGroups(iss) {
+  const me = auth.user?.name
+  const all = props.staffList.filter(s => s.name !== me)
+  const assigneeName = iss.assignee || ''
+  const assignee  = all.find(s => s.name === assigneeName) || null
+  const leaders   = all.filter(s => s.role && s.name !== assigneeName)
+  const taskMbrs  = all.filter(s => !s.role && (s.task_ids || []).includes(props.taskId) && s.name !== assigneeName)
+  const otherMbrs = all.filter(s => !s.role && !(s.task_ids || []).includes(props.taskId) && s.name !== assigneeName)
+  return { assignee, leaders, taskMbrs, otherMbrs }
+}
+
 function toggleCommentTag(name) {
   const idx = commentTagged.value.indexOf(name)
   if (idx === -1) {
@@ -475,6 +487,11 @@ async function deleteComment(issueId, commentId) {
 }
 .target-chip:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
 .target-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.chip-sep { color: var(--outline); font-size: 14px; user-select: none; padding: 0 2px; }
+.chip-assignee { border-color: var(--warning); background: #fff7ed; color: #c2410c; font-weight: var(--fw-semibold); }
+.chip-assignee.active { background: var(--warning); border-color: var(--warning); color: white; }
+.chip-task { border-color: var(--primary); background: var(--primary-light); font-weight: var(--fw-semibold); }
+.chip-task.active { background: var(--primary); border-color: var(--primary); color: white; }
 .requires-answer-toggle {
   display: flex;
   align-items: center;

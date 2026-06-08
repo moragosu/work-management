@@ -30,13 +30,10 @@
       <div v-if="editingCommentId === c.id">
         <div v-if="staffList.length > 0" class="comment-tag-row">
           <span class="comment-tag-label">@태그</span>
-          <button
-            v-for="s in staffList.filter(s => s.name !== auth.user?.name)"
-            :key="s.id || s.name"
-            class="target-chip"
-            :class="{ active: editTagged.includes(s.name) }"
-            @click="toggleEditTag(s.name)"
-          >{{ s.name }}</button>
+          <button v-for="s in orderedChipGroups.leaders" :key="s.id || s.name" class="target-chip" :class="{ active: editTagged.includes(s.name) }" @click="toggleEditTag(s.name)">{{ s.name }}</button>
+          <span v-if="orderedChipGroups.leaders.length && (orderedChipGroups.taskMbrs.length || orderedChipGroups.otherMbrs.length)" class="chip-sep">|</span>
+          <button v-for="s in orderedChipGroups.taskMbrs" :key="s.id || s.name" class="target-chip chip-task" :class="{ active: editTagged.includes(s.name) }" @click="toggleEditTag(s.name)">{{ s.name }}</button>
+          <button v-for="s in orderedChipGroups.otherMbrs" :key="s.id || s.name" class="target-chip" :class="{ active: editTagged.includes(s.name) }" @click="toggleEditTag(s.name)">{{ s.name }}</button>
         </div>
         <TiptapEditor v-model="editCommentText" height="100px" />
         <div class="flex gap-4 mt-6" style="align-items:center;justify-content:flex-end">
@@ -95,13 +92,10 @@
         <!-- @태그 chip -->
         <div v-if="staffList.length > 0" class="comment-tag-row">
           <span class="comment-tag-label">@태그</span>
-          <button
-            v-for="s in staffList.filter(s => s.name !== auth.user?.name)"
-            :key="s.id || s.name"
-            class="target-chip"
-            :class="{ active: tagged.includes(s.name) }"
-            @click="toggleTag(s.name)"
-          >{{ s.name }}</button>
+          <button v-for="s in orderedChipGroups.leaders" :key="s.id || s.name" class="target-chip" :class="{ active: tagged.includes(s.name) }" @click="toggleTag(s.name)">{{ s.name }}</button>
+          <span v-if="orderedChipGroups.leaders.length && (orderedChipGroups.taskMbrs.length || orderedChipGroups.otherMbrs.length)" class="chip-sep">|</span>
+          <button v-for="s in orderedChipGroups.taskMbrs" :key="s.id || s.name" class="target-chip chip-task" :class="{ active: tagged.includes(s.name) }" @click="toggleTag(s.name)">{{ s.name }}</button>
+          <button v-for="s in orderedChipGroups.otherMbrs" :key="s.id || s.name" class="target-chip" :class="{ active: tagged.includes(s.name) }" @click="toggleTag(s.name)">{{ s.name }}</button>
         </div>
         <TiptapEditor v-model="newCommentText" height="120px" placeholder="댓글을 입력하세요..." />
         <div class="flex gap-4 mt-6" style="align-items:center;justify-content:flex-end">
@@ -148,7 +142,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import TiptapPreview from '../TiptapPreview.vue'
 import TiptapEditor from '../TiptapEditor.vue'
@@ -166,6 +160,15 @@ const props = defineProps({
 
 const { toastMsg, showToast, toastError } = useToast()
 const auth = useAuthStore()
+
+const orderedChipGroups = computed(() => {
+  const me = auth.user?.name
+  const all = props.staffList.filter(s => s.name !== me)
+  const leaders   = all.filter(s => s.role)
+  const taskMbrs  = all.filter(s => !s.role && (s.task_ids || []).includes(props.taskId))
+  const otherMbrs = all.filter(s => !s.role && !(s.task_ids || []).includes(props.taskId))
+  return { leaders, taskMbrs, otherMbrs }
+})
 
 const comments = ref([])
 const legacyQA = ref([])
@@ -385,6 +388,9 @@ async function deleteComment(commentId) {
 }
 .target-chip:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
 .target-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.chip-sep { color: var(--outline); font-size: 14px; user-select: none; padding: 0 2px; }
+.chip-task { border-color: var(--primary); background: var(--primary-light); font-weight: var(--fw-semibold); }
+.chip-task.active { background: var(--primary); border-color: var(--primary); color: white; }
 .requires-answer-toggle {
   display: flex;
   align-items: center;
