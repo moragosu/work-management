@@ -29,7 +29,7 @@ const routes = [
   { path: '/tasks/:id/history', component: TaskHistory, meta: { title: '과제 이력' } },
   { path: '/issue-history', component: IssueHistory, meta: { title: '삭제된 이슈 히스토리' } },
   { path: '/answer-history', component: AnswerHistory, meta: { title: '답변 현황 히스토리' } },
-  { path: '/export', component: ExportReport, meta: { title: '보고서 내보내기' } },
+  { path: '/export', component: ExportReport, meta: { title: '보고서 내보내기', requiresLeader: true } },
   { path: '/go/:id', component: GoRedirect, meta: { title: '이동 중...' } },
 ]
 
@@ -46,6 +46,10 @@ router.beforeEach((to, _from, next) => {
   const user = JSON.parse(localStorage.getItem('authUser') || 'null')
   if (user?.force_password_change && to.path !== '/change-password') {
     return next('/change-password')
+  }
+  if (to.meta.requiresLeader) {
+    const isLeader = user?.is_admin || user?.role === 'group_leader' || user?.role === 'part_leader'
+    if (!isLeader) return next('/dashboard')
   }
   next()
 })

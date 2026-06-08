@@ -3,7 +3,7 @@ from fastapi.responses import PlainTextResponse
 import json
 import re
 import data_store
-from dependencies import get_current_user
+from dependencies import require_leader_or_admin
 
 router = APIRouter()
 
@@ -156,7 +156,7 @@ def _week_label(week: str) -> str:
 # ── 엔드포인트 ────────────────────────────────────────────────────────────
 
 @router.get("/available-weeks")
-def get_available_weeks(_user=Depends(get_current_user)):
+def get_available_weeks(_user=Depends(require_leader_or_admin)):
     all_issues = data_store.load("issues.json").get("issues", [])
     weeks = sorted({i.get("week", "") for i in all_issues if i.get("week")}, reverse=True)
     return weeks
@@ -167,7 +167,7 @@ def export_weekly_issues(
     weeks: str = Query(..., description="쉼표 구분 주차 e.g. 2025-W20,2025-W21"),
     part_name: str = Query("", description="파트명"),
     fmt: str = Query("text", description="text 또는 markdown"),
-    _user=Depends(get_current_user),
+    _user=Depends(require_leader_or_admin),
 ):
     week_list = [w.strip() for w in weeks.split(",") if w.strip()]
     if not week_list:

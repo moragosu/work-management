@@ -181,8 +181,7 @@ onMounted(async () => {
 
 <style scoped>
 .page-wrap {
-  max-width: 860px;
-  margin: 0 auto;
+  max-width: none;
   padding: 28px 24px;
 }
 .page-header { margin-bottom: 20px; }

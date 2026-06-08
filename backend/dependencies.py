@@ -21,3 +21,9 @@ def require_admin(user: dict = Depends(get_current_user)) -> dict:
     if not user.get("is_admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="관리자 권한이 필요합니다")
     return user
+
+
+def require_leader_or_admin(user: dict = Depends(get_current_user)) -> dict:
+    if not (user.get("is_admin") or user.get("role") in ("group_leader", "part_leader")):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="리더 또는 관리자 권한이 필요합니다")
+    return user
