@@ -440,7 +440,7 @@
             <li>등록된 댓글의 <strong>"↩ 답글"</strong> 버튼을 클릭하면 해당 댓글에 대한 대댓글을 작성할 수 있습니다 (2단계까지 지원)</li>
             <li>댓글·대댓글 작성자는 <strong>로그인 계정으로 자동 입력</strong>됩니다</li>
             <li>본인이 작성한 댓글은 <strong>수정·삭제</strong>할 수 있습니다</li>
-            <li>댓글 입력 폼 상단의 <strong>이름 칩</strong>을 클릭하면 해당 파트원이 태그 목록에 추가되고 댓글 본문에 <code class="md-syntax">@이름</code>이 자동으로 삽입됩니다. <strong>@태그는 칩 클릭으로만 동작</strong>합니다 — 본문에 직접 @를 입력해도 태그로 처리되지 않습니다</li>
+            <li>댓글 입력 폼 상단의 <strong>이름 칩</strong>을 클릭하면 해당 파트원을 <strong>답변 요구 대상(타겟)으로 지정</strong>할 수 있으며, 댓글 본문에 <code class="md-syntax">@이름</code>이 자동으로 삽입됩니다</li>
             <li>칩 배치 순서: <strong>이슈 담당자(주황색)</strong> → 그룹장·파트장 → <strong>해당 과제원(파란색)</strong> → 나머지 파트원 순으로 표시됩니다</li>
             <li>그룹장·파트장·관리자는 <strong>"답변 요구"</strong> 체크박스를 켜서 해당 댓글에 응답을 요청할 수 있습니다 — 태그된 파트원에게 알림이 발송되며, 댓글 카드에 <strong>"답변 대기"</strong> 배지가 표시됩니다</li>
             <li>답변 요구 댓글에 대댓글이 달리면 자동으로 <strong>"답변됨"</strong> 처리됩니다</li>
@@ -482,7 +482,7 @@
           <ul class="feature-list">
             <li>이슈와 별개로, 과제 카드 하단의 <strong>"과제 댓글"</strong> 섹션에서 과제 전반에 대한 의견·질문을 남길 수 있습니다</li>
             <li><strong>모든 파트원</strong>이 댓글을 작성할 수 있습니다</li>
-            <li>댓글 입력 폼 위의 <strong>이름 칩</strong>을 클릭하면 해당 파트원이 태그 목록에 추가되고 본문에 <code class="md-syntax">@이름</code>이 삽입됩니다. <strong>@태그는 칩 클릭으로만 동작</strong>합니다</li>
+            <li>댓글 입력 폼 위의 <strong>이름 칩</strong>을 클릭하면 해당 파트원을 <strong>답변 요구 대상(타겟)으로 지정</strong>할 수 있으며, 본문에 <code class="md-syntax">@이름</code>이 자동으로 삽입됩니다</li>
             <li>칩 배치 순서: <strong>그룹장·파트장</strong> → <strong>해당 과제원(파란색)</strong> → 나머지 파트원 순으로 표시됩니다</li>
             <li>그룹장·파트장·관리자는 <strong>"답변 요구"</strong> 체크박스로 특정 파트원에게 응답을 요청할 수 있습니다 — 태그된 파트원에게 알림이 발송되며, 대댓글이 달리면 자동으로 <strong>"답변됨"</strong> 처리됩니다</li>
             <li>댓글 카드에는 작성자·태그된 대상자·답변 상태(<strong>답변 대기 / 답변됨</strong>) 배지가 표시됩니다</li>

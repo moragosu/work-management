@@ -7,7 +7,7 @@
 
     <!-- 설정 패널 -->
     <div class="config-panel">
-      <div class="config-row">
+      <div class="config-top-row">
         <div class="config-field">
           <label class="config-label">파트명</label>
           <input
@@ -16,6 +16,25 @@
             placeholder="예: 설비혁신파트"
             @blur="savePartName"
           />
+        </div>
+        <div class="config-field">
+          <label class="config-label">형식</label>
+          <div class="format-toggle">
+            <button
+              class="fmt-btn"
+              :class="{ active: format === 'text' }"
+              @click="format = 'text'"
+            >
+              <span class="material-symbols-outlined">article</span>텍스트
+            </button>
+            <button
+              class="fmt-btn"
+              :class="{ active: format === 'markdown' }"
+              @click="format = 'markdown'"
+            >
+              <span class="material-symbols-outlined">code</span>마크다운
+            </button>
+          </div>
         </div>
       </div>
 
@@ -65,6 +84,7 @@
         <span class="result-title">
           <span class="material-symbols-outlined">article</span>
           생성된 보고서
+          <span class="result-fmt-badge">{{ format === 'markdown' ? 'Markdown' : '텍스트' }}</span>
         </span>
         <div class="result-actions">
           <button class="btn btn-ghost btn-sm" @click="copyToClipboard">
@@ -98,6 +118,7 @@ const loadingWeeks   = ref(false)
 const generating     = ref(false)
 const result         = ref(null)
 const copied         = ref(false)
+const format         = ref('text')
 
 function weekLabel(w) {
   const m = w.match(/(\d{4})-W(\d+)/)
@@ -125,6 +146,7 @@ async function generate() {
       params: {
         weeks: selectedWeeks.value.join(','),
         part_name: partName.value.trim(),
+        fmt: format.value,
       },
       responseType: 'text',
     })
@@ -143,7 +165,6 @@ async function copyToClipboard() {
     copied.value = true
     setTimeout(() => { copied.value = false }, 2000)
   } catch {
-    // fallback
     const ta = document.createElement('textarea')
     ta.value = result.value
     document.body.appendChild(ta)
@@ -156,6 +177,7 @@ async function copyToClipboard() {
 }
 
 function downloadFile() {
+  const ext = format.value === 'markdown' ? 'md' : 'txt'
   const blob = new Blob([result.value], { type: 'text/plain;charset=utf-8' })
   const url  = URL.createObjectURL(blob)
   const a    = document.createElement('a')
@@ -163,7 +185,7 @@ function downloadFile() {
   const m = firstWeek.match(/(\d{4})-W(\d+)/)
   const label = m ? `${m[1]}W${m[2].padStart(2, '0')}` : firstWeek
   a.href = url
-  a.download = `${label}_이슈보고서.txt`
+  a.download = `${label}_이슈보고서.${ext}`
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -173,7 +195,6 @@ onMounted(async () => {
   try {
     const { data } = await axios.get('/api/export/available-weeks')
     availableWeeks.value = data
-    // 기본값: 최근 4주 선택
     selectedWeeks.value = data.slice(0, 4)
   } catch (e) {
     console.error(e)
@@ -185,7 +206,7 @@ onMounted(async () => {
 
 <style scoped>
 .page-wrap {
-  max-width: 860px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 28px 24px;
 }
@@ -209,7 +230,12 @@ onMounted(async () => {
   background: var(--gray-50);
   margin-bottom: 24px;
 }
-.config-row { display: flex; gap: 16px; flex-wrap: wrap; }
+.config-top-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
 .config-field { display: flex; flex-direction: column; gap: 8px; }
 .config-label {
   font-size: var(--fs-sm);
@@ -224,6 +250,35 @@ onMounted(async () => {
 }
 .week-actions { display: flex; gap: 4px; }
 .config-input { min-width: 220px; }
+
+/* 형식 토글 */
+.format-toggle {
+  display: flex;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+.fmt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 16px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.fmt-btn .material-symbols-outlined { font-size: 15px; }
+.fmt-btn + .fmt-btn { border-left: 1px solid var(--outline); }
+.fmt-btn.active {
+  background: var(--primary);
+  color: white;
+  font-weight: var(--fw-semibold);
+}
 
 /* 주차 그리드 */
 .weeks-placeholder,
@@ -298,6 +353,14 @@ onMounted(async () => {
   color: var(--text-primary);
 }
 .result-title .material-symbols-outlined { font-size: 18px; color: var(--primary); }
+.result-fmt-badge {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--primary-light);
+  color: var(--primary);
+}
 .result-actions { display: flex; gap: 6px; }
 .result-actions .material-symbols-outlined { font-size: 16px; }
 .result-empty {
@@ -308,11 +371,11 @@ onMounted(async () => {
 }
 .result-textarea {
   width: 100%;
-  min-height: 480px;
-  padding: 16px;
-  font-family: 'Pretendard', monospace;
+  min-height: 600px;
+  padding: 20px 24px;
+  font-family: 'Pretendard', 'D2Coding', monospace;
   font-size: 13px;
-  line-height: 1.7;
+  line-height: 1.75;
   border: none;
   resize: vertical;
   background: var(--surface);
