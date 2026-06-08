@@ -692,8 +692,8 @@ function goToProgressTask(row) {
 }
 
 // ── 데이터 로드 ──
-async function refresh() {
-  loading.value = true
+async function refresh({ silent = false } = {}) {
+  if (!silent) loading.value = true
   actionLoading.value = true
   try {
     const [oRes, tRes, sRes] = await Promise.all([
@@ -723,6 +723,8 @@ async function refresh() {
   }
 }
 
+function silentRefresh() { refresh({ silent: true }) }
+
 async function loadDefaultWeek() {
   try {
     const { data } = await axios.get('/api/settings')
@@ -736,9 +738,9 @@ async function loadDefaultWeek() {
 
 onMounted(() => {
   loadDefaultWeek(); refresh(); loadNotice()
-  window.addEventListener('data-updated', refresh)
+  window.addEventListener('data-updated', silentRefresh)
 })
-onUnmounted(() => { window.removeEventListener('data-updated', refresh) })
+onUnmounted(() => { window.removeEventListener('data-updated', silentRefresh) })
 </script>
 
 <style scoped>
