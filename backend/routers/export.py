@@ -114,12 +114,13 @@ def _parse_issue_content(raw: str, fmt: str = "text") -> str:
         node = json.loads(raw)
         if isinstance(node, dict) and node.get("type") == "doc":
             result = _tiptap_to_markdown(node) if fmt == "markdown" else _tiptap_to_plain(node)
-            # 빈 줄 제거 (나머지는 다 붙여서)
             lines = [l for l in result.split("\n") if l.strip()]
             return "\n".join(lines)
     except (json.JSONDecodeError, TypeError):
         pass
-    return re.sub(r"<[^>]+>", "", raw).strip()
+    plain = re.sub(r"<[^>]+>", "", raw).strip()
+    lines = [l for l in plain.split("\n") if l.strip()]
+    return "\n".join(lines)
 
 
 def _build_task_name_map(tasks_list: list) -> dict:
@@ -210,7 +211,7 @@ def export_weekly_issues(
                 if merged:
                     lines.append(merged)
                 for url in urls:
-                    lines.append(f"- 링크: [{url}]({url})")
+                    lines.append(f"- [바로가기]({url})")
             else:
                 lines.append(f"\n□ {tname}")
                 if merged:

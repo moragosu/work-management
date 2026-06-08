@@ -100,14 +100,18 @@
       <div v-if="result.trim() === ''" class="result-empty">
         선택한 주차에 이슈 데이터가 없습니다.
       </div>
-      <textarea v-else class="result-textarea" readonly :value="result"></textarea>
+      <template v-else>
+        <div v-if="format === 'markdown'" class="result-md-preview" v-html="renderedMarkdown"></div>
+        <textarea v-else class="result-textarea" readonly :value="result"></textarea>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
+import { marked } from 'marked'
 
 const PART_NAME_KEY = 'export_part_name'
 
@@ -119,6 +123,11 @@ const generating     = ref(false)
 const result         = ref(null)
 const copied         = ref(false)
 const format         = ref('text')
+
+const renderedMarkdown = computed(() => {
+  if (!result.value || format.value !== 'markdown') return ''
+  return marked(result.value, { breaks: true, gfm: true })
+})
 
 function weekLabel(w) {
   const m = w.match(/(\d{4})-W(\d+)/)
@@ -206,8 +215,7 @@ onMounted(async () => {
 
 <style scoped>
 .page-wrap {
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: none;
   padding: 28px 24px;
 }
 .page-header { margin-bottom: 24px; }
@@ -383,4 +391,43 @@ onMounted(async () => {
   box-sizing: border-box;
   outline: none;
 }
+.result-md-preview {
+  min-height: 600px;
+  padding: 24px 32px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: var(--fs-md);
+  line-height: 1.8;
+  overflow-x: auto;
+}
+.result-md-preview :deep(h1),
+.result-md-preview :deep(h2),
+.result-md-preview :deep(h3) {
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+  margin: 1.4em 0 0.5em;
+  line-height: 1.4;
+}
+.result-md-preview :deep(h2) { font-size: 1.15em; }
+.result-md-preview :deep(h3) { font-size: 1.05em; }
+.result-md-preview :deep(strong) { font-weight: var(--fw-semibold); color: var(--text-primary); }
+.result-md-preview :deep(ul),
+.result-md-preview :deep(ol) {
+  padding-left: 1.5em;
+  margin: 0.4em 0;
+}
+.result-md-preview :deep(li) { margin: 0.2em 0; }
+.result-md-preview :deep(a) {
+  color: var(--primary);
+  text-decoration: underline;
+  word-break: break-all;
+}
+.result-md-preview :deep(code) {
+  background: var(--gray-100);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'D2Coding', monospace;
+  font-size: 0.9em;
+}
+.result-md-preview :deep(p) { margin: 0.3em 0; }
 </style>
