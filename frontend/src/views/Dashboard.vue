@@ -94,6 +94,9 @@
             <span class="badge" :class="filteredQuestions.length ? (questionFilter === 'answered' ? 'badge-green' : 'badge-orange') : 'badge-gray'">
               {{ filteredQuestions.length }}건
             </span>
+            <RouterLink to="/answer-history" class="panel-all-btn" @click.stop title="전체 답변 현황 히스토리">
+              <span class="material-symbols-outlined" style="font-size:14px">open_in_new</span>전체 현황
+            </RouterLink>
             <span class="material-symbols-outlined section-chevron" :class="{ open: panelExpanded.questions }">expand_more</span>
           </div>
           <div class="card-body panel-body">
@@ -116,6 +119,9 @@
                 <div class="panel-item-sub">
                   <span class="badge badge-blue">{{ getTaskName(c.task_id) }}</span>
                   <span class="badge badge-gray">{{ formatWeekLabel(c.week) }}</span>
+                  <button class="panel-hist-btn" @click.stop="router.push(`/tasks/${resolveParentTaskId(c.task_id)}/history`)">
+                    <span class="material-symbols-outlined">history</span>과제 이력
+                  </button>
                   <span class="panel-goto">바로가기 →</span>
                 </div>
               </li>
@@ -152,6 +158,9 @@
                 <div class="panel-item-sub">
                   <span class="badge badge-blue">{{ getTaskName(p.task_id) }}</span>
                   <span v-if="p.assignee" class="badge badge-gray">{{ p.assignee }}</span>
+                  <button class="panel-hist-btn" @click.stop="router.push(`/tasks/${resolveParentTaskId(p.task_id)}/history`)">
+                    <span class="material-symbols-outlined">history</span>과제 이력
+                  </button>
                   <span class="panel-goto">상세보기 →</span>
                 </div>
               </li>
@@ -867,6 +876,32 @@ onUnmounted(() => { window.removeEventListener('data-updated', refresh) })
   transition: color 0.15s;
 }
 .panel-item-link:hover .panel-goto { color: var(--primary); }
+
+.panel-hist-btn {
+  display: inline-flex; align-items: center; gap: 2px;
+  font-size: 11px; font-weight: var(--fw-medium);
+  color: var(--text-muted);
+  background: none; border: 1px solid var(--outline);
+  border-radius: var(--radius-sm);
+  padding: 1px 7px; cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.panel-hist-btn .material-symbols-outlined { font-size: 12px; }
+.panel-hist-btn:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-light); }
+
+.panel-all-btn {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; font-weight: var(--fw-medium);
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 2px 8px; border-radius: var(--radius-sm);
+  border: 1px solid var(--outline);
+  background: var(--surface);
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.panel-all-btn:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-light); }
 
 .q-targets-row {
   display: flex;
