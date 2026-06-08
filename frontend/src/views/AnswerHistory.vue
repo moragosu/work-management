@@ -1,15 +1,8 @@
 <template>
   <div class="page-wrap">
-    <div class="page-header">
-      <div class="header-row">
-        <div>
-          <h2 class="page-title-text">답변 현황 히스토리</h2>
-          <p class="page-desc">답변 요구로 등록된 모든 댓글의 현황을 전체 기간에서 확인합니다.</p>
-        </div>
-        <RouterLink to="/dashboard" class="btn btn-ghost btn-sm back-btn">
-          <span class="material-symbols-outlined">arrow_back</span>대시보드
-        </RouterLink>
-      </div>
+    <div class="ah-page-header">
+      <h2 class="page-title-text">답변 현황 히스토리</h2>
+      <p class="page-desc">답변 요구로 등록된 모든 댓글의 현황을 전체 기간에서 확인합니다.</p>
     </div>
 
     <!-- 필터 -->
@@ -219,13 +212,7 @@ onMounted(async () => {
   max-width: none;
   padding: 28px 24px;
 }
-.page-header { margin-bottom: 20px; }
-.header-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
+.ah-page-header { margin-bottom: 20px; }
 .page-title-text {
   font-size: var(--fs-h2);
   font-weight: var(--fw-bold);
@@ -233,11 +220,6 @@ onMounted(async () => {
   margin: 0 0 4px;
 }
 .page-desc { font-size: var(--fs-sm); color: var(--text-muted); margin: 0; }
-.back-btn {
-  display: inline-flex; align-items: center; gap: 4px;
-  flex-shrink: 0; font-size: var(--fs-sm);
-}
-.back-btn .material-symbols-outlined { font-size: 16px; }
 
 /* 필터 */
 .filter-bar {

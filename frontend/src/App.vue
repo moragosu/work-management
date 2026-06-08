@@ -23,6 +23,19 @@
           <span class="nav-icon material-symbols-outlined">assignment</span>
           <span class="nav-text">주간 진행 현황</span>
         </RouterLink>
+        <RouterLink v-if="auth.isLeader || auth.isAdmin" to="/issue-history" class="nav-item" active-class="active">
+          <span class="nav-icon material-symbols-outlined">manage_search</span>
+          <span class="nav-text">이슈 히스토리</span>
+        </RouterLink>
+        <RouterLink v-if="auth.isLeader || auth.isAdmin" to="/answer-history" class="nav-item" active-class="active">
+          <span class="nav-icon material-symbols-outlined">mark_chat_read</span>
+          <span class="nav-text">답변 현황 히스토리</span>
+        </RouterLink>
+        <RouterLink v-if="auth.isLeader || auth.isAdmin" to="/export" class="nav-item" active-class="active">
+          <span class="nav-icon material-symbols-outlined">summarize</span>
+          <span class="nav-text">보고서 내보내기</span>
+        </RouterLink>
+        <div class="nav-divider"></div>
         <RouterLink to="/admin" class="nav-item" active-class="active">
           <span class="nav-icon material-symbols-outlined">settings</span>
           <span class="nav-text">관리 도구</span>
@@ -30,14 +43,6 @@
         <RouterLink to="/feedback" class="nav-item" active-class="active">
           <span class="nav-icon material-symbols-outlined">feedback</span>
           <span class="nav-text">피드백</span>
-        </RouterLink>
-        <RouterLink v-if="auth.isLeader || auth.isAdmin" to="/issue-history" class="nav-item" active-class="active">
-          <span class="nav-icon material-symbols-outlined">manage_search</span>
-          <span class="nav-text">이슈 히스토리</span>
-        </RouterLink>
-        <RouterLink v-if="auth.isLeader || auth.isAdmin" to="/export" class="nav-item" active-class="active">
-          <span class="nav-icon material-symbols-outlined">summarize</span>
-          <span class="nav-text">보고서 내보내기</span>
         </RouterLink>
         <RouterLink to="/help" class="nav-item" active-class="active">
           <span class="nav-icon material-symbols-outlined">help</span>
