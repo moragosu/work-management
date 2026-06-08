@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload, settings, issues, issue_comments, task_comments, go, feedback, auth, notifications, deleted_issues
+from routers import okrs, progress, staff, admin, tasks, qna, confluence, upload, settings, issues, issue_comments, task_comments, go, feedback, auth, notifications, deleted_issues, export
 import uvicorn
 import os
 import data_store
@@ -45,6 +45,7 @@ app.include_router(notifications.router, prefix="/api/notifications", tags=["Not
 app.include_router(deleted_issues.router, prefix="/api/deleted-issues", tags=["DeletedIssues"])
 app.include_router(go.router, prefix="/go", tags=["ShortLink"])
 app.include_router(go.api_router, prefix="/api/go", tags=["ShortLink"])
+app.include_router(export.router, prefix="/api/export", tags=["Export"])
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
