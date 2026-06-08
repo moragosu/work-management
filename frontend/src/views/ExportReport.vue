@@ -1,6 +1,6 @@
 <template>
   <div class="page-wrap">
-    <div class="page-header">
+    <div class="er-page-header">
       <h2 class="page-title-text">보고서 내보내기</h2>
       <p class="page-desc">주간 이슈 내용을 텍스트 보고서로 추출합니다.</p>
     </div>
@@ -218,7 +218,7 @@ onMounted(async () => {
   max-width: none;
   padding: 28px 24px;
 }
-.page-header { margin-bottom: 24px; }
+.er-page-header { margin-bottom: 24px; }
 .page-title-text {
   font-size: var(--fs-h2);
   font-weight: var(--fw-bold);

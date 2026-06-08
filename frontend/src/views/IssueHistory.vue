@@ -1,21 +1,23 @@
 <template>
   <div class="page-wrap">
-    <div class="page-header">
+    <div class="ih-page-header">
       <h2 class="page-title-text">삭제된 이슈 히스토리</h2>
       <p class="page-desc">삭제된 이슈와 댓글 내역을 조회합니다. 파트장·관리자만 접근 가능합니다.</p>
     </div>
 
     <!-- 필터 -->
     <div class="filter-bar">
-      <select v-model="filterWeek" class="form-control filter-select" @change="load">
-        <option value="">전체 주차</option>
-        <option v-for="w in weeks" :key="w" :value="w">{{ weekLabel(w) }}</option>
-      </select>
-      <select v-model="filterTask" class="form-control filter-select" @change="load">
-        <option value="">전체 과제</option>
-        <option v-for="t in tasks" :key="t.id" :value="t.id">{{ t.name }}</option>
-      </select>
-      <span class="filter-count">{{ items.length }}건</span>
+      <div class="filter-row">
+        <select v-model="filterWeek" class="form-control filter-select" @change="load">
+          <option value="">전체 주차</option>
+          <option v-for="w in weeks" :key="w" :value="w">{{ weekLabel(w) }}</option>
+        </select>
+        <select v-model="filterTask" class="form-control filter-select" @change="load">
+          <option value="">전체 과제</option>
+          <option v-for="t in tasks" :key="t.id" :value="t.id">{{ t.name }}</option>
+        </select>
+        <span class="filter-count">{{ items.length }}건</span>
+      </div>
     </div>
 
     <!-- 목록 -->
@@ -184,41 +186,53 @@ onMounted(async () => {
   max-width: none;
   padding: 28px 24px;
 }
-.page-header { margin-bottom: 20px; }
+.ih-page-header { margin-bottom: 20px; }
 .page-title-text {
   font-size: var(--fs-h2);
   font-weight: var(--fw-bold);
   color: var(--text-primary);
-  margin-bottom: 4px;
+  margin: 0 0 4px;
 }
 .page-desc {
   font-size: var(--fs-sm);
   color: var(--text-muted);
+  margin: 0;
 }
 
 .filter-bar {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
   margin-bottom: 20px;
+  padding: 12px 14px;
+  background: var(--gray-50);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
 }
-.filter-select { width: auto; min-width: 140px; }
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.filter-select { width: auto; min-width: 140px; font-size: var(--fs-sm); }
 .filter-count {
   font-size: var(--fs-sm);
   color: var(--text-muted);
   margin-left: auto;
+  font-weight: var(--fw-medium);
 }
 
 .empty-state {
   text-align: center;
-  padding: 48px 0;
+  padding: 56px 0;
   color: var(--text-muted);
   font-size: var(--fs-sm);
 }
 .empty-icon {
   font-size: 40px;
   display: block;
-  margin-bottom: 10px;
+  margin: 0 auto 10px;
   color: var(--gray-300);
 }
 
