@@ -8,17 +8,22 @@
     <!-- 필터 -->
     <div class="filter-bar">
       <div class="filter-row">
-        <select v-model="filterWeek" class="form-control filter-select">
-          <option value="">전체 주차</option>
-          <option v-for="w in weeks" :key="w" :value="w">{{ weekLabel(w) }}</option>
-        </select>
-        <select v-model="filterTask" class="form-control filter-select">
-          <option value="">전체 과제</option>
-          <option v-for="t in taskOptions" :key="t.id" :value="t.id">{{ t.name }}</option>
-        </select>
-        <span class="filter-count">{{ filtered.length }}건</span>
-      </div>
-      <div class="filter-row">
+        <div class="filter-group">
+          <span class="filter-label">주차</span>
+          <select v-model="filterWeek" class="form-control filter-select">
+            <option value="">전체</option>
+            <option v-for="w in weeks" :key="w" :value="w">{{ weekLabel(w) }}</option>
+          </select>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+          <span class="filter-label">과제</span>
+          <select v-model="filterTask" class="form-control filter-select">
+            <option value="">전체</option>
+            <option v-for="t in taskOptions" :key="t.id" :value="t.id">{{ t.name }}</option>
+          </select>
+        </div>
+        <div class="filter-divider"></div>
         <div class="filter-group">
           <span class="filter-label">상태</span>
           <div class="filter-chip-group">
@@ -36,6 +41,7 @@
             <button class="filter-chip" :class="{ active: filterType === 'issue' }" @click="filterType = 'issue'">이슈댓글</button>
           </div>
         </div>
+        <span class="filter-count">{{ filtered.length }}건</span>
       </div>
     </div>
 
@@ -224,10 +230,9 @@ onMounted(async () => {
 /* 필터 */
 .filter-bar {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: center;
   margin-bottom: 20px;
-  padding: 12px 14px;
+  padding: 10px 16px;
   background: var(--gray-50);
   border: 1px solid var(--outline);
   border-radius: var(--radius-md);
@@ -235,8 +240,9 @@ onMounted(async () => {
 .filter-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
+  flex: 1;
 }
 .filter-select { width: auto; min-width: 130px; font-size: var(--fs-sm); }
 .filter-group {
@@ -252,7 +258,7 @@ onMounted(async () => {
 }
 .filter-divider {
   width: 1px;
-  height: 20px;
+  height: 18px;
   background: var(--outline);
   flex-shrink: 0;
 }
@@ -267,6 +273,7 @@ onMounted(async () => {
 .filter-count {
   font-size: var(--fs-sm); color: var(--text-muted);
   margin-left: auto; font-weight: var(--fw-medium);
+  flex-shrink: 0;
 }
 
 /* 빈 상태 */
