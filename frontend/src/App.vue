@@ -31,10 +31,6 @@
           <span class="nav-icon material-symbols-outlined">feedback</span>
           <span class="nav-text">피드백</span>
         </RouterLink>
-        <RouterLink to="/answer-history" class="nav-item" active-class="active">
-          <span class="nav-icon material-symbols-outlined">chat_bubble_outline</span>
-          <span class="nav-text">답변 현황</span>
-        </RouterLink>
         <RouterLink v-if="auth.isLeader || auth.isAdmin" to="/issue-history" class="nav-item" active-class="active">
           <span class="nav-icon material-symbols-outlined">manage_search</span>
           <span class="nav-text">이슈 히스토리</span>
