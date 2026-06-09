@@ -116,7 +116,8 @@
         <div class="card card-body">
           <h3 class="settings-heading">👤 사용자 관리</h3>
           <div v-if="usersLoading" class="text-muted text-sm">불러오는 중...</div>
-          <table v-else class="users-table">
+          <div v-else class="users-table-wrap">
+          <table class="users-table">
             <thead>
               <tr>
                 <th>아이디</th>
@@ -177,6 +178,7 @@
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </div>
@@ -509,10 +511,12 @@ onMounted(async () => {
 .week-radio-group { display: flex; gap: 20px; }
 .week-radio-label { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-md); cursor: pointer; }
 
+.users-table-wrap { overflow-x: auto; }
 .users-table {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--fs-md);
+  white-space: nowrap;
 }
 .users-table th, .users-table td {
   padding: 10px 12px;
