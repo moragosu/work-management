@@ -188,6 +188,7 @@ CREATE TABLE IF NOT EXISTS users (
     force_password_change  INTEGER NOT NULL DEFAULT 0,
     staff_id               TEXT DEFAULT NULL,
     created_at             TEXT,
+    last_login             TEXT,
     job_title              TEXT NOT NULL DEFAULT '',
     main_skills            TEXT NOT NULL DEFAULT '',
     sub_skills             TEXT NOT NULL DEFAULT '',
@@ -195,6 +196,11 @@ CREATE TABLE IF NOT EXISTS users (
     desired_field          TEXT NOT NULL DEFAULT '',
     okrs                   TEXT NOT NULL DEFAULT '',
     task_ids               TEXT NOT NULL DEFAULT '[]'
+);
+CREATE TABLE IF NOT EXISTS login_log (
+    id           TEXT PRIMARY KEY,
+    username     TEXT NOT NULL,
+    logged_in_at TEXT NOT NULL
 );
 """
 
@@ -246,6 +252,7 @@ def init_db() -> None:
             "ALTER TABLE issue_comments ADD COLUMN requires_answer INTEGER NOT NULL DEFAULT 0",
             "ALTER TABLE issue_comments ADD COLUMN is_answered INTEGER NOT NULL DEFAULT 0",
             "ALTER TABLE issue_comments ADD COLUMN tagged_users TEXT NOT NULL DEFAULT '[]'",
+            "ALTER TABLE users ADD COLUMN last_login TEXT",
         ]:
             try:
                 conn.execute(sql)

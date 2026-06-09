@@ -44,6 +44,16 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
         ).fetchone()
     if not row or not auth_utils.verify_password(form.password, row["password_hash"]):
         raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 올바르지 않습니다")
+    now = datetime.now().isoformat()
+    with data_store.get_conn() as conn:
+        conn.execute("UPDATE users SET last_login=? WHERE username=?", (now, row["username"]))
+        conn.execute("INSERT INTO login_log (id, username, logged_in_at) VALUES (?,?,?)",
+                     (short_uuid('L'), row["username"], now))
+        conn.execute("""
+            DELETE FROM login_log WHERE username=? AND id NOT IN (
+                SELECT id FROM login_log WHERE username=? ORDER BY logged_in_at DESC LIMIT 50
+            )
+        """, (row["username"], row["username"]))
     token = auth_utils.create_access_token({"sub": row["username"]})
     return {
         "access_token": token,
@@ -100,9 +110,48 @@ def change_password(body: ChangePasswordRequest, user: dict = Depends(get_curren
 def list_users(_admin: dict = Depends(require_admin)):
     with data_store.get_conn() as conn:
         rows = conn.execute(
-            "SELECT username, name, role, is_admin, created_at FROM users ORDER BY created_at"
+            "SELECT username, name, role, is_admin, created_at, last_login FROM users ORDER BY created_at"
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+@router.get("/users/{username}/history")
+def get_user_history(username: str, _admin: dict = Depends(require_admin)):
+    with data_store.get_conn() as conn:
+        user = conn.execute("SELECT username FROM users WHERE username=?", (username,)).fetchone()
+        if not user:
+            raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
+        login_rows = conn.execute(
+            "SELECT logged_in_at FROM login_log WHERE username=? ORDER BY logged_in_at DESC LIMIT 20",
+            (username,)
+        ).fetchall()
+        issues_count = conn.execute(
+            "SELECT COUNT(*) FROM issues WHERE created_by=?", (username,)
+        ).fetchone()[0]
+        task_comments_count = conn.execute(
+            "SELECT COUNT(*) FROM task_comments WHERE created_by=?", (username,)
+        ).fetchone()[0]
+        issue_comments_count = conn.execute(
+            "SELECT COUNT(*) FROM issue_comments WHERE created_by=?", (username,)
+        ).fetchone()[0]
+        last_activity = conn.execute("""
+            SELECT MAX(ca) FROM (
+                SELECT MAX(created_at) AS ca FROM issues WHERE created_by=?
+                UNION ALL
+                SELECT MAX(created_at) FROM task_comments WHERE created_by=?
+                UNION ALL
+                SELECT MAX(created_at) FROM issue_comments WHERE created_by=?
+            )
+        """, (username, username, username)).fetchone()[0]
+    return {
+        "login_log": [{"logged_in_at": r["logged_in_at"]} for r in login_rows],
+        "stats": {
+            "issues_created": issues_count,
+            "task_comments": task_comments_count,
+            "issue_comments": issue_comments_count,
+            "last_activity_at": last_activity,
+        },
+    }
 
 
 @router.get("/qa-targets")

@@ -124,6 +124,7 @@
                 <th>직책</th>
                 <th>관리자</th>
                 <th>가입일</th>
+                <th>최근 로그인</th>
                 <th></th>
               </tr>
             </thead>
@@ -147,7 +148,17 @@
                   />
                 </td>
                 <td class="text-muted text-sm">{{ u.created_at ? u.created_at.slice(0,10) : '-' }}</td>
+                <td class="text-sm" :class="u.last_login ? '' : 'text-muted'">
+                  {{ u.last_login ? u.last_login.slice(0,16).replace('T',' ') : '기록 없음' }}
+                </td>
                 <td style="display:flex;gap:4px">
+                  <button
+                    class="btn btn-ghost btn-xs"
+                    @click="openHistory(u)"
+                    data-tooltip="접속·사용 이력"
+                  >
+                    <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">history</span>이력
+                  </button>
                   <button
                     class="btn btn-ghost btn-xs"
                     @click="resetPassword(u.username, u.name)"
@@ -162,7 +173,7 @@
                 </td>
               </tr>
               <tr v-if="userList.length === 0">
-                <td colspan="5" class="text-muted text-sm" style="text-align:center;padding:20px">등록된 사용자가 없습니다</td>
+                <td colspan="7" class="text-muted text-sm" style="text-align:center;padding:20px">등록된 사용자가 없습니다</td>
               </tr>
             </tbody>
           </table>
@@ -185,6 +196,62 @@
           {{ copied ? '복사됨 ✓' : '클립보드에 복사' }}
         </button>
         <button class="btn btn-ghost" style="width:100%;margin-top:8px" @click="tempPwModal.show = false">닫기</button>
+      </div>
+    </div>
+
+    <!-- 사용자 이력 모달 -->
+    <div v-if="historyModal.show" class="modal-backdrop" @click.self="historyModal.show = false">
+      <div class="modal-card history-modal-card">
+        <div class="history-modal-header">
+          <h3 class="history-modal-title">
+            <span class="material-symbols-outlined">manage_accounts</span>
+            {{ historyModal.name }} 활동 이력
+          </h3>
+          <button class="modal-close-btn" @click="historyModal.show = false">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div v-if="historyModal.loading" class="history-loading">
+          <div class="spinner" style="margin:0 auto"></div>
+        </div>
+        <template v-else>
+          <!-- 접속 이력 -->
+          <div class="history-section">
+            <div class="history-section-title">
+              <span class="material-symbols-outlined">login</span>접속 이력
+            </div>
+            <div v-if="historyModal.data.login_log.length === 0" class="history-empty">기록 없음</div>
+            <ul v-else class="login-log-list">
+              <li v-for="(entry, i) in historyModal.data.login_log" :key="i" class="login-log-item">
+                <span class="material-symbols-outlined login-dot">fiber_manual_record</span>
+                {{ entry.logged_in_at.slice(0,16).replace('T',' ') }}
+              </li>
+            </ul>
+          </div>
+
+          <!-- 사용 현황 -->
+          <div class="history-section">
+            <div class="history-section-title">
+              <span class="material-symbols-outlined">insights</span>사용 현황
+            </div>
+            <div class="history-stats">
+              <div class="history-stat-item">
+                <span class="stat-label">이슈 등록</span>
+                <span class="stat-value">{{ historyModal.data.stats.issues_created }}건</span>
+              </div>
+              <div class="history-stat-divider"></div>
+              <div class="history-stat-item">
+                <span class="stat-label">댓글 작성</span>
+                <span class="stat-value">{{ historyModal.data.stats.task_comments + historyModal.data.stats.issue_comments }}건</span>
+              </div>
+            </div>
+            <div v-if="historyModal.data.stats.last_activity_at" class="history-last-activity">
+              마지막 활동: {{ historyModal.data.stats.last_activity_at.slice(0,16).replace('T',' ') }}
+            </div>
+            <div v-else class="history-empty">활동 기록 없음</div>
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -238,6 +305,10 @@ const userList = ref([])
 const tempPwModal = ref({ show: false, name: '', password: '' })
 const copied = ref(false)
 const usersLoading = ref(false)
+const historyModal = ref({
+  show: false, loading: false, name: '',
+  data: { login_log: [], stats: { issues_created: 0, task_comments: 0, issue_comments: 0, last_activity_at: null } },
+})
 
 const staffStats = computed(() => {
   const objCounts = {}
@@ -372,6 +443,22 @@ async function deleteUser(username) {
   }
 }
 
+async function openHistory(u) {
+  historyModal.value = {
+    show: true, loading: true, name: u.name,
+    data: { login_log: [], stats: { issues_created: 0, task_comments: 0, issue_comments: 0, last_activity_at: null } },
+  }
+  try {
+    const { data } = await axios.get(`/api/auth/users/${u.username}/history`)
+    historyModal.value.data = data
+  } catch (e) {
+    showToast('이력 조회 실패: ' + (e.response?.data?.detail || e.message))
+    historyModal.value.show = false
+  } finally {
+    historyModal.value.loading = false
+  }
+}
+
 async function fetchAll() {
   await Promise.all([fetchObjectives(), fetchTasks(), fetchStaff()])
 }
@@ -472,5 +559,115 @@ onMounted(async () => {
   text-align: center;
   color: var(--primary);
   font-family: monospace;
+}
+
+/* 이력 모달 */
+.history-modal-card {
+  width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 24px 28px;
+}
+.history-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.history-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+  margin: 0;
+}
+.history-modal-title .material-symbols-outlined { font-size: 20px; color: var(--primary); }
+.modal-close-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); padding: 4px; border-radius: var(--radius-sm);
+  display: flex; align-items: center;
+}
+.modal-close-btn:hover { background: var(--gray-100); }
+.history-loading { padding: 32px 0; display: flex; justify-content: center; }
+.history-section {
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.history-section:last-child { margin-bottom: 0; }
+.history-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  padding: 8px 12px;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--outline);
+}
+.history-section-title .material-symbols-outlined { font-size: 14px; }
+.history-empty {
+  padding: 14px 14px;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+.login-log-list {
+  list-style: none;
+  margin: 0; padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.login-log-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+.login-dot {
+  font-size: 7px !important;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.history-stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--outline);
+}
+.history-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  text-align: center;
+}
+.history-stat-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--outline);
+  flex-shrink: 0;
+}
+.stat-label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+.stat-value {
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  color: var(--primary);
+}
+.history-last-activity {
+  padding: 8px 14px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
 }
 </style>
